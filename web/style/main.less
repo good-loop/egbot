@@ -1,0 +1,132 @@
+// Styling for the SoGive app
+@import "colours.less";
+@import "positioning.less";
+@import "buttons.less";
+@import "Misc.less";
+
+@font-face {
+	font-family: 'Roboto';
+	src: url('../fonts/Roboto-Regular.ttf');
+}
+
+.TODO {
+	display: none;
+}
+
+.avoid-navbar {
+    margin-top: @navbar-height + 1;
+}
+
+.navbar-brand, .navbar-nav li a {
+    line-height: @navbar-height;
+    height: @navbar-height;
+    text-transform: lowercase;
+}
+
+/* Override the above so the account/logout menu looks normal */
+.dropdown-menu li a {
+	line-height: initial !important;
+	height: auto !important;
+}
+
+#navbar {
+	background-color: @colour-03;
+	font-size: 1.5em;
+}
+
+.navbar-inverse {
+	background-color: @colour-03;
+}
+
+.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:focus, .navbar-inverse .navbar-nav>.active>a:hover {
+	background-color: @colour-03;
+}
+
+
+.no-margin {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
+}
+
+.no-margin-bottom {
+	margin-bottom: 0px;
+}
+
+.messagebar {
+	margin-top:5px;
+}
+
+img.logo {
+	width:32px;	
+	max-height:32px;	
+}
+img.logo-small {
+	max-width:16px;	
+	max-height:16px;	
+}
+img.logo-large {
+	max-width:64px;	
+	max-height:64px;	
+}
+
+@import "animation.less";
+
+// Page specific stuff
+@import "Page.less";
+@import "EditCharityPage.less";
+@import "SearchPage.less";
+@import "CharityPage.less";
+@import "Donation.less";
+@import "NewDonationForm.less";
+@import "WizardProgressWidget.less";
+@import "FundRaiserPage.less";
+@import "RegisterPage.less";
+@import "SocialShare.less";
+@import "LoginWidget.less";
+@import "footer.less";
+@import "EventPage.less";
+@import "ShareWidget.less";
+
+/* https://css-tricks.com/snippets/css/a-guide-to-flexbox/ */
+.flexbox-1row {
+	display: flex;
+	flex-wrap: nowrap;
+	justify-content: center; // flex-start | flex-end | center | space-between | space-around;
+}
+.flexbox {
+	display: flex;
+}
+.flexitem {
+
+}
+
+// Let any singleton column be centred in its row
+.container .row .col-center {
+	float: none;
+	margin: 0 auto;
+}
+
+// Make the login widget a modal overlay
+.login-modal {
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	top: 0;
+	left: 0;
+	background: rgba(0,0,0,0.5);
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+body {
+	font-family: 'Nunito Sans', sans-serif;
+	color: @colour-03;
+}
+
+.full-width {
+	width: 100% !important;
+}
