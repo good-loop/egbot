@@ -19,7 +19,7 @@ iteration = 1
 filter = '!asyat-glvTDN7Q*KS8FC0X2Ds8E427nbJlZsxliDugZwP6._EWQ0H)6SoS2c'
 key = 'EuiPGzIIW4aHrRAJq5JQYA(('
 site = 'math.stackexchange'
-tag = 'examples-counterexamples+probability'
+tag = 'examples-counterexamples;probability'
 max = time.time()
 min = 0
 
@@ -35,7 +35,7 @@ else:
 	for qid in read_data:
 		qids += ';'.join(qid.split('\n'))
 
-request_link = 'http://api.stackexchange.com/2.2/questions/' + qids + '/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(int(max)) + '&tagged=' + tag + '&site=' + site + '&filter=' + filter
+request_link = 'http://api.stackexchange.com/2.2/questions/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(int(max)) + '&tagged=' + tag + '&site=' + site + '&filter=' + filter
 print 'Looking at ', request_link
 
 # make api request 
@@ -87,7 +87,7 @@ while data:
 
 				# do another api request to get the next 100 posts
 				print '--------------NEXT---------------'
-				request_link = 'http://api.stackexchange.com/2.2/questions/' + qids + '/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(question['creation_date']) + '&tagged=' + tag + '&site=' + site + '&filter=' + filter
+				request_link = 'http://api.stackexchange.com/2.2/questions/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(question['creation_date']) + '&tagged=' + tag + '&site=' + site + '&filter=' + filter
 				current_max = int(question['creation_date'])
 				print 'Questions looked at: ', master_count, ', Requests made: ', req_count
 				print 'Looking at ', request_link
@@ -100,26 +100,26 @@ while data:
 					print e
 				temp = json.loads(r.text)
 				while 'error_id' in temp.keys() or tryagain:
-                    if temp['error_message']:
-                        print temp['error_message']
-					print 'Questions looked at: ', master_count
-					print 'Sleeping for ' + str(counter) + ' seconds ...'
-					time.sleep(counter)
-					counter = 3 * counter
-					try:
+				    if temp['error_message']:
+						print temp['error_message']
+				    print 'Questions looked at: ', master_count
+				    print 'Sleeping for ' + str(counter) + ' seconds ...'
+				    time.sleep(counter)
+				    counter = 3 * counter
+				    try:
 						req_count += 1
 						r = requests.get(request_link)	
 						tryagain = False				
-					except requests.exceptions.RequestException as e: 
+				    except requests.exceptions.RequestException as e: 
 						tryagain = True
 						print e
-					temp = json.loads(r.text)	
+				    temp = json.loads(r.text)	
 				data = temp	
 				counter = 60
 			else:
 				break
 		else:
-			print 'Error: Couldn't find questions in this response'
+			print 'Error: Couldn\'t find questions in this response'
 	else:
 		print '===========API-ERROR============='
 		print data
