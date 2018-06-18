@@ -1,0 +1,825 @@
+Start,End,Excerpt Copy,Codes Applied Combined,Math artefact 1,Math artefact 2,Math artefact 3,Math artefact 4,Meta Label
+40649,40660,"[Fixed, T.]",ammended error (others),,,,,egbotdont
+950,1093,"Having seen the problem for the first time few minutes ago, the first reaction I have is to try some kind of variation on reductio ad absurdum.",RAA,[problem statement],proof approach – RAA,,,egbotdont
+1393,1620," Let C_n be the edge graph of the unit n-cube: so C_n has 2^n vertices and n*2^{n-1} edges. There is an obvious map p from the vertices of C_n to the integers, sending the vertex (i_1, i_2, ..., i_n) to the point \sum i_j a_j. ",re-representation,the edge graph of the unit n-cube [concept],Let C_n be the edge graph of the unit n-cube: so C_n has 2^n vertices and n*2^{n-1} edges. [argument?],There is a map p from the vertices of C_n to the integers [re-representation/analogy],"The map p from the vertices of C_n to the integers sends the vertex (i_1, i_2, ..., i_n) to the point \sum i_j a_j [detailing re-rep/analogy mappings]",egbotdont
+1620,1679,We would like to show that p^{-1}(M) cannot disconnect C_n.,wwtst,We would like to show that p^{-1}(M) cannot disconnect C_n. [goal],,,,egbotdont
+1681,1738,Is there some classification of sets that disconnect C_n?,question,Is there some classification of sets that disconnect C_n? [question],,,,egbotdont
+1739,1849,Is there some measure of size (probably not simple cardinality) in which p^{-1}(M) is too small to disconnect?,question,Is there some measure of size (probably not simple cardinality) in which p^{-1}(M) is too small to disconnect? [question],,,,egbotdont
+1855,1879,I’d like to induct on n.,induction,induct on n [proof strategy],,,,egbotdont
+1880,1962,"I tried to set it up a few times and failed, but maybe someone else can do better.",social glue, - ,,,,egbotdont
+2021,2314,"The following reformulation of the problem may be useful:
+Show that for any permutation s in Sn, the sum a_s(1)+a_s(2)…+a_s(j) is not in M for any j=<n.
+
+Now, we may use the fact that Sn is ""quite large"" and prove the existence of such permutation with some kind of a pigeonhole-ish principle.",re-representation,"[problem statement] is equivalent to “Show that for any permutation s in Sn, the sum a_s(1)+a_s(2)…+a_s(j) is not in M for any j=<n.” [re-rep]","we may use the fact that Sn is ""quite large"" and prove the existence of such permutation with some kind of a pigeonhole-ish principle [proof]","[in the case that n=2] the sequence of points landed on is either (a_1, a_1 + a_2) or (a_2, a_1 + a_2). If m is not a_1 or a_2 we can pick either sequence; if m is one of those we pick the other one. [proof of a specific case]","This could be the base case for some induction on n. [proof]
+",egbotdont
+1095,1245,I hope this kind of comment is in the spirit of the original idea — I apologise in advance if I’ve stepped over the boundary of the experiment’s rules,social glue,,,,,egbotdont
+1248,1299,This is definitely in the spirit of the experiment ,social glue,,,,,egbotdont
+2381,2984,"If n = 2, the problem reduces to: let a_1, a_2 be distinct positive integers, and let m be a positive integer which is not s = a_1 + a_2. A grasshopper is to jump along the real axis, starting at the point 0 and making two jumps a_1, a_2. Prove that the order can be chosen in such a way that the grasshopper never lands on m.
+
+In this case, the desired result is obvious; the sequence of points landed on is either (a_1, a_1 + a_2) or (a_2, a_1 + a_2). If m is not a_1 or a_2 we can pick either sequence; if m is one of those we pick the other one.
+
+This could be the base case for some induction on n.","suggested base case, simple case"," If n = 2, the problem reduces to: let a_1, a_2 be distinct positive integers, and let m be a positive integer which is not s = a_1 + a_2. A grasshopper is to jump along the real axis, starting at the point 0 and making two jumps a_1, a_2. Prove that the order can be chosen in such a way that the grasshopper never lands on m. [specific example/re-rep of initial problem]",,,,egbotdo
+3043,3335,"The following reformulation of the problem may be useful:
+Show that for any permutation s in Sn, the sum a_s(1)+a_s(2)…+a_s(j) is not in M for any j=<n.
+
+Now, we may use the fact that Sn is ""quite large"" and prove the existence of such permutation with some kind of a pigeonhole-ish principle",repeated comments, - ,,,,egbotdont
+3400,3768,"This is an administrative comment: there are now four comments numbered “2″. Is it possible to clean this up? [Now doing so - T.]
+
+(Incidentally, I know I’ve seen blogs — and I’m pretty sure they were WordPress blogs — that automatically numbered the comments. I’m not sure how to activate this, but it might be useful for this post and others in the “polymath” vein.)",technical issues, - ,,,,egbotdont
+3825,3892,"Well, my first thought is to see if the hypotheses seem reasonable.",introducing your comment,,,,,egbotdont
+4029,4260,"The grasshopper’s other steps will land on a partial sums $a_{\sigma(1)} + … + a_{\sigma(k)}$ for some permutation $\sigma$, but we get to choose the permutation. Thus it seems plausible that we can avoid a given set of n-1 points.",plausibilty of conjecture,,,,,egbotdont
+4321,4339,Quick observation.,introducing your comment,,,,,egbotdont
+4340,4379,The grasshopper must make a first step.,sub-conjecture,,,,,egbotdont
+4380,4487,"This is always possible, since the a_i are distinct and |M|=n-1; that is, there is always an a_i not in M. ",proof of sub-conjecture,,,,,egbotdont
+4487,4662,"However, let’s say M matches all but one of the a_i. Then the first step is uniquely determined. Still, according to the claimed theorem, a second step must still be possible.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+4721,4737,Following (2 3);,by number,,,,,egbotdont
+4738,4967,"For any x in M, there are two possibilities:
+1. x can’t be represented as a sum of (distinct) ai’s.
+2. x=a_j1+a_j2…+a_jk. In this case, we may assign x the set {j1, j2…jk}
+
+So M can actually be regarded as a subset of P({1, 2…n})",case split,,,,,egbotdont
+4914,4967,"M can actually be regarded as a subset of P({1, 2…n})",sub-conjecture,,,,,egbotdont
+5028,5051,Addressing Michael Lugo,by name,,,,,egbotdont
+5053,5327,"I think he means number just your own comments, and then address a (person,number) pair. [Actually, I was proposing a global numbering system; I'll try to fix it up now. But the (author, number) pair approach would also have worked, except perhaps for anonymous comments. -T",technical issues,,,,,egbotdont
+5330,5351,Addressing Haim(2 5):,"by name, by number",,,,,egbotdont
+5353,5443,That’s pretty strong; all you need is that there exists a permutation where that is true. ,too strong,,,,,egbotdont
+5443,5655,"And it doesn’t work; there are numbers $a_1,a_2,\ldots,a_n$ and sets $M$ of $n-1$ points such that, for instance, $a_1 \in M$. Then any permutation starting with $a_1$ would not satisfy your conjecture for $j=1$.",,,,,,egbotdont
+5657,6030,"But, just looking for *one* permutation that satisfies $a_s(1)+a_s(2)…+a_s(j) \not \in M$ for any $j \leq n$ (which is basically the statement of the theorem), could lend itself well to induction. In other words, use the fact that for every subset $M’ \subset M$ of size $j$ not containing $a_s(1)+a_s(2)…+a_s(j)$, there is a way to permute those $j$ numbers to avoid $M’$.",induction,,,,,egbotdont
+6095,6267,"The scorings of this problem accroding to the offical result are:
+
+Score Number of Particpants
+0 540
+1 2
+2 1
+3 10
+4 6
+5 2
+6 1
+7 3
+
+A score of 1-6 represents partial credit.",meta-level issues,,,,,egbotdont
+6325,6341,Addressing Dave:,by name,,,,,egbotdont
+6343,6400,"Sorry, indeed I meant: “Show that for *one* permutation…”",ammended error (own),,,,,egbotdont
+6343,6348,Sorry,apologies,,,,,egbotdont
+6468,6487,Regarding Haim(3 9),"by name, by number",,,,,egbotdont
+6488,6649,"Unfortunately, the same integer may occur as the sum of many different subsets of M. For example, if M = {1,2,3}, do you assign the integer 3 to {3} or to {1,2}?",to a local conjecture,,,,,egbotdo
+6707,6871,"can M really be regarded as a subset of P when P({1,2,…,n}) since M is a set of n-1 positive integers not containing s, and not necessarily the set of {1,2,…,(n-1)}","question, sub-conjecture",,,,,egbotdont
+6931,6972,(I’m lost with the numbering of comments),technical issues,,,,,egbotdont
+6974,6983,To David:,by name,,,,,egbotdont
+6985,6998,You’re right.,social glue,,,,,egbotdont
+6999,7295,"Instead, we may take a set of the largest possible size, and if there are two such sets, we may order their elements, and take the larger tuple in the lexicographical order. Now, this may be useful: note that M does not contain a1+a2+…+an, so each x in M must be assigned to some j-tuple with j<n",arbitrary abstract eg,,,,,egbotdo
+7297,7440,Perhaps we should look for some surjective mapping from Sn to the set of <n-tuples that will assert the existence of the desirable permutation…,constructive,,,,,egbotdont
+7636,7659,"nevermind. my mistake
+",ammended error (own),,,,,egbotdont
+8036,8704,"we need to show that there is a permutation $\sigma$ that no partial sum
+$a_{\sigma(1)}+ \ldots + a_{\sigma(j)}, j = 1,2,..n$ is in the set M. we can assume that the numbers $a_1, a_2,.. a_n$ are in increasing order.
+if M does not intersect the interval $[a_1, s=a_1+a_2..a_n]$ then any permutation $\sigma$ would do. so we assume that max M is less or equal to s.
+
+choose the initial step $a_j$ where j is the smallest index j so that $a_j$ is not in M. this is possible because M has only n-1 elements. now replace the set M by $M_1 = M – a_j = m – a_j: m in M$, remove $a_j$ and set $\sigma_1 = j.$
+
+i need to work on how to make the next step or use induction on j",induction,,,,,egbotdont
+8884,8982,It’s that if on the first step you can get past a forbidden number then you are done by induction.,induction,,,,,egbotdont
+8764,8883,"OK, there have been enough comments that I feel I can make my very preliminary, and not obviously helpful, observation.",introducing your comment,,,,,egbotdont
+8984,10506,"However, since there is absolutely no reason to be able to do that on the first step, I think this is probably not the way to go. I’m tempted to try proving it for n=3 by an ugly method. In fact, here is an attempt at that. Let the numbers be a,b and $c$. We’re trying to get to a+b+c. Let’s write down the first two steps of all six possible routes: (a,a+b), (a,a+c), (b,b+a), (b,b+c), (c,c+a), (c,c+b). Can we find two numbers that intersect all these pairs?
+
+The answer isn’t instantly obvious, so let’s experiment with blocking a and b+c to see what happens. Then the only possibilities left are (b,b+a) and (c,c+a). We know that we have not covered b or c. Actually, we haven’t covered b+a either (since a>0 and a\ne c).
+
+To be more systematic, we have to see what the possible equalities are between the various numbers. We know that a,b and $c$ are distinct. Also, a+b, b+c and a+c are distinct (subtract them from a+b+c). So the only possible equalities are things like a=b+c, Moreover, only one such equality can hold, since the number that equals the sum must be the biggest of the three. So let’s suppose WLOG that b\ne a+c and c\ne a+b. Then the pairs (a,a+b), (b,a+b), (a,a+c) and (c,a+c) have only the obvious equalities. The only way of blocking all four of these paths is to take a+b and a+c. But that leaves the path (b,b+c). (It’s possible that a=b+c here, but we were forced not to block a.)
+
+I don’t see a general argument coming out of this just yet, but a few little ideas might perhaps be developed.",simple case,,,,,egbotdo
+10571,10643,"I think I’m the one who screwed up the comment numbering, so I apologize",apologies,,,,,egbotdont
+10570,10858," I think I’m the one who screwed up the comment numbering, so I apologize. I’m going to number this as comment 20, and hopefully we can do sequential numbering from now on. [My count gives 19, but it should be OK to have gaps. A good rule would be: when in doubt, make the number bigger.]",technical issues,,,,,egbotdont
+10914,10944,Forgive me for the silly image,ask for forgiveness,,,,,egbotdont
+10913,11214," Forgive me for the silly image but that´s the only way I can”feel” the problem. I imagine our grasshopper hero going from 0 to s in n distinct jumps whose lengths are given (a1,a2,…,an) .But there are some numbers x (x belongs to M) where a landmine is placed and if our buddy falls there, game over.",metaphor,,,,,egbotdont
+11216,11238,Now I am only guessing,I am guessing,,,,,egbotdont
+11242,11841," I think that if we prove that we can find a sequence even for the worst case (n-1 landmines i.e all x between 1 and s-1) we have solved our problem. As it has been suggested we could try induction (for each step an unused ai can be choose so we can avoid the landmines) or we can try a combinatorial approach and prove that there is at least one sequence a1.a2…an whose set of partial sums is disjointed from M. Are these really two really different approaches? A local , step by step on (by Induction) and a global one by combinatorics? or is the same since the induction would need combinatorics?",proof strategy,,,,,egbotdont
+11242,11391, I think that if we prove that we can find a sequence even for the worst case (n-1 landmines i.e all x between 1 and s-1) we have solved our problem.,worst case scenario,,,,,egbotdo
+11392,11512,As it has been suggested we could try induction (for each step an unused ai can be choose so we can avoid the landmines),suggested step case,,,,,egbotdont
+11516,11654,we can try a combinatorial approach and prove that there is at least one sequence a1.a2…an whose set of partial sums is disjointed from M.,combinatorial,,,,,egbotdont
+11655,11841,"Are these really two really different approaches? A local , step by step on (by Induction) and a global one by combinatorics? or is the same since the induction would need combinatorics?",proof strategy,,,,,egbotdont
+11901,11988,Just a quick thought after having read the problem description and the current replies.,introducing your comment,,,,,egbotdont
+11988,12196," It is certainly not the case that for fixed M, *any* permutation \sigma:\{1,\ldots,n\} \rightarrow \{1,\ldots,n\} will yield a sequence of steps a_{\sigma(1)},a_{\sigma(1)}+a_{\sigma(2)},\ldots that avoid M.",yes,,,,,egbotdont
+12198,12436,"But maybe the following statement, stronger than the original claim, is true: for fixed M and any permutation \sigma:\{1,\ldots,n\} \rightarrow \{1,\ldots,n\}, some cyclic permutation of \sigma will yield a sequence of steps that avoid M.",no,,,,,egbotdont
+12438,12516,I haven’t thought about this approach so maybe there is an easy counterexample,I might be wrong,,,,,egbotdont
+12583,12718,“maybe the following statement … is true: for fixed M … some cyclic permutation of \sigma will yield a sequence of steps that avoid M.”,by content,,,,,egbotdont
+12720,12733,"Sadly, false.",emotion or value words,,,,,egbotdont
+12734,12827,"Take (a_1, a_2, a_3) = (1,2,3) and take M = {2,3}. Then none of the cyclic permutations work.",to a local conjecture,,,,,egbotdo
+12829,12908,"I like the idea of using a smaller group than the full symmetric group, though.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+12975,13162,"I’m thinking about the possibility of transforming this problem into another, where there are several ways to travel from one point to another, and M regulates which ways can’t be chosen.",re-representation,,,,,egbotdont
+13224,13239,My first ideas:,introducing your comment,,,,,egbotdont
+13243,13339,"without loss of generality $M$. is a subset of $A:=\{1,\ldots,s-1\}$, where $s:=a_1+\ldots+a_n$.",sub-conjecture,,,,,egbotdont
+13343,13490,"Let $F$ be the set of possible sums $S_{\sigma,j} $ for $\sigma\in S_n$ and $j\leq n$, as described by Haim(2). What properties does this set have?",relevant entity,,,,,egbotdo
+13455,13490,What properties does this set have?,question,,,,,egbotdont
+13491,13674,"One symmetry is as follows: consider $A$ as a set of $s-1$ ordered beads, of which the ones corresponding to $F$ are colored. So $F$ can be considered as a coloring of a set of beads.",re-representation,,,,,egbotdont
+13676,13873,"Then consider a MOVE, given by taking a segment $b_1,\ldots,b_k$ of ordered beads, of which the _first_ and the _last_ are colored. Then reverse its order. now you have a new coloring of the beads.",sub-conjecture,,,,,egbotdont
+13875,13945,I claim that the set $F$ of colored beads is invariant under any MOVE.,sub-conjecture,,,,,egbotdont
+13946,13979,Is it also characterized by this?,question,,,,,egbotdont
+13979,14000,(ehm..in some sense?),informal,,,,,egbotdont
+14589,14604,A vague thought,introducing your comment,,,,,egbotdont
+14605,14662,that came out of the brute-force approach to the case n=3,simple case,,,,,egbotdo
+14665,14863,"t seems that the more coincidences there are amongst the finite sums of the a_i, the harder it is for the grasshopper, since the landmines (if we go with that image) can block several paths at once.",sub-conjecture,,,,,egbotdont
+14864,14984,"So it ought, for instance, to be easy to prove that the grasshopper wins if a_i=2^{i-1} (so that all sums are distinct).",class of supporting examples,,,,,egbotdo
+14985,15247,"In fact, here’s a quick proof. There are n! distinct paths, and any landmine rules out k!(n-k)! of them for some k. But this is maximized when k=1 (since k=0 and k=n are forbidden), so we can’t rule out more than a proportion n^{-1} of all paths. So we are done.",proof of sub-conjecture,,,,,egbotdont
+15249,15296,At the opposite extreme is the case when a_i=i.,class of difficult examples,,,,,egbotdo
+15350,15402,Does anyone have an argument for this special case? ,request for help,,,,,egbotdont
+15402,15574,"Morally, it ought to be the hardest, but that doesn’t mean it’s as hard as the whole problem, since the difficulty might lie in actually proving that it’s the extreme case.",meta comment about the process,,,,,egbotdont
+15628,15820,"Generalizing gowers’s comment, if for any k<n we can find k of the a_i whose partial sums avoid M and whose sum gets you past at least k of the elements of M, then you can finish by induction.",induction,,,,,egbotdont
+15822,15988,"So an indecomposable instance of the problem is one for which the smallest k with the property above is k=n, these are the ones that don't directly fall to induction.",specific difficult case,,,,,egbotdo
+16050,16080,(variant of Louigi’s approach),by name,,,,,egbotdont
+16081,16341,"if you start with a given \sigma then maybe it can be useful to iterate “exchanging 2 successive jumps to avoid an element of M” (this uses the case n=2 discussed by Michael Lugo (2 4)).. in other words you compose your permutation with inversions, or 2-cycles","proof, simple case",,,,,egbotdo
+16397,16432,Addressing 1 (reductio ad absurdum),by number,,,,,egbotdont
+16434,16946,"Suppose there exists an M such that every grasshopper walk must pass through at least one point of M. Wlog let M = { S_{k_1}, S_{k_2}, …, S_{k_{n-1}}} where each S_{k_j} is a sum of k_j integers a_i. For each S_{k_j}, we have that at most (k_j)!(n-k_j)! grasshopper walks must pass through the point S_{k_j}. Since the total number of walks is n!, we must have:
+
+(k_1)!(n-k_1)! + (k_2)!(n-k_2)! + … + (k_{n-1})!(n-{k_{n-1}})! >= n!
+
+Clearly the left hand side is at most (n-1) (n-1)!. Hence we have n-1 > n. QED.",RAA,,,,,egbotdont
+17002,17023,Re my previous post: ,previous comment by the same contributor,,,,,egbotdont
+17023,17095,"This was too simple, so there must be a mistake in my proof. What is it?",what's the problem here?,,,,,egbotdont
+17160,17216,Quick thought following on David Speyer’s first comment:,by name,,,,,egbotdont
+17160,17173,Quick thought,introducing your comment,,,,,egbotdont
+17217,17333,The problem asks us to prove that no set of size (n-1) can disconnect two diagonally opposing vertices in the n-cube,translate the conjecture,,,,,egbotdont
+17464,17606,"So, now we are faced with a constructive problem, independent of the set M: Construct n vertex-disjoint paths from 0^n to 1^n in the n-cube.
+",constructive,,,,,egbotdont
+17335,17463,"By Menger’s theorem, this is equivalent to proving that there are n internally vertex-disjoint paths between these two vertices.",reference to other maths,,,,,egbotdont
+17356,17463,this is equivalent to proving that there are n internally vertex-disjoint paths between these two vertices.,here are two equivalent conjectures,,,,,egbotdont
+17664,17668,@pz:,by name,,,,,egbotdont
+17669,17804,it is that you assume “wlog” a fact which is not a “generic” bad case. In the generic bad case only one of the sums S_{k} belongs to M.,wlog,,,,,egbotdont
+17873,17878,To pz,by name,,,,,egbotdont
+17880,18016,"the mistake is that the same element of M can be written as a sum of a_i in many ways, and can thus block many more than k!(n-k)! paths.",here is a mistake in your reasoning,,,,,egbotdont
+18017,18100,"For example, if (a_1, a_2, a_3) = (1,2,3), then putting 3 into M blocks four paths.",to show flaw in reasoning,,,,,egbotdo
+18102,18114,"To Mohammed,",by name,,,,,egbotdont
+18134,18234,"look at the n paths
+
+e_1, e_1+e_2, …, e_1+e_2+…+e_n
+e_2, e_2+e_3, …, e_2+e_3+…+e_1
+…
+e_n, e_n+e_1, …",class of supporting examples,,,,,egbotdo
+18236,18280,"Unfortunately, I think we are in a rut here.",meta-level comment about proof,,,,,egbotdont
+18349,18638,"Let a_1<a_2<\cdots<a_n, then try the situation when the first step are blocked except for only one choice.
+
+If M=\{a_1,\cdots,a_{i-1},a_{i+1},\cdots,a_n\}, then our first step is forced to take a_i. Then we can choose our second step as the largest one, a_n, to leave all landmines behind.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+18640,18726,"I am thinking if we can continue this road, discuss different situations step by step.",meta-level comment about proof,,,,,egbotdont
+18785,18802,Also addressing 1,by number,,,,,egbotdont
+18804,19051,"I propose the following reformulation:
+Prove the following to be false:
+(a) exists b $\in$ M s.t any path contains a prefix s.t Sum(prefix) = b
+This is equivalent with:
+(b) any 2 paths, exists prefix in each of them s.t Sum(prefix1) = Sum(prefix2)",re-representation,,,,,egbotdont
+18804,19316,"I propose the following reformulation:
+Prove the following to be false:
+(a) exists b $\in$ M s.t any path contains a prefix s.t Sum(prefix) = b
+This is equivalent with:
+(b) any 2 paths, exists prefix in each of them s.t Sum(prefix1) = Sum(prefix2)
+
+It seems like (b) can be proven false by fixing one path, and then proving the existence of another with doesn’t not have the property (unless 2 of the numbers are equal, contradiction). Analysis for increasing length of the prefixes for first path seems to work.",case split,,,,,egbotdont
+19372,19380,@mircea:,by name,,,,,egbotdont
+19381,19794,"The S_k’s are arbitrary sums of the a_i elements. What I am saying is that the elements of M are each a potential “hit” (i.e. if an element of M cannot be expressed as a sum of a_i’s, then no grasshopper walk will step on it).. If only one of the sums S_k belongs to M, then we have at most k!(n-k)! walks that go through it, and then we can clearly find a walk out of the n! – k!(n-k)! that doesn’t go through M.",you're wrong,,,,,egbotdont
+19859,19878,If I’m not mistaken,I might be wrong,,,,,egbotdont
+19880,19910,what I said in my last comment,previous comment by the same contributor,,,,,egbotdont
+19880,19943,what I said in my last comment can be proved by induction on n:,introducing your comment,,,,,egbotdont
+19945,20822,"By Ind. Hyp., there are n vertex disjoint paths p_1,\ldots,p_n from 0^{n+1} to 1^n0, that only uses vertices that have 0 at the end. The last vertex of each p_i is a vertex of weight n-1 that has 0 at the end. From each p_i, 1\le i\le n-1, we can create a path p'_i from 0^{n+1} to 1^{n+1} by following p_i until the last vertex, which is of the form v0 where $v$ is a sequence of weight n-1, then jumping to v1, and then 1^{n+1}. From p_n, we create p'_n by following p_n to 1^n0 and then going to 1^{n+1}. Removing the internal vertices of all these paths, we are at least left with the n-cube containing all vertices of the form v1, except n-1 of the vertices of weight n. Say, the vertex of weight n that is not taken is 01^{n}. Then we can add another path p'_{n+1} as follows: 0^{n+1}, 010^{n-1}, 01^20^{n-2},\ldots,01^{n-1}0,01^n,1^{n+1}. All p'_i‘s are vertex disjoint.",induction,,,,,egbotdont
+20824,20846,Am I making a mistake?,"question, I might be wrong",,,,,egbotdont
+20902,20916,@David Speyer:,by name,,,,,egbotdont
+20917,20922,Oops.,informal,,,,,egbotdont
+20923,20936,You’re right.,you're right,,,,,egbotdont
+20937,21045,"Maybe we can try to refine the count, i.e. show that not too many sets of a_i’s can sum to the same integer…",ammended error (own),,,,,egbotdont
+21104,21112,@gowers:,by name,,,,,egbotdont
+21114,21129,I thought about,informal,,,,,egbotdont
+21114,21325,"I thought about induction on the set of all possible (a_1,\dots,a_n) with some ordering instead of n. Your approach might provide a nicer base so that one only has to decrease the a_i or throw some of them away.",induction,,,,,egbotdont
+21216,21256,Your approach might provide a nicer base,suggested base case,,,,,egbotdont
+21257,21325,so that one only has to decrease the a_i or throw some of them away.,explanation,,,,,egbotdont
+21327,21457,"I.e. what happens if the claim is true for (a_1,\dots,a_n): is it also true for some subset (a_1,\dots,a_{i-1},a_{i+1},\dots,a_n)?","question, sub-conjecture",,,,,egbotdont
+21527,21628,"Why can’t a S_{k_j} be the sum of another set of integers of a_1, a_2, \ldots, a_n as well as S_{k_j}",question,,,,,egbotdont
+21711,21786,as there would be another set of walks based on the second set of integers.,explanation,,,,,egbotdont
+21628,21710,that would make (k_j)!(n-k_j)! less than the total number of walks through S_{k_j},sub-conjecture,,,,,egbotdont
+21787,21955,"if the a_1, a_2, \ldots, a_n are in arithemetic progression this will happen, the sum of the first and last will equal the sum of the second and the second to last etc.",sub-conjecture,,,,,egbotdont
+21865,21955,the sum of the first and last will equal the sum of the second and the second to last etc.,explanation,,,,,egbotdont
+22025,22041,In regards to 31,by number,,,,,egbotdont
+22042,22229,"the proof regarding the n-cube doesn’t the same problem occur, that points of M can go to more than one point of the n cube(because the sums are the same so there are more than n-1 points",here is a mistake in your reasoning,,,,,egbotdont
+22025,22103,In regards to 31 the proof regarding the n-cube doesn’t the same problem occur,question,,,,,egbotdont
+22105,22165,that points of M can go to more than one point of the n cube,what I mean is...,,,,,egbotdont
+22165,22229,(because the sums are the same so there are more than n-1 points,justification,,,,,egbotdont
+22291,22309,"Right, my mistake.",you're right,,,,,egbotdont
+22369,22392,Here’s a wrong argument,introducing your comment,,,,,egbotdont
+22369,23056,"Here’s a wrong argument, but I wonder whether it could be turned into a correct argument somehow. It goes like this. Suppose we can find a sum of k of the numbers that is bigger than exactly k-1 of the forbidden points. Then we’ve split the problem into two: get to that point, and then get to the end. The trouble is that for the second part we have to take n-k steps and there are now n-k forbidden points. So we need something stronger. For instance, it would be enough if we could find a sum of k numbers that is bigger than exactly k forbidden points, followed by a jump that clears two forbidden points (and doesn’t land on a forbidden point). Then we’d have divided and conquered.",here's something I know is wrong,,,,,egbotdont
+22398,22406,I wonder,informal,,,,,egbotdont
+22467,22485,It goes like this.,introducing your comment,,,,,egbotdont
+22486,23056,"Suppose we can find a sum of k of the numbers that is bigger than exactly k-1 of the forbidden points. Then we’ve split the problem into two: get to that point, and then get to the end. The trouble is that for the second part we have to take n-k steps and there are now n-k forbidden points. So we need something stronger. For instance, it would be enough if we could find a sum of k numbers that is bigger than exactly k forbidden points, followed by a jump that clears two forbidden points (and doesn’t land on a forbidden point). Then we’d have divided and conquered.",case split,,,,,egbotdont
+23116,23122,"Sorry,",apologies,,,,,egbotdont
+23123,23277,"I meant it’s enough if we can find a sum of k numbers that’s bigger than exactly k-1 forbidden points, followed by clearing at least two forbidden points.",what I mean is...,,,,,egbotdont
+23116,23278,"Sorry, I meant it’s enough if we can find a sum of k numbers that’s bigger than exactly k-1 forbidden points, followed by clearing at least two forbidden points. ",ammended error (own),,,,,egbotdont
+23278,23309,This feels vaguely topological.,emotion or value words,,,,,egbotdont
+24518,24526,@gowers:,by name,,,,,egbotdont
+24527,24717,"by induction, if several ones of the a_1<a_2<\cdots<a_n should be blocked, then they must be a_n,a_{n-1},\cdots, a_k. Otherwise, one can make the first step jump over at least one landmines.","induction, here is a mistake in your reasoning",,,,,egbotdont
+24350,24452,"Anyone have any idea how to reason about the myriad ways \sum X = \sum Y when X,Y \in \mathcal{P}(A) ?",question,,,,,egbotdont
+23745,23757,I was hoping,emotion or value words,,,,,egbotdont
+23365,24348,"So the approach I was looking at was to try splitting the possible sums on a_i into two partially disjoint sets, made up of (respectively) all possible sums of a_1..a_n without a_i, and all possible sums with a_i. Those two sets have to be the same size, and each forms a smaller instance of almost the same problem, setting a’ = (a1..a_n without a_i), and M’ = {m-a_i} or M’=M.
+
+I was hoping to find some way of removing a member of either of the M’ sets to apply induction — if it worked I could just choose to do a_i either first or last, with the simpler problem in-between, but couldn’t find a way to do it. The problem is that they don’t quite reduce that easily, for instance choosing A={2,3,5,7}, M={7,10,12}, and a_i=2, gives A’={3,5,7} and M’={5,8,10} or {7,10,12}. On the other hand, if you select a_i=3, and M’={4,7,9}, you quickly find 4 isn’t the sum of any combination of {2,5,7}, so can reduce it to A’={2,5,7},M’={7,9}, which is n=k-1 and you have an inductive step.",induction,,,,,egbotdont
+23978,24140,"The problem is that they don’t quite reduce that easily, for instance choosing A={2,3,5,7}, M={7,10,12}, and a_i=2, gives A’={3,5,7} and M’={5,8,10} or {7,10,12}.",to show flaw in reasoning,,,,,egbotdo
+24141,24348,"On the other hand, if you select a_i=3, and M’={4,7,9}, you quickly find 4 isn’t the sum of any combination of {2,5,7}, so can reduce it to A’={2,5,7},M’={7,9}, which is n=k-1 and you have an inductive step.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+24776,24798,Here’s a new approach:,introducing your comment,,,,,egbotdont
+25093,25237,our problem is equivalent to showing that the union of Mj for al j=<n covers all possible sets of integers (of size n-1) not containing a1+…+an.,translate the conjecture,,,,,egbotdont
+24800,25237,"For each j, let Sn_j be the set of permutations with j fixed points. For a permutation s in Sn_j, we say that a set of integers M (as above) is s-compatible if it doesn’t contain a sum of the form a_s(1)+…+a_s(k) . Denote by Mj the collection of all s-compatible sets for some s in Sn_j. Now, our problem is equivalent to showing that the union of Mj for al j=<n covers all possible sets of integers (of size n-1) not containing a1+…+an.",,,,,,egbotdont
+25366,25459,"(I'm sorry if this is being reposted, as I experience some technical problems with this blog)",technical issues,,,,,egbotdont
+25239,25364,"Now, it's easy to characterize Mn, and I guess that an easy characterization of the other Mj's may help us finish this proof…",meta-level comment about proof,,,,,egbotdont
+25517,25540,Sort of a meta-comment.,introducing your comment,,,,,egbotdont
+25541,25634,It seems to me there are (at least) two really different flavors of approach to this problem.,meta-level comment about proof,,,,,egbotdont
+25636,25997,"ALGORITHMIC APPROACH: where you try to make some kind of inductive argument, a la aj’s 46 above, where the end result would be a procedure that constructed the desired hop-sequence. You can imagine assigning some kind of “barrier to completion” quantity to each state of the grasshopper, and making an argument that that quantity can be decreased at each step.",induction,,,,,egbotdont
+25998,26251,"COUNTING APPROACH: trying to show that there are fewer forbidden hop-sequences than there are sequences, a la Tim’s 27. This would give a solution to the IMO problem without providing any easy way to construct a sequence avoiding the forbidden integers.",combinatorial,,,,,egbotdont
+26103,26117,a la Tim’s 27.,"by name, by number",,,,,egbotdont
+26253,26602,"If the second approach turns out to be successful, it might be an interesting “beyond the IMO” problem to figure out whether there is, in fact, a reasonably fast deterministic algorithm for finding a good sequence! (I can imagine that choosing random sequences might be pretty fast in practice, if indeed the number of forbidden sequences is small.)","constructive, extension to the problem",,,,,egbotdont
+26661,26756,Maybe the graph approach started by David Speyer and followed by Mohammad is not entirely dead.,by content,,,,,egbotdont
+26697,26709,David Speyer,by name,,,,,egbotdont
+26726,26734,Mohammad,by name,,,,,egbotdont
+26884,26905,(by Menger’s theorem),reference to other maths,,,,,egbotdont
+26757,27280,"Let G be the quotient graph of the n-cube by the equivalence relation that identifies vertices with the same partial sum. Then (by Menger’s theorem) it is enough to find n vertex independent paths from 0^n to 1^n in G (not in the n-cube !).
+
+This has the advantage getting rid of the M, as Mohammad said.
+
+Moreover, the quotient is not arbitrary. For example, the fact that all a_i are distinct and positive says that no two different edges in the quotient will share the same source and target, and there will be no loops.",graph approach,,,,,egbotdont
+27044,27061,as Mohammad said.,"by content, by name",,,,,egbotdont
+27355,27359, #27,by number,,,,,egbotdont
+27361,27368,@gowers,by name,,,,,egbotdont
+27371,27451,"one possible forbidden set is a set of n-1 consecutive integers {b+1, …, b+n-1}.",relevant entity,,,,,egbotdo
+27452,27849,"In this case we must arrange to land exactly on b, then use a_n = n to jump over the landmines. Of course this specific task is easy to accomplish; but to me it points out that purely local methods of selecting the next step length are unlikely to work (how do I know, just looking at the safe territory around me at the start, that I must eventually arrive at b with the n-step still available?).",meta-level comment about proof,,,,,egbotdont
+27705,27848,"(how do I know, just looking at the safe territory around me at the start, that I must eventually arrive at b with the n-step still available?)",explanation,,,,,egbotdont
+27906,27953,What are the steps the grasshopper can land on?,,,,,,egbotdont
+27954,28038,"Obviously, any value that’s of the form \sum_{i=1}^{n} s_i*a_i where s_i \in {0,1}. ",class of supporting examples,,,,,egbotdo
+28786,29100,"An example of a point having multiple labels might be if a_1 = a_2 + a_3, in which case, a single point will have labels (1,0,0,…) and (0,1,1,…). A slightly more complicated example might be to also have a_4 = a_5 + a_6 in which case labels 100100, 100011, 011100, and 011011 would all be shared by a single point.",relevant entity,,,,,egbotdo
+28220,28538,"Any value in M that is not a possible step the grasshopper can take isn’t interesting; we can reduce the problem to an (n-1) instance by finding a step that can be taken (since there’s n distinct first steps, n-1 forbidden this is possible), and looking at the remaining (n-1) possible steps and (n-2) forbidden steps.",we can reduce the problem to...,,,,,egbotdont
+28540,28784,"Iterating on that, we can thus reduce the problem to n’ and M’ where the grasshopper can reach every point in M’, and we can thus label every point in M’ according to the corresponding s_i digits (noting some points might have multiple labels).",we can reduce the problem to...,,,,,egbotdont
+30268,30334,does anybody see the role of the assumption that a_i are integers?,"question, are they necessary?",,,,,egbotdont
+29161,29185,In response to 48 (JSE) ,"by name, by number",,,,,egbotdont
+29186,29205,nd 50 (Greg Martin),"by name, by number",,,,,egbotdont
+29207,29369,"a similar point to Greg’s is that using random methods to find a solution algorithmically doesn’t seem as though it will work, since sometimes the move is forced.",meta-level comment about proof,,,,,egbotdont
+29334,29368,since sometimes the move is forced,explanation,,,,,egbotdont
+29371,29812,"Going back to the approach of trying to find k such that you can get past k-1 landmines with k steps (without worrying about whether you land on one except at the final point), and then jump over at least two landmines, and then finish by induction, one obvious necessary condition for this approach to have a chance is that if a_n is the biggest step size, then there should somewhere be two landmines that have a distance of at most a_n-2.",induction,,,,,egbotdont
+29813,29862,Is there an easy argument if this doesn’t happen?,question,,,,,egbotdont
+29891,29913,Another small thought.,introducing your comment,,,,,egbotdont
+29914,30095,"Suppose that a_1\ne 1. Then we can subtract 1 from every step size, and get some new step sizes b_i-1. And the kth partial sum of the b_i is the kth partial sum of the a_i, minus k.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+30096,30208,"Hmm … I thought I was going to be able to say something useful there, but it doesn’t seem to be getting anywhere",informal,,,,,egbotdont
+29481,29489,worrying,emotion or value words,,,,,egbotdont
+30400,30507,"If the gap between every pair of land mines is greater than a_{n}-2, then
+
+a_1+a_2+…+a_n >= (n-1) (a_{n}-1)",sub-conjecture,,,,,egbotdont
+30509,30587,That ought to be inconsistent with the idea that a_n is the largest of the a_i,here's something that should be wrong,,,,,egbotdont
+30589,30653,(Although the boundary behavior isn’t quite working out for me.),informal,,,,,egbotdont
+30719,30779,The problem should become easier if the a_i aren’t integers.,"by content, no",,,,,egbotdont
+30780,31116,"It looks like the only thing that matters about the a_i is which equalities of the form \sum a_{i_r} = \sum a_{j_s} hold. If some such system of inequalities has a solution in the real numbers, it will have a solution in the integers as well. (It has a solution in the rationals by basic linear algebra; rescale to remove denominators.)",explanation,,,,,egbotdont
+31173,31202,A somewhat offtopic question:,introducing your comment,,,,,egbotdont
+31203,31223,Is this a P problem?,question,,,,,egbotdont
+31287,31305,I’m asking myself:,introducing your comment,,,,,egbotdont
+31309,31367,what happens bringing the first jump to the last position?,question,,,,,egbotdont
+31368,31423,(i.e. by considering a cyclic permutation of the jumps),what I mean is...,,,,,egbotdont
+31424,31463,Are there any invariant jump endpoints?,question,,,,,egbotdont
+31467,31550,is there a way to work with congruences modulus (n-1) and the pigeonhole principle?,question,,,,,egbotdont
+31609,31683,In this comment I try to restate the problem using the term ‘hitting set’.,introducing your comment,,,,,egbotdont
+31685,31740,"For a given ‘a’ sequence, there are N! possible paths. ",sub-conjecture,,,,,egbotdont
+31740,31824,"For each path i, define x_i as the set of the N-1 relevant partial sums of the path.",concept,,,,,egbotdont
+31825,31873,Define X as the set of all of these N! x_i sets.,concept,,,,,egbotdont
+31685,32019,"For a given ‘a’ sequence, there are N! possible paths. For each path i, define x_i as the set of the N-1 relevant partial sums of the path. Define X as the set of all of these N! x_i sets. Now we know that the set {a} of size N (the set of elements in the sequence ‘a’) is a hitting set of X. Prove that this is a minimum hitting set.",we can reduce the problem to...,,,,,egbotdont
+32938,32951,It seems like,humble,,,,,egbotdont
+32303,32490,"(For example, if A={2,3,5,7} then m_i=7 has labels 1010 and 0001, which is always 0 in the second position — ie as soon as you’ve taken a step of size 3, you can’t hit the landmine at 7).",,,,,,egbotdont
+32303,32490,"(For example, if A={2,3,5,7} then m_i=7 has labels 1010 and 0001, which is always 0 in the second position — ie as soon as you’ve taken a step of size 3, you can’t hit the landmine at 7).","supporting a subconjecture, explanation",,,,,egbotdont
+32079,32302,"If you look at each m_i \in M, and the label(s) assigned to it, you might find one that only has the value 0 in one particular position, say x; in that case, if you can take a step of size $a_x$ you’ve reduced your problem.",we can reduce the problem to...,,,,,egbotdont
+32492,32637,"Similarly, if you find an m_i that only has the value 1 at a particular position in all its labels, and can defer that step to last, you’re safe.",we can reduce the problem to...,,,,,egbotdont
+32638,32936,"(Same example, m_i=12 has labels 0011 and 1101, which have a 1 in the last position — so if you can do steps 2, 3 and 5 in whatever order saving 7 to last, you’ll not hit 12, and finding a way to avoid M-\{m_i\} mines with n-1 steps is an easier instance of the problem — as long as 2+3+5 \notin M)","explanation, supporting a subconjecture",,,,,egbotdont
+32952,33103,"there might be some way to say that amongst all the initial steps you can make (ie, all the a_i \notin M) one of the members of M will match the above.",case split,,,,,egbotdont
+33579,33884,"That seems like it might be amenable to a proof by contradiction: suppose for every a_i either a_i is in M, or every element of M has a label where the ith bit is set. Then something bad happens, right? Ending up with two different points sharing a label would work, or having more than 2^n labels, maybe.",RAA,,,,,egbotdont
+33105,33136,Maybe some notation would help:,introducing your comment,,,,,egbotdont
+33138,33577,"f A is your set of possible steps, then say S(A) is the set of all possible positions you can end up on the way. So eg, if A={2,3,5}, S(A)={0,2,3,5,7,8,10}. Then the above is saying that for some a_i \in A where a_i \notin M, there is an m_j \in M where m_j \notin S(A-\{a_i\}) — in which case you can reduce the problem to A'=A-\{a_i\}, and m’ in M’ iff m'+a_i \in M-\{m_j\}, and since S(A') \notin M' we have an instance of the n-1 case.",introducing notation,,,,,egbotdont
+33251,33577,"So eg, if A={2,3,5}, S(A)={0,2,3,5,7,8,10}. Then the above is saying that for some a_i \in A where a_i \notin M, there is an m_j \in M where m_j \notin S(A-\{a_i\}) — in which case you can reduce the problem to A'=A-\{a_i\}, and m’ in M’ iff m'+a_i \in M-\{m_j\}, and since S(A') \notin M' we have an instance of the n-1 case.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+33948,33967,Another small case.,introducing your comment,,,,,egbotdont
+33967,34838," Let’s take a_i=i for i=1,2,3,4. So we’re trying to get to 10 in steps of 1,2,3,4 and there are three landmines.
+
+If there’s a landmine on any of 1,2,3,4, then by 47 (@liuxiaochuan) they must be on 4, or 4 and 3, or 4 and 3 and 2. In the third case we can go to 1 and then to 5, and then we’re done by induction (two steps and zero obstacles, so perhaps induction was a bit of a sledgehammer). If there are obstacles on 4 and 3, then induction is more appropriate — we can either get to 5 in two steps and are then done, or there’s an obstacle at 5, in which case we can go 2,6,7,10. If there’s just an obstacle at 4, things get harder, since then we need to know what goes on after 4. But then we can cheat and say that at least one number between 6 and 9 is an obstacle so we can run things in reverse. The only case not covered is then when the obstacles are at 4,5,6.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+34127,34148,by 47 (@liuxiaochuan),"by name, by number, induction for a specific example",,,,,egbotdo
+34279,34308,(two steps and zero obstacles,explanation,,,,,egbotdont
+34313,34358,perhaps induction was a bit of a sledgehammer,meta-level comment about proof,,,,,egbotdont
+34346,34358,sledgehammer,"metaphor, informal",,,,,egbotdont
+34361,34430,"If there are obstacles on 4 and 3, then induction is more appropriate",meta comment about the process,,,,,egbotdont
+34433,34550,"we can either get to 5 in two steps and are then done, or there’s an obstacle at 5, in which case we can go 2,6,7,10.",explanation,,,,,egbotdont
+34604,34653,since then we need to know what goes on after 4. ,explanation,,,,,egbotdont
+34653,34674,But then we can cheat,informal,,,,,egbotdont
+34840,34999,"That was still a rather ugly case-by-case argument, but it serves to confirm a sense that the difficult case is when the obstacles are not near the end points.",meta-level comment about proof,,,,,egbotdont
+34864,34868,ugly,emotion or value words,,,,,egbotdont
+35001,35063,I’d like to try to find an argument along the following lines.,introducing your comment,,,,,egbotdont
+35063,35855," Order the step sizes as a_1<\dots<a_n. Now let's try two paths. The first is where you take the steps in increasing order of size, and the second is where you take it in decreasing order. Now look at where you are half way through this process. Suppose that in the first case you have passed well under half the obstacles and in the second case you've passed well over half. Then it should be possible to move from one extreme to the other and find a permutation where you've passed more or less exactly half. (Actually, of course, the hypothesis here doesn't have to hold, but this is just meant to give the flavour of some kind of argument.) And then there might be a hope of … hmm … I'm still trying to find that elusive jump over two obstacles that takes place at exactly the right time.",proof strategy,,,,,egbotdont
+35734,35739,hope ,emotion or value words,,,,,egbotdont
+35741,35750, … hmm … ,informal,,,,,egbotdont
+35780,35787,elusive,emotion or value words,,,,,egbotdont
+35857,35869,Subquestion.,introducing your comment,,,,,egbotdont
+35870,36016,"If a_i=i and you have n-1 consecutive obstacles, what's the neatest proof that you must be able to get to the last non-obstacle without using a_n?",question,,,,,egbotdont
+36017,36127,"(I don't think it's hard to prove it, but it would be good to have something that had a hope of generalizing.)",meta comment about the process,,,,,egbotdont
+36105,36109,hope,emotion or value words,,,,,egbotdont
+36188,36194,Re 54.,by number,,,,,egbotdont
+36274,36566,"Just let all the a_n be very large and roughly equal to a. Then the sum is approximately equal to na, so if we start near 0 and end near na, then we can get gaps of size about na/(n-1), which is bigger than a_n. So my proposal runs into difficulty. Not sure how big a difficulty it is though.",,,,,,egbotdont
+36195,36566,"Your analysis shows that it is possible for the gaps all to be at least a_n-1. Just let all the a_n be very large and roughly equal to a. Then the sum is approximately equal to na, so if we start near 0 and end near na, then we can get gaps of size about na/(n-1), which is bigger than a_n. So my proposal runs into difficulty. Not sure how big a difficulty it is though.",proof of sub-conjecture,,,,,egbotdont
+36298,36326,very large and roughly equal,informal,,,,,egbotdont
+36486,36522,So my proposal runs into difficulty.,meta-level comment about proof,,,,,egbotdont
+36523,36566,Not sure how big a difficulty it is though.,"meta-level comment about proof, informal",,,,,egbotdont
+36627,36683,"Another thought, which could possibly be worth pursuing.",introducing your comment,,,,,egbotdont
+36684,36768,Suppose you have n obstacles. Then of course it is possible to stop the grasshopper.,sub-conjecture,,,,,egbotdont
+36769,36929,But perhaps it is sufficiently difficult to stop the grasshopper that it is possible to say quite a lot about the step sizes and the positions of the obstacles.,meta-level comment about proof,,,,,egbotdont
+36683,37343," Suppose you have n obstacles. Then of course it is possible to stop the grasshopper. But perhaps it is sufficiently difficult to stop the grasshopper that it is possible to say quite a lot about the step sizes and the positions of the obstacles. If so, then it might just be possible to do an induction by finding a partial sum of k steps that doesn’t land on an obstacle and passes exactly k-1 obstacles. (The idea would be that if you can’t get past the remaining n-k obstacles in the remaining n-k steps, then something pretty strong happens and you can use a different argument.) This is a very preliminary attempt to find a stronger inductive hypothesis.",induction,,,,,egbotdont
+37411,37608,"It might be useful to see whether the solution is unique or not. This can be done by answering the following question – given a sequence of hops that avoids all landmines, can we construct another?","meta-level comment about proof, here's a stronger version",,,,,egbotdont
+37531,37608,"given a sequence of hops that avoids all landmines, can we construct another?",question,,,,,egbotdont
+37616,37649,we can try using Gowers’ approach,"by content, by name",,,,,egbotdont
+37616,37792,"we can try using Gowers’ approach of skipping k-1 landmines in k hops on the specific case where a_i = i. Since this case looks like a difficult one, it might give new insight.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+37722,37792,"Since this case looks like a difficult one, it might give new insight.",justification,,,,,egbotdont
+37851,37914,Re 65: Is it ever true that multiple paths avoid all landmines?,"by content, by number",,,,,egbotdont
+37914,38014," Yes, because technically I think none of the landmines even need to be less than sum(a_1, …, a_N). ",sub-conjecture,,,,,egbotdont
+38014,38072,Is it always true that multiple paths avoid all landmines?,rhetorical,,,,,egbotdont
+38077,38106,"consider a = {1, 2}, M = {1}.",an existence case,,,,,egbotdo
+38167,38195,Following again on Tim’s 27:,"by name, by number",,,,,egbotdont
+38195,38214," loosely speaking, ",informal,,,,,egbotdont
+38343,38511,"An equality between m and a sum of about half the a_i’s (or for that matter any proportion greater than 0) is going to kill off only on order of c^{-n} n! paths, right?","sub-conjecture, rhetorical",,,,,egbotdont
+38739,38819,"if all the paths are blocked, then some, or many mines must be sums of FEW a_i’s",sub-conjecture,,,,,egbotdont
+38823,38859, “cofew” sums of all but a few a_i’s,concept,,,,,egbotdont
+38681,38738,I suppose what I’m groping for is some way to claim that ,humble,,,,,egbotdont
+38605,38679, And surely having this many identities is a serious condition on the a_i?,question,,,,,egbotdont
+38167,38861,"Following again on Tim’s 27: loosely speaking, it seems that for a landmine m to kill off a lot of paths effectively, you want m to be equal to a lot of _short_ sums of a_i’s. An equality between m and a sum of about half the a_i’s (or for that matter any proportion greater than 0) is going to kill off only on order of c^{-n} n! paths, right? So you’d need exponentially many of these identities to impede the grasshopper substantially. And surely having this many identities is a serious condition on the a_i?
+
+I suppose what I’m groping for is some way to claim that “if all the paths are blocked, then some, or many mines must be sums of FEW a_i’s (or “cofew” sums of all but a few a_i’s).",proof,,,,,egbotdont
+38926,39003,What’s the largest fraction of all paths that any single point can belong to?,question,,,,,egbotdont
+39004,39313,"Here’s some data in the case where n=5 and a_i=i. The total number of paths is 120. This is how many paths each point from 1 to 14 is in. (I may make mistakes here.)
+
+1 24 (equals 4!)
+2 24
+3 2×3!+4!=36
+4 2×3!+4!=36
+5 4×3!+4!=42
+6 6×2!+4×3!=36
+7 6×2!+4×3!=36
+
+and by symmetry the rest are 36,36,42,36,36,24,24.",simple case supporting subconjecture,,,,,egbotdo
+39142,39169,(I may make mistakes here.),I might be wrong,,,,,egbotdont
+39315,39606,"This proves that it is possible for a single point to knock out more than (n-1)! of the paths, which isn’t all that surprising of course, but it suggests that counting arguments would be difficult as they’d have to demonstrate that the sets of paths knocked out had to overlap substantially.",saying why what you've just said is interesting,,,,,egbotdont
+39664,39667,"Ah,",informal,,,,,egbotdont
+39752,39778,landmines of “medium size”,concept,,,,,egbotdont
+39670,39838, it does seem in this case (where the a_i are in arithmetic progression) that the landmines of “medium size” are capable of killing a substantial fraction of the paths.,"here's a weaker version, class of supporting examples for subconj",,,,,egbotdo
+39708,39741,a_i are in arithmetic progression,concept,,,,,egbotdont
+39839,40020,"It would be great if someone ran this computation for a somewhat larger n, where (I think) the sums of size about n^2/4 would be more strongly dominated by sums of length about n/2.",request for help,,,,,egbotdont
+40105,40579,"Here’s the numbers for n=10:
+
+{362880, 362880, 443520, 443520, 524160, 554400, 635040, 665280, \
+776160, 823680, 571680, 568800, 616320, 600480, 662400, 633600, \
+665280, 650880, 666720, 619200, 635040, 637920, 633600, 649440, \
+648000, 632160, 646560, 646560, 632160, 648000, 649440, 633600, \
+637920, 635040, 619200, 666720, 650880, 665280, 633600, 662400, \
+600480, 616320, 568800, 571680, 823680, 776160, 665280, 635040, \
+554400, 524160, 443520, 443520, 362880, 362880}",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+40086,40104,Easy enough to do.,,,,,,egbotdont
+40581,40648,"By the way, Tim Gowers’ numbers above have a typo: 42 should be 48.",here is a mistake in your reasoning,,,,,egbotdont
+464,673,"I’d just like to chip in here and say that solving an already solved problem in an open collaborative way is a great idea, as it is basically guaranteed to give us useful data about how such projects can work.",meta comment about the process,,,,,egbotdont
+40725,40885,"Here’s a visual plot of the data for n=20. It looks like it’s flat between (1/4)*(sum_{i=1}^n i) and (3/4)*(sum_{i=1}^n i), and then very erratic outside there.",supporting example,,,,,egbotdo
+40886,40932,I have no idea why that should be — any ideas?,"question, why is this as it is?",,,,,egbotdont
+40934,41045,"By the way, I suspect that this kind of analysis is not the most efficient route to solving an Olympiad problem",meta-level comment about proof,,,,,egbotdont
+41047,41113,"But I’m not doing Olympiads anymore, so I don’t mind having fun.
+",informal,,,,,egbotdont
+41171,41219,In the same line of thought of previous comments,introducing your comment,,,,,egbotdont
+41220,41351,for the case a_i=i maybe one can calculate the i which maximize the numbers of paths killed (expressed in function of n of course) ,relevant entity,,,,,egbotdo
+41352,41382," is this possible, easy to do?",question,,,,,egbotdont
+41239,41350,maybe one can calculate the i which maximize the numbers of paths killed (expressed in function of n of course),goals,,,,,egbotdont
+41383,41491,This could be used in a rough estimate calculation on the maximum number of paths killed by (n-1) landmines.,justification,,,,,egbotdont
+41556,41781,"Here’s n=40. I’ve changed to displaying the data as fraction of walks blocked, rather than absolute number of walks blocked. Looks like about it’s constant at 2/n for i between (1/4)*(sum_{i=1}^n i) and (3/4)*(sum_{i=1}^n i).",arbitrary case,,,,,egbotdo
+41843,41935,"I may be overlapping with something that has already been suggested (and perhaps ruled out),",humble,,,,,egbotdont
+41940,43312,"what about trying to prove, by induction on the length of the path, that some path of a given length exists (concluding that there is a path of length n). For instance, it is clear that there is a path of length 1, since at most n-1 of points a_n can be blocked off.
+
+It is possible for there to be paths of length 1 which have no extension to a path of length 2 (say, a_1 isn’t in M, but a_1+a_i belongs to M for each i>1). But we can construct a path of length 2 as follows: let a_j be largest element such that a_j is not in M. Suppose there is no extension of a_j to a path of length 2 (i.e., a_i+a_j is in M for each i other than j). Consider two cases; if there is some n<a_j in M, we can consider the n-1 remaining jumps and at most n-2 points remaining in M, resolving the problem inductively. Otherwise, there is no n<a_j in M; now, let a_1 be the smallest element other than a_j. Since it cannot be that a_1=a_j+a_k for any k, it follows that a_i is not in M (all the elements of M are accounted for as being of the form a_j+a_k). Let a_2 be the smallest element which is neither a_1 nor a_j; then a_1+a_2 can't have the form a_j+a_k for any k: it can't be either a_j+a_1 or a_j+a_2, and since a_1<a_j, a_1+a_2<a_j+a_k when a_k is anything else. So (a_1,a_1+a_2) is a path of length 2.
+
+But this arguments suggests extending to paths of length 3 might be tricky.",induction,,,,,egbotdont
+43379,43493,it seems than the position X=n is the place which maximize the number of paths killed in the case we are studying.,sub-conjecture,,,,,egbotdont
+43559,43689,Maybe it’s slightly useful also to mention any superficially plausible looking approaches that might turn out *not* to be helpful.,informal,,,,,egbotdont
+43704,44104,"when seeing a sum like s my first instinct is to telescope it by expressing the terms as differences, b1 – b2, b2 – b3, etc.
+
+But the fact that any permutation of the a_i may be involved means that cancellation will be patchy, which is discouraging. However, any landing point will be the difference of two sums each involving at most ~ n/2 terms, and typically far fewer, which might be exploitable.",re-representation,,,,,egbotdont
+43954,44104,"However, any landing point will be the difference of two sums each involving at most ~ n/2 terms, and typically far fewer, which might be exploitable.",saying why what you've just said is interesting,,,,,egbotdont
+43305,43312,tricky.,emotion or value words,,,,,egbotdont
+43940,43952,discouraging,emotion or value words,,,,,egbotdont
+44195,44206,pessimistic,emotion or value words,,,,,egbotdont
+44173,44728,"My data makes me very pessimistic about a counting approach. It looks like we can create a situation where almost any landmine knocks about (2/n)*n! paths. If we could make these knock outs miss each other, we’d have enough to kill every path twice.
+
+That doesn’t mean that I believe the problem to be false. If the knockouts are independent, I expect n!*(1-2/n)^n paths to survive, which is roughly n!/e^2. But this does suggest to me that we would have to do a somewhat sophisticated analysis of independence to make the argument work, which seems hard.",meta-level comment about proof,,,,,egbotdont
+45015,45204,if you choose a random set of n landmines (let’s say in the “stable range” between (1/4)sum and (3/4)sum) the proportion of acceptable walks is actually converging to something less than 1.,sub-conjecture,,,,,egbotdont
+45206,45701,"Presumably there’s some straightforward argument for 2/n; you could imagine making a similar argument for a k-tuple of landmines, all in the “stable range”, showing that the proportion of walks containing _both_ landmines coverges to some simple f(n,k) which doesn’t depend on the location of the mines. Then you could imagine estimating the PIE (but of course this would depend on estimates which allowed k to be large enough, relative to n, to make the unestimated terms nicely bounded above.)",proof,,,,,egbotdont
+44789,44989,"So you can imagine, e.g., trying to show that this is “as bad as it gets” and getting an argument in this direction that you can always avoid ~n/2 landmines (or is this obvious for some other reason?)",proof,,,,,egbotdont
+44950,44988,is this obvious for some other reason?,question,,,,,egbotdont
+45766,45770,"Hmm,",informal,,,,,egbotdont
+45771,45798,I confirm KK’s observation.,by name,,,,,egbotdont
+45799,45911,"For all values of n between 5 and 30, the maximum occurs at n. (And at the symmetrically located \binom{n}{2}.) ",class of supporting examples for subconj,,,,,egbotdo
+45911,45948,"KK, do you have an intuition for why?",question,,,,,egbotdont
+46010,46136,"(I tried to post a somewhat longer piece, but I’m not sure if it’s being held up or just didn’t go through. [The former - T.])",meta-level issues,,,,,egbotdont
+46137,46247,"What about holding the a_i and M fixed, and proving by induction that a path of length k exists for each k<=n?",question,,,,,egbotdont
+46137,46405,"What about holding the a_i and M fixed, and proving by induction that a path of length k exists for each k<=n? That is, first show (trivially) that some a_i is not in M. Then show that there is an a_i and an a_j so that neither a_i nor a_i+a_j belongs to M, and so on.",induction,,,,,egbotdont
+46468,46476,I agree.,informal,,,,,egbotdont
+46477,46496,I feel pessimistic ,emotion or value words,,,,,egbotdont
+46477,46593,"I feel pessimistic about counting arguments, so my thoughts are mainly focused on trying to find a clever induction.",proof strategy,,,,,egbotdont
+46595,46806,"But it might be quite interesting to see whether we can prove that n/2 or so obstacles are not enough, by arguing that not enough obstacles can block substantially more than a fraction 2/n of all possible paths.",sub-conjecture,,,,,egbotdont
+47686,47689,:-),informal,,,,,egbotdont
+47625,47746,"Maybe too trivial, but it’s very late here (classical excuse :-) ) and the point of view might help someone nevertheless.",humble,,,,,egbotdont
+46872,47623,"What if we consider the partial sums as follows:
+A1={a1, a2, …, an} (the initial set)
+A2={a1+a2, a1+a3, a1+a4, …, a1+an, a2+a3, ..,a2+an, …, an-1+an}
+A3={a1+a2+a3, a1+a2+a4, …}
+…
+An={a1+a2+…+an}
+
+The path of the grasshopper can be realised by picking for each step i an element from Ai which contains the element chosen at the previous step.
+Ex. If we choose a1 at step 1, we’ll have to choose an a1+x from A2 for step 2, etc.
+
+Then we have:
+A1-M= set of elements eligible for step 1
+A2-M= set of elements eligible for step 2
+…
+An-M= set of elements eligible for step n
+
+Also, we are sure that An-M is non-empty from the hypothesis (as is A1-M).
+Starting from these, we only need to prove, perhaps using some set elements, that all Ai-M are non empty.",hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+47808,47858,Following up on the suggestion Cristina and I made,"introducing your comment, by name",,,,,egbotdont
+48423,48484,Can this sort of reasoning extend to give a path of length 3?,question,,,,,egbotdont
+47860,48421,"Since there are only n-1 points in M, there must be some a_i not in M. Now we wish to find a path of length 2; let a_L be the largest a_i not in M, and suppose it cannot be extended to a path of length 2. Then a_1 (assuming a_1 is the smallest a_i other than a_L) cannot be in M: if it were, it would have to be a_L+a_j for some j, which is impossible since a_1<=a_j. So a_1<a_L. Now let a_P be either a_2 (if L!=2) or a_3 (if L=2); then a_1+a_2P, and a_1+a_2 can’t be equal to either a_1+a_P or a_2+a_P. Therefore a_1+a_2 is not in M, so a_1,a_1+a_2 is a path.",suggested base case,,,,,egbotdont
+48553,48573,I don’t understand. ,informal,,,,,egbotdont
+48573,48697,"What if (a_1, a_2, a_3) = (1,2,3) and M = (4,5). Then the largest a_i not in M is 3, but the path 0 –> 3 cannot be extended.",to a local conjecture,,,,,egbotdo
+48758,49034,"How about proof by contradiction?
+Let for every n and every path, there is one point (partial sum of a_i’s, say a_1+a_2…+a_k) that intersects with a value in M. Then, can we break this down to two sub-problems of size k and n-k, and use the contradiction argument recursively?",RAA,,,,,egbotdont
+49097,49166,I agree with Cristina(76) that this sort of approach might be useful.,by name,,,,,egbotdont
+49669,49771,Then the question becomes: is there always a path/sum pair that will satisfy our while loop condition?,translate the conjecture,,,,,egbotdont
+49167,50192,"I had a somewhat algorithmic twist on it; consider the following algorithm that picks points arbitrarily, and at each step checks to see if sum = a_i + a_j + a_k … is in M. If the grasshopper at any point finds itself unable to hop forward, it simply hops backwards to its previous point (which, because we are working iteratively is assumed to be safe). Of course it might find itself backtracking the whole path, but since we’re not actually trying to construct an efficient algorithm this is fine.
+
+Then the question becomes: is there always a path/sum pair that will satisfy our while loop condition? This is trivial for the first step (since there must be at least one a_i that is not covered by a landmine), but for the second step we could imagine that for a fixed a_i the landmines cover all possible n-1 next steps. In this case, however, we backtrack, fix another a_j, and then can proceed completely (well, almost completely, since we can’t discount the case where a_j + a_k = a_i for some k) safely to the finish.",constructive,,,,,egbotdont
+50194,50318,So I guess I also agree with many of the other commenters that looking at the partial sums must be at least somewhat useful.,proof strategy,,,,,egbotdont
+50387,50435,I haven’t had a chance to digest all of this yet,humble,,,,,egbotdont
+50437,50524,"but qualitatively, ignoring counting arguments, and focussing on a potential induction:",introducing your comment,,,,,egbotdont
+50526,51214,"If grasshopper can jump from either end over one or more “landmines” I have an induction.
+
+If not, I have a concentration of landmines in the middle.
+
+It should then be possible to find an interval in the middle of length Am which contains a ‘large enough’ number of landmines that I can use an inductive hypothesis on each end. I “just” need that interval to allow a partition of the Am which works for each end.
+
+Now I can either try to find that interval in the middle containing lots of landmines directly, or I can try to progress as far as possible from either end, in which case I am aiming to increase the central density so that I can include lots of landmines in a single leap.","induction, case split",,,,,egbotdont
+51215,51224,Question:,introducing your comment,,,,,egbotdont
+51299,51377,"The induction above requires it, but is there a deeper way of using this fact?",question,,,,,egbotdont
+51447,51479,In Re Tim Gower’s comment at 63:,"by number, by content",,,,,egbotdont
+51487,51519,thank for pointing out my error.,you're right,,,,,egbotdont
+51529,51648,"hat case shouldn’t be too hard, as the k-term sums for different values of k should largely fall in distinct intervals.",sub-conjecture,,,,,egbotdont
+51650,51961,"For example, here is the case where n=20, and the a_i are 101, 102, 103, …, 120. Notice that, we tend to be getting significantly fewer than 1/n knockouts. It might be nice to prove that 1,2,…,n really does optimize the proportion of k element subsets which is knocked out — and compute the shape of that curve!",simple case supporting subconjecture,,,,,egbotdo
+52024,53447,"Consider just the sequence of points on the line, without encoding their distance:
+write “j” if you have a jump, “m” if there is a point of M, and “x” if there is both a jump and a point of M (situation which we want to avoid), and forget about the other points for the moment.
+
+Suppose we start from a grasshopper trajectory, represented by a string of j, m, and x. We want to permute the jump lengths in order to cancel as many “x” as possible, since our aim is a string of just “j” and “m”. We can suppose that our string starts well, i.e. not with a “x” (I’m not sure this helps).
+
+Sometimes it is useful to exchange two successive jumps in order to diminish the number of “x”, i.e. to make changes like:
+[ jxj ]–>[ jmjj ] or [ jjmj ]
+[ jxx ]–>[ jmjx ] or [ jjmx ]
+[ xxx ]–>[ xmjx ] or [ xjmx ]
+This corresponds to the original problem in case n=2.
+
+Still we can’t deal with sequences of the form [ jmx ] or [xmj ]. We know however from 18 (the case n=3) that strings with 4 jumps and only 2 points of M (besides perhaps the extrema), like [ jxxj ], [ xxxj ] or [ jxmjx ], can also be solved, i.e. transformed in strings that outside the extrema have only “j” and “m” (call “zero” on the first jump point, and call “a”,”b”, “c” the jump sizes to see the isomorphism with case n=3).
+
+In this way, having solved the problem in in case n=N-1 and less, one has many manipulations of the “x-j-m” string for free. Is it true?",arbitrary abstract eg,,,,,egbotdo
+53436,53447,Is it true?,question,,,,,egbotdont
+53508,53558,Clarifying/following up on my earlier comment(76):,previous comment by the same contributor,,,,,egbotdont
+53559,54175,"Hypothesis: Lets assume that for every n and every path (i.e. partial sums), there is atleast one point (say, k’th partial sum) which is equal to a value in M (say M_k, where the values in M are sorted in ascending order).
+Now consider the set of k partial sums, where the last partial sum is M_k due to the assumption above. Now, if we consider the k-1 a_i’s (say, {b_1, b_2,…, b_k}) and {M_1, M_2, …, M_k-1}, this is exactly the same problem as above, but of size k-1. The size of the problem always decreases by atleast 1, so we should be able to disprove the hypothesis if we can show it for a problem of size 1?",proof strategy,,,,,egbotdont
+54238,54253,It surprises me,emotion or value words,,,,,egbotdont
+54238,54725,"It surprises me that no one has mentioned the word “tree”! For the numbers {3, 5, 7, 10} I provide a tree of trunk 3+5+7+10 with its branches ordered in a special as well as obvious manner that should allow the grasshopper to move backwards … and someone here ‘formalize’ my example into a solution, I hope!
+
+[There are n distinct 1-branches against n-1 undesirable choices, so the first step backwards is possible; now how many wrong 2-branches can be given the said ordering, etc etc.]",re-representation,,,,,egbotdont
+54784,54840,There seems to be an important symmetry in this problem.,concept,,,,,egbotdont
+54841,55017,It doesn’t matter whether you start on 0 and travel to s via a sequence of partial sums or whether you start on s and travel backwards by subtracting sequences of partial sums.,sub-conjecture,,,,,egbotdont
+55018,55122,For this reason I think it might be beneficial to associate 2 values to each a_i (both a_i and s – a_i).,re-representation,,,,,egbotdont
+55184,55263,I actually do think there might be value in looking at both a_i and at s – a_i.,by content,,,,,egbotdont
+55264,56073,"Consider ordering both the a_i’s and the landmines (call them m_1, …, m_{n-1}) in increasing order. If s - a_n is in M but is *not* the largest mine m_{n-1}, then we know there are at most n-3 mines between 0 and s - a_n - a_i for some element a_i. Using an inductive hypothesis, we could argue that we must therefore be able to reach s – a_i or s – a_n – a_i successfully.
+
+Otherwise, we could look at the case where both the largest element and the largest landmine are not used. In this case, we again use an inductive hypothesis (sort of). If we don’t reach m_{n-1} in these n-1 hops, we add back on a_n and we are done. If we do reach it, say on the i-th hop, then we can try to use a_n instead for that hop (so in essence swap the a_j used for the i-th hop with the last hop in the full n-hop sequence).",induction,,,,,egbotdont
+56075,56105,"Does any of that make sense?
+","question, humble",,,,,egbotdont
+56177,56228,Let me redo my previous post and make some changes:,introducing your comment,,,,,egbotdont
+56229,57394,"If you have proved this for n you should be able to get if for n+1. Take each n subset of the n+1 set and use the result for n then you will get a set of sums that can only be blocked at the nth sum since the n+1 sum is already blocked by hypothesis the nth sum must be removed.
+Here the we may have n+1 blocking elements and the above is not true
+However this can be fixed because if we have n+1 elements blocking the n set and its sums then then we have no elements left to block the one remaining element and we can easily get the desired sums by taking that element and the sums contianing it now we can continue as before and we must remove the n set.
+
+However it must be removed for every n subset of the n+1 elements then but that means we must remove every n sum. However since every n sum can be represented by subtracting an element from the sum of all n+1 elements and each of the n+1 elements are different then the n sums must be n+1 different elements and we must bloc all of them with M but M has only n elements so we are done with the induction. The theorem is true for 1 trivially and we ought to be able to use that for the base of the induction.",induction,,,,,egbotdont
+57460,57528,"Kristal– You’re idea sounds good, but I don’t completely follow it. ",by name,,,,,egbotdont
+57528,57653,"When you remove an element of A in the inductive step, what do you take for your set M? It needs to have less element, right?","question, induction",,,,,egbotdont
+57711,57826,this idea seems too simple. but i want to give it a try. i can see what is wrong with this. may be some of you can.,here's something that should be wrong,,,,,egbotdont
+57828,57886,the worst places to put the mines are at the partial sums.,sub-conjecture,,,,,egbotdont
+57887,58307,"i will look at the
+case n = 4. we put the origin at the top of a tree and next level we put
+4 partial sums a1 to a4. next level you put the six partial sums a1+a2,…
+now you block the vertices where the mines are. there is at most three
+of them. but the total number of paths is (4c1)(4c2)(4c1). if i use the fact
+(4ck) > 3 for any k = 1, 2, 3 you still end up with more than one path from
+the top to s = a1+a2 + a3 + a4.",simple case supporting subconjecture,,,,,egbotdo
+58376,58613,"Suppose L = \{2,4,6,8,9,10, 11 \}. Here, n =7. Also the sum is 50. Now suppose M = \{2,4,6,8,9,10 \}. In this case, the grasshopper can just go 11 units forward. So what about the set M not containing the sum, makes the problem solvable?","are they necessary?, supporting example",,,,,egbotdo
+58681,58722,A slightly different take on the problem:,introducing your comment,,,,,egbotdont
+58723,58740,Is it even in NP?,question,,,,,egbotdont
+58741,58877,"That is, given numbers a_1,a_2 \ldots a_n, is there a short witness that for all possible choices of M there exists a path the avoids M.","question, what I mean is...",,,,,egbotdont
+58878,58935,Someone suggested an approach similar to Menger’s theorem,by content,,,,,egbotdont
+58936,58994," that we could show n disjoint paths, but that is not true",sub-conjecture,,,,,egbotdont
+58996,59039,"Can be seen easily for the instance{1,2,3}.",to a local conjecture,,,,,egbotdo
+59100,59126,I’m trying to follow 85 90,by number,,,,,egbotdont
+59619,59770,So is there some reason that at least one of these roughly N*(N-1) partial solutions of A’ and M’ can always be extended to a full solution of A and M?,question,,,,,egbotdont
+59127,59618," I have my set A of size N and my set M of size N-1, and I want to use inductive solutions of subsets of A and M to build a solution to A and M. There are N subsets A’ of A with size N-1, and there are N-1 subsets M’ of M with size N-2; for each of these N*(N-1) combinations I can use the inductive solution to get a path through A’ that hits at most one mine in M. Well, maybe a bit fewer than N*(N-1) because I can’t get a partial solution when an element in M’ is equal to the sum of A’.",induction,,,,,egbotdont
+59830,59834,Yeah,informal,,,,,egbotdont
+59836,59918,I was trying to put together something along the lines of what Kristal says in 85.,"by number, by name",,,,,egbotdont
+59919,60435,"Suppose you’re trying to find a good ordering of a_1, … a_n. Choose a j such that (sum a_i) – a_j isn’t in M. By induction you know that you can order the (n-1) integers a_1, … a_{j-1},a_{j+1},…a_n so that the partial sums avoid m_1, …. m_{n-2}. But then you can stick a_j at the end and you’ve jumped all the way to sum a_i which isn’t a landmine by assumption. This is obviously too easy to be correct but in the spirit of the project I’ll just leave it here as a paraphrase of Kristal to see what’s wrong with it.",here's something that should be wrong,,,,,egbotdont
+60506,60512,@91 96,by number,,,,,egbotdont
+60514,60665,"this is wrong since m_{n-1} could be smaller than (sum a_i) – a_j
+in which case you still have n-1 obstacles, but with only n-1 steps to get over them.","here is a mistake in your reasoning, to a local conjecture",,,,,egbotdo
+60724,60738,oh yeah gotcha,informal,,,,,egbotdont
+60805,60866,Here’s a slightly different set up for an induction argument.,introducing your comment,,,,,egbotdont
+60867,61213,"Assume the result holds for |A|=n. We’ll then try to prove it for |A|=n+2. Since the cases n=1 and n=2 are trivial, this is sufficient. Clearly we can assume that every element of M is greater than a_1 and less than a_n. So remove the first and last element and switch the roles of A and M. By the induction hypothesis we can solve this problem. ",induction,,,,,egbotdont
+61213,61261,So is there any kind of duality between A and M?,question,,,,,egbotdont
+61335,61356,from 86 by anonymous:,"by name, by number",,,,,egbotdont
+61553,61756,My new set M is all the elements that don’t contain the removed element. If there are n+1 then as noted we can take the sets containing the remaining element and easily construct the desired set of sums.,explanation,,,,,egbotdont
+61830,61845,In answer to 87,by number,,,,,egbotdont
+61845,62036, the solution is to start with 11 then add any other element to it then any other until all elements are used none are in M as all of M’s elements are less than 11 so we easily get a solution,hypothesized case to explore conjecture/proof attempt,,,,,egbotdont
+62105,62176,Another take on the divide and conquer approach similar to gowers’ @43:,"introducing your comment, by name, by number",,,,,egbotdont
+62177,62740,"It is enough to find k jumps that takes us past k obstacles. Then we just induct on the remaining n-k jumps and n-k-1 obstacles. But there may not exist such k jumps, it could be that you always need atleast k+1 jumps to cross k obstacles all the way to the end. If this happens, then one can perhaps argue that if you start from the end and proceed backwards, then one can find such k jumps, that cross k obstacles and you are then done by induction. (Note that assuming the result to be true, there must always exist such k jumps in either of the 2 directions.)",induction,,,,,egbotdont
+62818,62839,Here’s a wrong proof.,introducing your comment,,,,,egbotdont
+62840,62859,proof by induction:,introducing your comment,,,,,egbotdont
+62861,63190,"w.l.o.g. assume a_1 ... a_n and m_1 ... m_{n-1} is ordered. By the inductive hypothesis for a_1 ... a_{n-1} and m_1 ... m_{n-2}, there must exist some ordering, a_{\pi(1)} ... a_{\pi(n-1)}, s.t. the partial sums c_1 ... c_{n-1} do not contain any of the m_i (i m_{n-1} > m_t ( for all t).
+For, l j, c'_l > c'_j > m_t (for all t).",induction,,,,,egbotdont
+63192,63199,QED ???,question,,,,,egbotdont
+63366,63398,Can we repair this proof though?,question,,,,,egbotdont
+63399,63460,Maybe splitting into a case analysis involving the condition?,question,,,,,egbotdont
+62818,63460,"Here’s a wrong proof.
+proof by induction:
+
+w.l.o.g. assume a_1 ... a_n and m_1 ... m_{n-1} is ordered. By the inductive hypothesis for a_1 ... a_{n-1} and m_1 ... m_{n-2}, there must exist some ordering, a_{\pi(1)} ... a_{\pi(n-1)}, s.t. the partial sums c_1 ... c_{n-1} do not contain any of the m_i (i m_{n-1} > m_t ( for all t).
+For, l j, c'_l > c'_j > m_t (for all t).
+
+QED ???
+
+The reason this is wrong that to actually use the induction hypothesis, we need to assume that a_1+ \ldots + a_{n-1} is not in M, which of course might not be true. Can we repair this proof though? Maybe splitting into a case analysis involving the condition?",here's something I know is wrong,,,,,egbotdont
+63534,63541,from 94,by number,,,,,egbotdont
+63616,64015,This is wrong. My new M would be all set that match sums of the n subset of the n+1 set if n of them matched then I would a problem because I would not free up the remaining elements of that are sums containing the excluded element because some of the sums with the excluded element might match some of the sums without it. This will have to be fixed somehow if the idea from 85 can be made to work.,here is a mistake in your reasoning,,,,,egbotdont
+64084,64128,Do the same inductive step as proposed by 91,by number,,,,,egbotdont
+64624,64653,Am I making any mistake here?,question,,,,,egbotdont
+64084,64622,"Do the same inductive step as proposed by 91, remove m_{n-1} and some a_j such that (sum a_i) – a_j isn’t in M. But now try to find k jumps from the beginning that jump over k obstacles. if you don’t find any such k, then consider the last jump, that is (n-1)st. this jump must start before m_{n-2}, since otherwise we would have had n-2 jumps that cross n-2 obstacles.
+now note that this could not have landed at m_{n-1}, since it has to be equal to (sum a_i) – a_j. So appending a_j to this sequence avoids m_{n-1} also and we are done.",proof strategy,,,,,egbotdont
+64723,64784,Here is an approach which is a bit different from the others.,introducing your comment,,,,,egbotdont
+64784,65802," Let s = a_1 + … + a_n, with a_1 < a_2 < … < a_n and let M = { m_1 < m_2 < … < m_{n-1} }. Consider the n intervals (0, m_1), (m_1, m_2), …, (m_{n-1}, s). Since there are n of them, and the grasshopper only lands in (0,s) n-1 times, one of them must be missed (of course, more than one might be missed). Let's try to start our induction by working out which of these is to be missed. This is similar to Tim Gowers' idea above to about skipping over 2, but the extra option of skipping at the end gives us a little more freedom. For notational simplicity, set m_0=0 and m_n = s.
+
+My first thought was that we have n intervals whose lengths add up to s, so there must be one of them whose length is less than the average of the a_i. I hoped that this was the one that should be skipped. But that isn't always true. Take A = (9, 10, 11, 30) and M = (11, 30, 49).
+
+Still, we don't need that in order to win. All we need is to have
+
+m_{k-1} < a_{i_1} + … a_{i_k} < m_k < m_{k+1} < a_{i_1} + … a_{i_k} +a_{i_{k+1}} < m_{k+2}.",induction,,,,,egbotdont
+65804,65868,"In a few examples, it does seem that we can always achieve this.",supporting example,,,,,egbotdo
+65167,65233,This is similar to Tim Gowers' idea above to about skipping over 2,"by content, by name",,,,,egbotdont
+65388,65512,"we have n intervals whose lengths add up to s, so there must be one of them whose length is less than the average of the a_i",sub-conjecture,,,,,egbotdont
+65514,65521,I hoped,emotion or value words,,,,,egbotdont
+65568,65643,"But that isn't always true. Take A = (9, 10, 11, 30) and M = (11, 30, 49).",to a local conjecture,,,,,egbotdo
+65928,66048,"Here’s a follow up to my argument above that there is a path of length 2, this time showing there is a path of length 3.",introducing your comment,,,,,egbotdont
+66048,66063," Unfortunately,",emotion or value words,,,,,egbotdont
+65928,67394,"Here’s a follow up to my argument above that there is a path of length 2, this time showing there is a path of length 3. Unfortunately, there seems to be a small proliferation of cases, which may mean that a proper inductive extension of this argument would either be a bit complicated, or require a better argument.
+
+Split the a_i into b_1,b_2 so that b_1,b_1+b_2 is a path, b_1+b_2 is maximal among second terms of paths of length 2, and b_1 is maximal among initial elements of paths of length 2 with second terms of length b_1+b_2. Let c_1<c_2<…<c_{n-2} be the remaining elements.
+
+Now suppose that b_1+b_2+c_i is in M for each i. Then this accounts for all but one element of M. Consider b_1+c_1; first, suppose b_1+c_1 is not in M. Then c_1<b_2; if also b_1+c_1+c_2 not in M, we are done. So suppose b_1+c_1+c_2 is in M. If b_2<b_1 then c_1+c_2+b_2 is also not in M, and we are done. If b_1<b_2 then b_2 is in M, which means b_2=b_1+c_1+c_2. Then c_1+b_2 cannot be in M, so c_1<b_1, and therefore again c_1+c_2+b_2<b_1+c_j+b_2 for any j other than 1 or 2, and c_1+c_2+b_2 cannot be b_1+c_j+b_2 for j either 1 or 2.
+
+So we deal with the remaining case, where b_1+c_1 does belong to M. Then c_1 does not belong to M, and neither does c_1+b_2, so c_1<b_1. Then c_1+b_2+c_2<b_1+b_2+c_j for any j, so if c_1+b_2+c_2 is in M then it must be that b_1=b_2+c_2. Then c_2 and c_2+b_1 are in M, so c_2<b_2, so also c_2+b_1+c_1 are not in M, so this is a path of length 3.",case split,,,,,egbotdont
+67461,67547,"Also, is there only one order in which the grasshopper never lands on any points in M?",question,,,,,egbotdont
+67547,67596, What is M contains s = a_1 + a_2 + \cdots + a_n?,question,,,,,egbotdont
+67597,67693,Would we still be able to fins an order in which the grasshopper never lands on any points in M?,question,,,,,egbotdont
+67693,67742, Maybe we can use probabilities and random walks?,question,,,,,egbotdont
+67810,67866,Or maybe use some type of inequality involving the mean?,question,,,,,egbotdont
+67743,67809,"E.g. the probability of going a_1 units in step 1 is P_{11}, etc….",example,,,,,egbotdo
+67927,67945,Meta comment first,introducing your comment,,,,,egbotdont
+67948,68033,it would help immensely to have threaded comments. This is getting very hard to read!,technical issues,,,,,egbotdont
+68035,68059,"Re Gowers’s 44, 63, etc:","by name, by number",,,,,egbotdont
+68060,68146,Is it clear that we would want to save a_n to be the “jump over two landmines” choice?,question,,,,,egbotdont
+68147,68244,Can anyone think of an example where one is required to use a_n to jump only one (or zero) mines?,"question, request for help",,,,,egbotdont
+68246,68875,"It’s possible to prove that *either* there are two mines within a_n - 2 of each other or else something easy happens. For instance, if a_n is not in M then we are done by the induction mentioned earlier; similarly s-a_n should be in M.
+
+Thus either (a) those are the smallest and largest elements of M, in which case we have n-1 elements of $M$ in [a_n, s-a_n], which is an interval of s-2a_n <= a_n + a_{n-1} + (n-2)(a_n-2) - 2a_n < (n-2)(a_n-2),
+or (b) we have elements of M less than a_n (or on the other side)… but that already is within a_n -2 of a_n unless it is exactly 1, in which case the induction argument works again.","case split, induction",,,,,egbotdont
+68946,68999,"I thought I posted this a bit ago, but I don’t see it",technical issues,,,,,egbotdont
+69001,69893,"Let a_1 < a_2 < \ldots < a_n and let m_1 < m_2 < \ldots < m_{n-1}.
+
+If we can find i_1, i_2, …, i_{k+1} distinct indices such that
+
+m_{k-1} < a_{i_1} + \ldots + a_{i_k} < m_k < m_{k+1} <
+< a_{i_1} + \ldots + a_{i_k} + a_{i_{k+1}} < m_{k+2}
+
+then we win. This combines two observations above: the one about skipping over two landmines is the case where 1 \leq k \leq n-2. The possibility of starting out or ending by jumping over a land mine are the degenerate cases k=0 or k=n-1.
+
+So, it seems like it would be good to figure out what k should be. Notice that there are n intervals (0, m_1), (m_1, m_2), …, (m_{n-1}, a_1+\ldots+a_n). So the shortest of them is shorter than a_n. I had hoped that the shortest would always be (m_{k}, m_{k+1}), but this doesn't seem to be true: consider A=(9,10,11,30) and M = (11,30,49).
+
+Still, it does always seem to be true that we can find (m_{k-1}, m_k).",constructive,,,,,egbotdont
+69450,69466,degenerate cases,emotion or value words,,,,,egbotdont
+69069,69254,"If we can find i_1, i_2, …, i_{k+1} distinct indices such that
+
+m_{k-1} < a_{i_1} + \ldots + a_{i_k} < m_k < m_{k+1} <
+< a_{i_1} + \ldots + a_{i_k} + a_{i_{k+1}} < m_{k+2}
+
+then we win.",sub-conjecture,,,,,egbotdont
+69372,69480,The possibility of starting out or ending by jumping over a land mine are the degenerate cases k=0 or k=n-1.,relevant entity,,,,,egbotdo
+69482,69548,"So, it seems like it would be good to figure out what k should be.",saying why what you've just said is interesting,,,,,egbotdont
+69680,69821,"I had hoped that the shortest would always be (m_{k}, m_{k+1}), but this doesn't seem to be true: consider A=(9,10,11,30) and M = (11,30,49).",to a local conjecture,,,,,egbotdo
+69964,70029,"My longer comments aren’t appearing, so I’ll keep this one short:",technical issues,,,,,egbotdont
+70031,70245,"Take A = (9, 10, 11, 30) and M = (9, 30, 51). Then we use the long jump to only jump over one mine. Of course, this is one of the cases where we know how to reduce — when we can start by jumping over a single mine.",relevant entity,,,,,egbotdo
+70309,70351,Let me try to summarize nikhil 5:09. (105),"by name, by number, introducing your comment",,,,,egbotdont
+71950,72107,What happens if m_{n-1} = \sum_{k=1}^{n-2} b_k? It seems to me that the lemma does not apply in this case because the last jump (to m_{n-1}) lands on a mine.,here is a mistake in your reasoning,,,,,egbotdont
+70360,70367,Post 48,by number,,,,,egbotdont
+70353,70358,Lemma,introducing your comment,,,,,egbotdont
+70460,70466,Proof:,introducing your comment,,,,,egbotdont
+70628,70649,Proof of Main Result:,introducing your comment,,,,,egbotdont
+70370,70459,Let 0< k < n. If there is ever a sequence of k jumps that cross k mines then we are done.,here's a weaker version,,,,,egbotdont
+70467,70626,"If this is the case then the subset of A of elements we haven't used has size n-k and the number of mines left is n-k-1, and so the lemma follows by induction.",proof of sub-conjecture,,,,,egbotdont
+70650,71582,"We see that there is a 1 \leq j \leq n such that \sum_{i=1}^{n} a_i - a_j \notin M. We set A' = A -\{a_{j}\}, and M' = M -\{m_{n-1} \} (where m_{n-1} is the largest element of M). By induction, there is a sequence of partial sums of A' that avoid M. Let \{b_i\}_{i=1}^{n-1} be the elements of A' in the order we form the partial sums. This is to say \sum_{i=1}^{l} b_i \notin M' for every 0<l<n.
+
+Now how many elements of M' are less than \sum_{i=1}^{n-2} b_i ? By the lemma we can assume that it is at most n-3. Thus the element m_{n-1} (which we removed from M to create M') is larger than every partial sum \sum_{i=1}^{l} b_i for 0<l<n-2. So the only problem we could have by adding it back in would be if it was equal to \sum_{i=1}^{n-1} b_i . However, by construction we know that this is not an element of M.
+
+Lastly, we add a_j back in. However, \sum_{i=1}^{n-1} b_i +a_j = \sum_{k=1}^{n} a_k, which isn't in M be assumption.",proof,,,,,egbotdont
+71646,71692,It looks to me like nikhil devanur 5:09 works.,"by content, by name, meta-level comment about proof",,,,,egbotdont
+71693,71727,Can anyone find a problem with it?,"what's the problem here?, question",,,,,egbotdont
+71786,71820,I’ll agree that Nikhil’s 5:09 post,"by name, by content",,,,,egbotdont
+71825,71832,kindly ,emotion or value words,,,,,egbotdont
+71785,71884, I’ll agree that Nikhil’s 5:09 post (as kindly spelled out by someone anonymous) looks pretty good.,meta-level comment about proof,,,,,egbotdont
+72171,72180,Re: 115. ,by number,,,,,egbotdont
+72180,72210,That does look like a problem.,you're right,,,,,egbotdont
+72271,72307,I’m very late to the party as usual.,informal,,,,,egbotdont
+72309,72418,"t seems to me that this problem could be tractable by proof by contradiction, and I just had a quick thought.",,,,,,egbotdont
+72308,73037,"It seems to me that this problem could be tractable by proof by contradiction, and I just had a quick thought. Assume that there is a set M for which the statement of this problem fails. There are n! possible sequences of partial sums based on the set A = {a_{1}, ... , a_{n}}. Then at least one member of M is always obtained by some partial sum in every sequence of partial sums of A. If m members of M lie in the interval (0, s), then at least one of those m members of M is obtained by partial sums in at least n!/m different partial sum sequences. I’m guessing that this might be unreasonable since, in general, n!/m \gg n, and members of A are mutually distinct, but right off hand I don’t know why, and it’s time for bed …",RAA,,,,,egbotdont
+72861,72976,"I’m guessing that this might be unreasonable since, in general, n!/m \gg n, and members of A are mutually distinct,",what's the problem here?,,,,,egbotdont
+72981,73037,"right off hand I don’t know why, and it’s time for bed …",informal,,,,,egbotdont
+72906,72975,"since, in general, n!/m \gg n, and members of A are mutually distinct",explanation,,,,,egbotdont
+73100,73149,So one approach to the problem pointed out in 115,by number,,,,,egbotdont
+73100,73695,"So one approach to the problem pointed out in 115 would be to then back up to the sum \sum_{j=1}^{n-3} b_j. By considerations in 112 all of the partial sums up to this point should avoid M. There are three elements left b_{n-2}, b_{n-1} and a_j. We may assume that \sum_{j=1}^{n-3} b_j + b_{n-2} \in M.
+
+Moreover, we could then try to add on one of the other remaining elements instead. Thus there must be collisions with M regardless of how you add these 3 remaining elements. This should imply that there are several mines between \sum_{j=1}^{n-3} b_j and \sum_{j=1}^{n} a_j (the finish line).",ammended error (others),,,,,egbotdont
+73754,73774,"Come to think of it,",informal,,,,,egbotdont
+73775,73802,it should be clear that 112,by number,,,,,egbotdont
+73775,73873,"it should be clear that 112 can’t be quite right, because it always chooses a_j as the final step.","explanation, you're right",,,,,egbotdont
+73874,74154,"But we have examples where that isn’t right (a_j was arbitrary so that sum_{i!=j}a_i was not in M), so we know that the correct solution will have to account for the fact that there may be multiple a_j which satisfy that condition, some of which may not be part of a solving path.",relevant entity,,,,,egbotdo
+74221,74264,Would it helpful to consider reduced case? ,question,,,,,egbotdont
+74264,74588,Suppose M is periodic with period K m_i = i*K Take j_max as maximum j such as partial sum of j elements is zero mod K. So any other partial sum including S_j_max is non zero mod K. if j_max < n we have our solution taking S_j_max as tail. If j_max = n we throw away element a_l such a_l mod K != 0 (always exist) and repeat.,"here's a weaker version, proof of sub-conjecture",,,,,egbotdont
+74589,74606,Is that correct ?,question,,,,,egbotdont
+74671,74707,Following up on David’s comment (#2),"by name, by number",,,,,egbotdont
+74709,75094,"there’s a theorem which I believe is due to Noga Alon that says you need at least n-hyperplanes to cover all the vertices except {1,1, … , 1} of the unit hypercube {0,1}^n by hyperplanes not passing through {1,1, … , 1}. The proof is based on linear algebra (combinatorial nullstellensatz). This is probably overkill for an IMO problem and not clear how it would be directly be useful.","reference to other maths, translate the conjecture",,,,,egbotdont
+75159,75233,In the case with n-1 consecutive landmines discussed by Greg Martin in 51.,"by content, by name, by number",,,,,egbotdont
+75235,75376,"Suppose the landmines b+1,\ldots, b+n-1 are all reachable by the grasshopper (i.e. they are all partial sums of the sequence a_1,\ldots,a_n).",here's a weaker version,,,,,egbotdont
+75376,75445, Does anybody have a simple argument to show that b is a partial sum?,"question, request for help",,,,,egbotdont
+75502,75518,"@pabloless,122: ","by name, by number",,,,,egbotdont
+75520,75699,"need not be a partial sum in that case. Take A={2,3,4,6}, then b=1 isn’t a partial sum, despite 2=b+1..b+n-1=4 all being partial sums. b+n isn’t a partial sum either in this case.",to a local conjecture,,,,,egbotdo
+75765,75782,"You’re right, aj.",you're right,,,,,egbotdont
+75784,76204,"I’ve worked out the case A = \{1,2,3,4,5\}.
+
+Since we there are only 4 landmines, there is a residue class modulo 5 that contains no landmines.
+
+Suppose \{5,10\} contains no obstacles. We can assume that all obstacles are between 6 and 9 because otherwise we pass an obstacle in one jump (starting at {}0, or a backwards jump starting at 15).
+
+If it’s another residue class, it splits $1,\ldots,15$ into four intervals.",to a local conjecture,,,,,egbotdo
+76204,76765,"
+If there is a landmine in the first interval we jump it over in a single step and proceed by induction. Symmetricaly we solve the problem if there is a landmine in the last interval.
+
+In the remaining case a center interval contains 2 landmines or more. In this case we can jump over that interval in two steps (again, either two forward steps starting at zero, or two backward steps starting at 15), remaining on the “safe” residue class each time. This solves the problem, by the induction argument stated several times before (for example the lemma in 112).","case split, induction",,,,,egbotdont
+76680,76765,by the induction argument stated several times before (for example the lemma in 112).,"by content, by number",,,,,egbotdont
+76825,76855,Here’s another induction idea.,introducing your comment,,,,,egbotdont
+76857,77523,"We start with n-1 a_i‘s and n-2 m_i‘s and assume we can solve this case. Let c_l = \sum_{j=1}^{l} a_i (for 0<l<n-1) be a sequence of partial sums that solves the problem for this case. Now we are given m_{n-1} and a_n. We consider the new 'path' given by the partial sums d_l = \sum_{j=1}^{l} a_i (for 0<l<n). We only have trouble if m_{n-1} = c_r for some r < n. Now by the lemma in 112, we may assume that the number of mines less than c_{r-1} is at most r-2. Also we may assume that the number of mines greater than c_{r+1} is at most n-r-2. Thus we have at least (n-2 -r-1-n+r+2 )+1 = 3 mines between c_{r-1} and c_{r+1}, provided i did the arithmetic correctly.",induction,,,,,egbotdont
+77483,77522,provided i did the arithmetic correctly,I might be wrong,,,,,egbotdont
+77525,77573,That turns out less helpful than I had expected.,meta-level comment about proof,,,,,egbotdont
+77651,77671,Re: 72 David Speyer:,"by name, by number, by content",,,,,egbotdont
+77884,78120,I don’t think there is anything special about 1/4 and 3/4: If you zoom in this interval would be smaller and if you zoom out it would be larger. I think 1/4 and 3/4 tells us more about Mathematica’s plot-function than about the problem.,relevant entity,,,,,egbotdo
+78188,78211,Nikhil’s approach @105 ,"by number, by name",,,,,egbotdont
+78215,78236,its elaboration @115 ,by number,,,,,egbotdont
+78236,78244,and @118,by number,,,,,egbotdont
+78188,78255,Nikhil’s approach @105 and its elaboration @115 and @118 work fine.,meta-level comment about proof,,,,,egbotdont
+78256,78291,I summarize them in a concise way.,introducing your comment,,,,,egbotdont
+78292,78895,"Induct on n. For n=2 see post 4@Lugo and n=3 see post 18@gowers. Assume it holds for n-1. Let M be as in the statement. Set m:=\max M and S:=a_1+\cdots a_k. WLOG assume that m<S. Also, at least one of the numbers S-a_i is NOT contained in $M$, since {\rm card}(M)a_1+\cdots+a_{n-1} we are done, so assume this isn’t the case. Let k be the index so that a_1+\cdots+a_{\sigma(k)}<\max M^\prime<a_1+ cdots+a_{\sigma(k+1)}. If k=n-2 we are done again by our assumption that a_1+\cdots+a_{n-1}\notin M. So assume that $k2$ steps to avoid the two points m^\prime,m. This is certainly possible by the case n=3.",induction,,,,,egbotdont
+78305,78328,For n=2 see post 4@Lugo,"by number, by name, by content",,,,,egbotdont
+78333,78356,n=3 see post 18@gowers.,"by number, by name, by content",,,,,egbotdont
+78897,79002,"P.S. We do not need to know the case n=3 in order for the proof to work, but it simplifies the last step.",meta-level comment about proof,,,,,egbotdont
+79068,79170,An induction proof might work if we can find a stronger statement to induct on (researcher’s paradox).,meta-level comment about proof,,,,,egbotdont
+79171,79384,"Since there’s a natural symmetry going from 0 to s and jumping backwards from s to 0, it would be interesting to investigate if it is possible to find a sequence of jumps avoiding all the points of M and (s – M).","here's a stronger version, saying why what you've just said is interesting",,,,,egbotdont
+79385,79494,This is one way to deal with the two strong restrictions coming from the first and last jumps simultaneously.,saying why what you've just said is interesting,,,,,egbotdont
+79559,79579,"Re:125, Partalopoulo","by name, by number",,,,,egbotdont
+79581,79631,would you mind elaborating on your argument a bit?,"question, request for help, explanation",,,,,egbotdont
+79729,79756,Here is an general thought.,introducing your comment,,,,,egbotdont
+79632,79664,I’m having trouble following it.,humble,,,,,egbotdont
+80213,80238,And a trivial observation,introducing your comment,,,,,egbotdont
+80280,80348,"Is there an induction on s, or on s and n together, or involving A1?",question,,,,,egbotdont
+79758,80471,"Assume that A1 … An are 1,2 … n. I can take a block of n spaces, and put my n-1 mines in those. This forces a jump to the remaining space. I then have to divide up the Ai so that I can jump to that place and from it to the ends. This I can do because the small numbers give me flexibility, and I’ve used all the mines, so there are no more constraints. As I put more holes in my block, the constraints are reduced and there are more ways to hop through.
+
+And a trivial observation – I can assume that hcf of the Ai is 1.
+
+Is there an induction on s, or on s and n together, or involving A1?
+
+If A1 = 1, for example, this interval contains no mines. In fact one of the intervals must contain no mines (pigeonhole).","hypothesized case to explore conjecture/proof attempt, simple case",,,,,egbotdo
+80529,80635,"Can we come up with a hyper optimistic conjecture to the affect that the worse case sequence is 1,2,3,…,n?","question, sub-conjecture",,,,,egbotdont
+80551,80578,hyper optimistic conjecture,emotion or value words,,,,,egbotdont
+80702,80715,Reply to 127.,by number,,,,,egbotdont
+80715,80775," I’m sorry, for some reason part of the text didn’t appear.",technical issues,,,,,egbotdont
+80788,80811,For n=2 see post 4@Lugo,"by number, by name",,,,,egbotdont
+80816,80844,for n=3 see post 18@gowers. ,"by number, by name",,,,,egbotdont
+80776,81849,"Induct on . For n=2 see post 4@Lugo and for n=3 see post 18@gowers. Assume it holds for n-1. Let M and A=\{a_1,\dots,a_n\} be as in the statement. Set $S=a_1+\cdots+a_n$ and m=\max M . WLOG assume that m<S. We have that at least one of the numbers S-a_i is NOT contained in M, since card(M)<n. WLOG assume that S-a_n\notin M.
+
+Set M^\prime=M\setminus\{m\} and A^\prime=A\setminus\{a_n\}. Apply the induction hypothesis on A^\prime and M^\prime. So there exists some permutation \sigma\in S_{n-1} so that the numbers S_j:=a_{\sigma(1)}+\cdots+a_{\sigma(j)} do not belong to $\latex M^\prime$.
+
+If a_1+\cdots a_{n-1}<\max M^\prime we are done (choose a_n as the last step), so assume this is not the case. So there exists some k\in\{1,\dots,n-1\} so that S_k<\max M^\prime<S_{k+1}. If k+1=n-1, then m\neq S_{n-1} by our assumption, so we are done again. So we may assume that $k+12$ more jumps in order to avoid m and M^\prime (possibly changing the order of a_{\sigma(k+1)},\dots, a_{\sigma(n-1)} and a_n). This is certainly possible by the case n=3 and completes the proof.",induction,,,,,egbotdont
+81902,81920,I like remark 2(1),by number,,,,,egbotdont
+81921,81957,(but did not get much further down) ,,,,,,egbotdont
+81961,82070,certainly seperating the vertices of the discrete cube (by hyperplanes) look relevant (and perhaps familiar).,by content,,,,,egbotdont
+82071,82151,A simple set that disconnects the distcrete cube is all vertices of fixed weight,concept,,,,,egbotdont
+82155,82268,a special case of our problem is that for a set of size n the number of sums of k elements is at least n (0<k<n).,relevant entity,,,,,egbotdo
+82335,82365,Latex corrections to post 129:,"introducing your comment, by number",,,,,egbotdont
+82367,82678,"“Formula does not parse”: … the numbers a_{\sigma(1)}+\cdots+a_{\sigma(j)}….
+
+Second half of last paragraph: So we may assume that k+12 jumps are chosen in order to avoid the points m and m^\prime (possibly rearranging a_{\sigma(k+1)},\dots,a_{\sigma(n-1)} and a_n. This is certainly possible by the case n=3.
+",technical issues,,,,,egbotdont
+82772,82814,"sorry I can’t do latex, will have to learn",apologies,,,,,egbotdont
+83001,83035,Or have i misunderstood something?,"I might be wrong, question",,,,,egbotdont
+82755,82999,"I don’t see how (sorry I can’t do latex, will have to learn) A1+ …+An-1 can be less than max(M’) – it seems to me that either your interval is then too long, or the number of mines too small for the induction to go through – ie what is your s’?",here is a mistake in your reasoning,,,,,egbotdont
+83102,83526,"I’m in a weird position here. If the solution proposed earlier is correct, then I don’t want to read it, as I’d be amused to go off and try to work it out for myself. Looking at the comments, I can’t quite tell whether it is basically fine, or whether there is a problem with it. In the latter case I’d be interested to read it and think about whether it is possible to fix the problem. Can anyone give me advice about this?",meta-level comment about proof,,,,,egbotdont
+83489,83526,Can anyone give me advice about this?,question,,,,,egbotdont
+83210,83267,I’d be amused to go off and try to work it out for myself,emotion or value words,,,,,egbotdont
+83593,83632,"Mark, you are right about your comment.","by name, by content",,,,,egbotdont
+83593,84175,"Mark, you are right about your comment. I didn’t claim that this always holds though. It’s just that the whole text does not appear for some reason!
+
+Define S_j=a_{\sigma(1)}+…+a_{\sigma(j)}.
+
+If a_1+…+a_{n-1}<max M', then we are done. If not, then let k in {1,…,n-1} so that S_k<max M'<S_{k+1}. If k+1=n-1, then m is not equal to S_{k+1}=a_1+….+a_{n-1} by our assumption. So assume that k+12 jumps by possibly rearranging a_{\sigma(k+1)},….,a_{\sigma(n-1)} and a_n in order for the grasshopper to avoid m and m’. This is possible by the case n=3 and completes the inductive step.
+",response to someone pointing out error,,,,,egbotdont
+83743,84173,"Define S_j=a_{\sigma(1)}+…+a_{\sigma(j)}.
+
+If a_1+…+a_{n-1}<max M', then we are done. If not, then let k in {1,…,n-1} so that S_k<max M'<S_{k+1}. If k+1=n-1, then m is not equal to S_{k+1}=a_1+….+a_{n-1} by our assumption. So assume that k+12 jumps by possibly rearranging a_{\sigma(k+1)},….,a_{\sigma(n-1)} and a_n in order for the grasshopper to avoid m and m’. This is possible by the case n=3 and completes the inductive step.",suggested step case,,,,,egbotdont
+84497,84608,To Mark@131. You are right about your comment. I didn’t claim this. It’s just that the whole text won’t appear!,repeated comments,,,,,egbotdont
+84610,84624,To gowers@133.,"by number, by name",,,,,egbotdont
+84625,84705,"I think the solution is correct, but as it is posted it is certainly incomplete.","errors, meta-level comment about proof",,,,,egbotdont
+84764,84783,to partalopoulo@129,"by number, by name",,,,,egbotdont
+84784,84802,I agree with 131. ,by number,,,,,egbotdont
+84802,85001,"For example, let n=4, A={1,2,3,4}, M={4,5,6}, hence s=10, m=6.
+We may choose a_n=1, then A’={2,3,4}, M’={4,5}, but by induction hypothesis the steps s_k might be s_1=2, s_2=6, s_3=9, but s_2 is in M.","induction for a specific example, counterexample",,,,,egbotdo
+85002,85042,Or am I missing some point of the proof?,"question, I might be wrong",,,,,egbotdont
+85097,85123,what is meant here really?,question,,,,,egbotdont
+85043,85057,Another thing:,introducing your comment,,,,,egbotdont
+85058,85123,"The proof ends with “k+12 more jumps”, what is meant here really?","by content, unclear",,,,,egbotdont
+85182,85198,follow-up to 136,"by number, previous comment by the same contributor",,,,,egbotdont
+85199,85249,"Sorry, I was apparently too quick with that post. ",apologies,,,,,egbotdont
+85199,85306,"Sorry, I was apparently too quick with that post. I think I understand now the proof, and it seems correct!",response to someone pointing out error,,,,,egbotdont
+85307,85494,"In the last part of the proof you have n-k numbers $a_{\sigma(k+1)}$, …, $a_{\sigma(n-1)}$, $a_n$, and you have to avoid only one trap, namely $m$. And that is possible by the case $n=3$.",ammended error (own),,,,,egbotdont
+85560,85616,What happens if S_{n-3} < M_{n-3} and S_{n-2} = M_{n-1}?,question,,,,,egbotdont
+85617,85660,(So the second to last leap is a big one.) ,explanation,,,,,egbotdont
+85560,85709,What happens if S_{n-3} < M_{n-3} and S_{n-2} = M_{n-1}? (So the second to last leap is a big one.) Then we have to avoid 3 mines with only 3 jumps.,counterexample,,,,,egbotdo
+85710,85847,"I don't want to be too pessimistic though, I actually think we are very close. Let me gather my thoughts and see what I can come up with.",meta-level comment about proof,,,,,egbotdont
+85710,85751,I don't want to be too pessimistic though,emotion or value words,,,,,egbotdont
+85913,85927,To Tim Gowers:,by name,,,,,egbotdont
+85928,85992,"I think the proof may be fixable, but I don’t think it is right.",meta-level comment about proof,,,,,egbotdont
+85994,86130,"To those who think the proof works, what happens if S_{n-3} < M_{n-3} and S_{n-2} = M_{n-1}. Then we have to avoid 3 mines with 3 jumps.",counterexample,,,,,egbotdo
+86132,86189,To Terry: Could you please check your spam queue? Thanks!,technical issues,,,,,egbotdont
+86249,86882,"My last comment did not appear – may be it got marked as spam. I’m reposting it.
+
+In reply to Gil’s unnumbered comment following comment 129, here’s a proof by induction of :’for a set of size n the number of sums of k elements is at least n (0<k<n)'. Let the the n numbers be a_1 < a_2 < \ldots < a_{n-1} < a_n. As induction hypothesis suppose that for n-1 distinct sets of k-1 elements each S_1, S_2 \ldots, S_{n-1} \subseteq \{1,\ldots,n-1\} the sums a_{S_i} = \sum_{j \in S_i} a_j are distinct. Consider the n sums a_1 + \ldots + a_k, a_{S_1} + a_n, a_{S_2} + a_n, \ldots, a_{S_{n-1}} + a_n. These are easily seen to be distinct.",repeated comments,,,,,egbotdont
+86948,87136,"I have tried at least twenty times to leave a comment and still can’t see them, though it always tell me that I duplicated the same comment.I guess the same situation happens to David,too.",technical issues,,,,,egbotdont
+87138,88181,"Let a_1<a_2<\cdots<a_n.
+
+1,a_1can't be blocked, otherwise we can choose our first step to left a landmine behind, finish the inductive step.
+
+2, Two sets A=\{a_2,\cdots,a_n\} and B=a_1+a_2,\cdots,a_1+a_n contains at least n different values. we claim that the elements in B should not be all blocked. otherwise we can choose the first step with a_i and then a_i+a_n leaving all landmines behind.
+
+3,so, we can at least get to the second group withour being killed. then we claim that a_1+a_2 and a_1+a_3 can't be all blocked. otherwise we can take two steps and leave two landmines behind and finish the inductive step.
+
+4, through a_1+a_2 or a_1+a_3, we can get to
+a_1+a_2+a_3,a_1+a_2+a_4,a_1+a_2+a_n,
+\cdots,a_1+a_3+a_4,\cdots,a_1+a_3+a_n which contains at least n-1 different values. Similarly, if all of these are blocked, then we can construct a way to avoid all of the landmines. So, we can get to one of these by the third step.
+
+5, then we analyze a_1+a_2+a_3,a_1+a_2+a_4,and a_1+a_3+a_4 in the similar fasion and continue in the road.",constructive,,,,,egbotdont
+88240,88246,to 139,by number,,,,,egbotdont
+88247,88253,oh yes,informal,,,,,egbotdont
+88247,88280,"oh yes, I see the problem, thanks",response to someone pointing out error,,,,,egbotdont
+88347,88619,"I’m suspicious that Terry is removing posts which give away too much of the answer/have working proofs. So I’m putting my observations from earlier in individual posts. Terry can allow disallow them as he likes, but I did arrive at them after looking at this conversation.",technical issues,,,,,egbotdont
+88687,88974,"Given a set where the Grasshopper can reach the end, you might be able to block the only possible path with a point in M. But the moment you add a another jump all bets are off, as that jump could be applied anywhere in the sequence. I’ll be very impressed if someone can make this work.",proof,,,,,egbotdont
+89042,89098,Speyer (2) mentioned a minimal size needed to disconnect,"by content, by name, by number",,,,,egbotdont
+89100,89128,This seems a good approach. ,meta-level comment about proof,,,,,egbotdont
+89128,89212,What is the minimal size needed to prevent the grasshopper from reaching its target.,question,,,,,egbotdont
+89213,89278,"Clearly at least n will suffice as we could select M={a_1,…a_n}. ",justification,,,,,egbotdont
+89278,89325,What happens when we remove one element from M.,question,,,,,egbotdont
+89393,89411,Final observation.,introducing your comment,,,,,egbotdont
+89411,89663," The beginning an ending jumps are constrained. There are n possible first jumps, n possible last jumps, but n^2-n-O(A,2) which measures the number of instances where a_i+a_j=a_k+a_l. I’d avoid the middle and focus on the beginning/end of the sequence.",proof,,,,,egbotdont
+89728,89738,addendum. ,introducing your comment,,,,,egbotdont
+89738,89801,Apologies to Terry. I guess its just the WordPress spam filter.,technical issues,,,,,egbotdont
+89868,90353,"I wasn’t clear on 141c comment. There are n possible first landing positions. Then n^2-n-O(A,2) second landing positions, n^3-n^2+n-O(A,3) (I think…). Key point is the O(A,2) which measures the # of overlapping 2 sums in A. For A={1,2,3,4} O(A,2)=1 because 1+4=2+3 so there is one overlap. This function is clearly very complicated and changes every time you change A. If you are trying to analyze what happens in the middle of the path, I think it will cause serious problems for you.",clarification,,,,,egbotdont
+90408,90492,Here’s one way of making the following approach suggested by Gowers and others work.,,,,,,egbotdont
+90494,91317,"Show by induction that for k <= n you can take k steps that avoid the mines M.
+
+The base cases have been discussed before. Suppose that you can take k-1 steps a_1,a_2,...,a_{k-1} (in that order) without hitting a mine. Let a_k < a_{k+1} < ... < a_n be the remaining possible steps and let s = a_1+a_2 + ... + a_{k-1}. Now a strong observation is that if any of s+a_k, s+ a_{k+1},...,s+a_n is not a mine we are done. And if not we 'know' the positions of n-k+1 mines.
+
+In particular there are at most k mines in the interval [0,s+a_{k+1}] and at most k-1 mines in the right open interval [0,s+a_{k+1}). Let s' = s+ a_{k+1}. Then, from the above observations for some 1 <= i <= k+1, s'-a_i is not a mine and the interval [0,s'-a_i] has at most $k-1$ mines. We can now finish the argument by another level of induction on $k$.",induction,,,,,egbotdont
+91376,91400,trying to fix proof 129.,"by number, introducing your comment",,,,,egbotdont
+91401,91979,"Assume a_1<…<a_n, s=a_1+…+a_n, M the set to be avoided, m=max M.
+The induction step works except if s-a_n=m:
+
+Suppose s-a_nm, set M’=M\{m}, A’=A\{a_n}. By induction hypothesis
+there is a permutation p in S_{n-1} s.t. for all j up to n-1 the sums
+s_k=\sum_{i\leq k} a_{p(i)} are not in M’. If also s_k is not in
+M for all k, we are done. Otherwise, there is k with s_k=m. Now we
+replace the step a_{p(k)}=s_k-s_{k-1} by a_n which is larger than
+a_{p(k)}. Done.
+
+A similar argument “from the left” works if a_nmin M, however it
+well may be the case that s-a_n=max M and a_n=min M.",induction,,,,,egbotdont
