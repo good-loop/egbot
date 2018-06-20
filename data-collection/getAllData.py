@@ -10,13 +10,13 @@ from pandas.io.json import json_normalize
 
 # path to data folder
 path = '/home/irina/data'
-
+ 
 # data collection iteration (batch api requests) < should probs turn this into a args script
 iteration = 4 																				## UPDATE THIS: to improve data management
 
 # define stackexchange api request properties
 filter = '!asyat-glvTDN7Q*KS8FC0X2Ds8E427nbJlZsxliDugZwP6._EWQ0H)6SoS2c' 
-key = '0KV1Jx2FaDYYrrCnFFqUQw((' 															## UPDATE THIS: to improve speed
+key = '564*QrqqIA5WwT1eXCHsTA((' 															## UPDATE THIS: to improve speed
 site = 'math.stackexchange'
 #tag = 'examples-counterexamples+probability'
 max = '1508264904' #time.time() 															## UPDATE THIS: to improve data management
