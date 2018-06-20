@@ -12,17 +12,17 @@ from pandas.io.json import json_normalize
 path = '/home/irina/data'
 
 # data collection iteration (batch api requests) < should probs turn this into a args script
-iteration = 1
+iteration = 4 																				## UPDATE THIS: to improve data management
 
 # define stackexchange api request properties
-filter = '!asyat-glvTDN7Q*KS8FC0X2Ds8E427nbJlZsxliDugZwP6._EWQ0H)6SoS2c'
-key = '0KV1Jx2FaDYYrrCnFFqUQw(('
+filter = '!asyat-glvTDN7Q*KS8FC0X2Ds8E427nbJlZsxliDugZwP6._EWQ0H)6SoS2c' 
+key = '0KV1Jx2FaDYYrrCnFFqUQw((' 															## UPDATE THIS: to improve speed
 site = 'math.stackexchange'
 #tag = 'examples-counterexamples+probability'
-max = time.time()
+max = '1508264904' #time.time() 															## UPDATE THIS: to improve data management
 min = 0
 
-request_link = 'http://api.stackexchange.com/2.2/questions/' + '/?key=' + key + '&order=desc&sort=creation' + '&site=' + site + '&filter=' + filter
+request_link = 'http://api.stackexchange.com/2.2/questions/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(max) + '&site=' + site + '&filter=' + filter
 print "Looking at ", request_link
 
 # make api request 
@@ -35,15 +35,13 @@ while 'error_id' in temp.keys():
 	temp = json.loads(r.text)	
 data = temp
 
-print data
-
-# search for relevant info in the api response and construct dataset$ git checkout -b iss53
+# search for relevant info in the api response and construct dataset
 master_count = 0
 req_count = 1
 dup_count = 0
 counter = 60
 final = []
-current_max = max
+current = max
 tryagain = False
 it = 1
 while data:
@@ -53,15 +51,16 @@ while data:
 				master_count += 1
 				final.append(question)
 			
+			current = question["creation_date"]
 			# exporting dataset to csv
 			try:
-				json_normalize(final).to_csv(path + '/getAllData_mse_%d_%d_%d.csv' % (it, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+				json_normalize(final).to_csv(path + '/getAllData_mse_%d_%d_%d_%d.csv' % (iteration, it, int(current), max), sep=',', encoding='utf-8')
 				it += 1
 			except UnicodeEncodeError as e: print(e)
 
 			# do another api request to get the next 100 posts
 			print "--------------NEXT---------------"
-			request_link = 'http://api.stackexchange.com/2.2/questions/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(question["creation_date"]) + '&site=' + site + '&filter=' + filter
+			request_link = 'http://api.stackexchange.com/2.2/questions/?key=' + key + '&order=desc&sort=creation&pagesize=100&min=' + str(int(min)) + '&max=' + str(current) + '&site=' + site + '&filter=' + filter
 			current_max = int(question["creation_date"])
 			print 'Questions looked at: ', master_count, ", Requests made: ", req_count
 			print "Looking at ", request_link
@@ -99,10 +98,10 @@ while data:
 print "---------------END---------------"
 print "Questions looked at: ", master_count, ", Requests made: ", req_count
 #print "Duplicates found: ", dup_count
-if question:
-	print "From ", datetime.datetime.fromtimestamp(int(question["creation_date"])).strftime('%Y-%m-%d %H:%M:%S'), "to ", datetime.datetime.fromtimestamp(int(max)).strftime('%Y-%m-%d %H:%M:%S')
+#if question:
+#	print "From ", datetime.datetime.fromtimestamp(int(question["creation_date"])).strftime('%Y-%m-%d %H:%M:%S'), "to ", datetime.datetime.fromtimestamp(int(max)).strftime('%Y-%m-%d %H:%M:%S')
 
 # exporting dataset to csv
 try:
-	json_normalize(final).to_csv(path + '/getAllData_mse_aggregate_%d_%d_%d.csv' % (iteration, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(path + '/getAllData_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), max), sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
