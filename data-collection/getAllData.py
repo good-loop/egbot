@@ -8,6 +8,9 @@
 import requests, json, time, datetime, csv, sys
 from pandas.io.json import json_normalize
 
+# path to data folder
+path = '/home/irina/data'
+
 # data collection iteration (batch api requests) < should probs turn this into a args script
 iteration = 1
 
@@ -52,7 +55,7 @@ while data:
 			
 			# exporting dataset to csv
 			try:
-				json_normalize(final).to_csv('data/mse_%d_%d_%d.csv' % (it, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+				json_normalize(final).to_csv(path + '/getAllData_mse_%d_%d_%d.csv' % (it, int(question["creation_date"]), max), sep=',', encoding='utf-8')
 				it += 1
 			except UnicodeEncodeError as e: print(e)
 
@@ -101,5 +104,5 @@ if question:
 
 # exporting dataset to csv
 try:
-	json_normalize(final).to_csv('mse_aggregate_%d_%d_%d.csv' % (iteration, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(path + '/getAllData_mse_aggregate_%d_%d_%d.csv' % (iteration, int(question["creation_date"]), max), sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)

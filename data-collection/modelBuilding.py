@@ -12,8 +12,11 @@ import numpy as np
 import operator
 import sklearn
 
+# path to data folder
+path = '/home/irina/data'
+
 #========== reading data 
-df = pd.read_csv('data/dedoose.csv', usecols=['Excerpt','Label'], encoding='utf-8')   # Index Excerpt Label
+df = pd.read_csv(path + '/data/dedoose.csv', usecols=['Excerpt','Label'], encoding='utf-8')   # Index Excerpt Label
 
 # binarize label column
 # df['Label'] = (df['Label']=="egbotdo").astype(int)

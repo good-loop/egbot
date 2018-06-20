@@ -10,8 +10,11 @@ import pandas as pd
 import numpy as np
 import operator
 
+# path to data folder
+path = '/home/irina/data'
+
 #========== reading data 
-df = pd.read_csv('data/dedoose.csv', encoding='utf-8')
+df = pd.read_csv(path + '/dedoose.csv', encoding='utf-8')
 
 egbotdo = dict()
 egbotdont = dict()

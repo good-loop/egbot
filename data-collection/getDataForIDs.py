@@ -11,6 +11,10 @@
 import requests, json, time, datetime, csv, sys
 from pandas.io.json import json_normalize
 
+# path to data folder
+path = '/home/irina/data'
+
+# define iteration run of this script for batch running
 # data collection iteration (batch api requests) < should probs turn this into a args script
 iteration = 1
 
@@ -22,7 +26,7 @@ site = 'math.stackexchange'
 max = time.time()
 min = 0
 
-with open('input.txt', 'r') as f:
+with open(path+'/input.txt', 'r') as f:
 	read_data = f.readlines()
 
 # split ids into batches of 100 to respect api limit
@@ -72,7 +76,7 @@ while data:
 			
 			# exporting dataset to csv
 			try:
-				json_normalize(final).to_csv('data/ind/ind_mse_%d_%d_%d_%d.csv' % (iteration,it, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+				json_normalize(final).to_csv(path + '/getDataForIDs_mse_%d_%d_%d_%d.csv' % (iteration,it, int(question["creation_date"]), max), sep=',', encoding='utf-8')
 				it += 1
 			except UnicodeEncodeError as e: print(e)
 
@@ -129,5 +133,5 @@ if question:
 
 # exporting dataset to csv
 try:
-	json_normalize(final).to_csv('data/ind/ind_mse_aggregate_%d_%d_%d.csv' % (iteration, int(question["creation_date"]), max), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(path + '/getDataForIDs_mse_aggregate_%d_%d_%d.csv' % (iteration, int(question["creation_date"]), max), sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)

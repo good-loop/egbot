@@ -1,6 +1,6 @@
 ###########################################################################
 ## Description: Script to get StackExchange q&a eg ids using their API	###
-## Status: WIP															###
+## Status: abandoned, not needed anymore								###
 ###########################################################################
 
 # -*- coding: utf-8 -*-
