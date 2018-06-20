@@ -54,7 +54,7 @@ while data:
 			current = question["creation_date"]
 			# exporting dataset to csv
 			try:
-				json_normalize(final).to_csv(path + '/getAllData_mse_%d_%d_%d_%d.csv' % (iteration, it, int(current), max), sep=',', encoding='utf-8')
+				json_normalize(final).to_csv(path + '/getAllData_mse_%d_%d_%d_%d.csv' % (iteration, it, int(current), int(max)), sep=',', encoding='utf-8')
 				it += 1
 			except UnicodeEncodeError as e: print(e)
 
@@ -103,5 +103,5 @@ print "Questions looked at: ", master_count, ", Requests made: ", req_count
 
 # exporting dataset to csv
 try:
-	json_normalize(final).to_csv(path + '/getAllData_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), max), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(path + '/getAllData_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), int(max)), sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
