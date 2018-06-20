@@ -1,16 +1,14 @@
 ###################################################################################
-## Description:                                                                 ###
+## Description: Text analytics of the labelled dedoose data                     ###
 ## Status: WIP															        ###
 ###################################################################################
 
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
-from sklearn.feature_extraction import DictVectorizer
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import operator
-import sklearn
 
 #========== reading data 
 df = pd.read_csv('data/dedoose.csv', encoding='utf-8')
@@ -23,8 +21,8 @@ dontcount = 0
 
 #========== constructing frequency dictionaries
 for index, row in df.iterrows():
-    words = row['Excerpt Copy'].lower().split(' ')
-    label = row['Meta Label']
+    words = row['Excerpt'].lower().split(' ')
+    label = row['Label']
     
     if label in 'egbotdont':
         dontcount += 1
@@ -65,6 +63,7 @@ for word in egbotdont:
 # generate a word cloud image for egbotdo
 wordcloud = WordCloud().generate_from_frequencies(egbotdo_filtered, max_font_size=40)
 
+plt.figure()
 plt.title('egbotdo')
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
@@ -76,56 +75,15 @@ plt.figure()
 plt.title('egbotdont')
 plt.imshow(wordcloud, interpolation="bilinear")
 plt.axis('off')
-#plt.show()
 
 # sort them based on frequency count, descending
 freq_do = sorted(egbotdo_filtered.items(), key=operator.itemgetter(1), reverse=True)
 freq_dont = sorted(egbotdont_filtered.items(), key=operator.itemgetter(1), reverse=True)
 
-#========== feature selection
-
-# bag of words model - term frequency
-matrix = []
-matrix.append(egbotdo)
-matrix.append(egbotdont)
-v = DictVectorizer(sparse=False)
-X = v.fit_transform(matrix)
-#print v.get_feature_names()
-
-
-#unique = list(set(freq_do+freq_dont))
-#bowdo = [0]*len(unique)
-##bowdont = [0]*len(unique)
-
-#print unique
-# for word in egbotdont:
-#     print word
-#     bowdont[unique.index(word)] = egbotdont[word]
-#     break
-        # if label in 'egbotdo':
-        #     bowdo[unique.index(word)] += 1
-
-
-# later: phrase based features, part of speech features, semantic features, social cues, etc?
-# named entity recog: rule-based, generative models - HMM, conditional models - MeMM or CRF, deep learning - RNN?
-
-#========== clustering 
-
-#========== rule-based
-
-#========== classification 
-# w/ and w/o stemming
-# try knn: bayes, svm, decision trees, random forests 
-
-#========== testing
-
-#=========== general improvements
-# should i use tf-idf to normalise terms?
-# n gram model?
-# needs more data => input some mse data as well
-
-
-
-
-
-
+#=========== pie chart 
+plt.figure()
+count_Class=pd.value_counts(df['Label'], sort= True)
+count_Class.plot(kind = 'pie',  autopct='%1.0f%%')
+plt.title('Pie chart')
+plt.ylabel('')
+plt.show()
