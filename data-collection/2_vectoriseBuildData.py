@@ -50,15 +50,18 @@ X = f.fit_transform(df[cols[0]]) # generates counts
 
 ## Binarize
 #X = preprocessing.binarize(X) # no need for counts, just a binary value representing existence of the word in the excerpt
-#y = df['Label'].map({'egbotdont':1,'egbotdo':0}) # binarize labels as well
+y = df['Label'].map({'egbotdont':1,'egbotdo':0}) # binarize labels as well
 
-newX = pd.DataFrame(data=X.toarray().transpose(), index=f.get_feature_names())
-vectorisedDF = newX.transpose().assign(**df.drop(['Excerpt'], axis=1)).copy()
+#vectorisedDF = newX.transpose().assign(**df.drop(['Excerpt'], axis=1)).copy()
+
+vectorisedDF = pd.DataFrame(data=X.toarray().transpose(), index=f.get_feature_names()).transpose()
+vectorisedDF['ID'] = df['ID']
+vectorisedDF['Label'] = y
 
 ## exporting dataset to csv
 try:
     outputfile = path + '/2_vectoriseBuildData_%d_%d.csv' % (iteration, int(time.time()))
-    vectorisedDF.to_csv(outputfile, sep=',', encoding='utf-8')
+    vectorisedDF.to_csv(outputfile, sep=',', index=False, encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
 
 print outputfile

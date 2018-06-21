@@ -26,17 +26,21 @@ else:
     cols = ['Excerpt','Label'] #['Excerpt Copy','Meta Label']
 
 
-# read data
-df = pd.read_csv(dataset, usecols=cols, encoding='utf-8')
+## read data
+try:
+    df = pd.read_csv(dataset, usecols=cols, encoding='utf-8')
+except IOError:
+    print "Fatal Error: Sorry, couldn't find " + dataset
+    sys.exit(0)
 
-df = df[:10]
+#df = df[:20] # smaller version for testing purposes (because excel can't open files that are too big ;_;)
 
 df['ID'] = range(1,df.shape[0]+1) # id > 0, because of the principle of least astonishment 
 
 # exporting dataset to csv
 try:
     outputfile = path + '/1_processRawData_%d_%d.csv' % (iteration, int(time.time()))
-    df.to_csv(outputfile, sep=',', encoding='utf-8')
+    df.to_csv(outputfile, sep=',', index=False, encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
 
 print outputfile
