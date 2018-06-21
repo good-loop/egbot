@@ -29,7 +29,14 @@ else:
 # read data
 df = pd.read_csv(dataset, usecols=cols, encoding='utf-8')
 
+df = df[:10]
+
+df['ID'] = range(1,df.shape[0]+1) # id > 0, because of the principle of least astonishment 
+
 # exporting dataset to csv
 try:
-	df.to_csv(path + '/1_processRawData_%d_%d.csv' % (iteration, int(time.time())), sep=',', encoding='utf-8')
+    outputfile = path + '/1_processRawData_%d_%d.csv' % (iteration, int(time.time()))
+    df.to_csv(outputfile, sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
+
+print outputfile
