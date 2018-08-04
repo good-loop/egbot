@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="src" path="builder"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/elasticsearch-java-client"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
@@ -11,5 +12,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.webappbase"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="dependencies/jython-standalone.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

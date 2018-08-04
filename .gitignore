@@ -1,1 +1,7 @@
 /bin/
+data/build
+pom.bob.xml
+web/build
+node_modules/
+bob.log
+dependencies
