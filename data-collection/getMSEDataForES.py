@@ -63,7 +63,6 @@ data = temp
 # search for relevant info in the api response and construct dataset
 ans_count = 0
 req_count = 1
-dup_count = 0
 counter = 60
 final = []
 current = max
