@@ -7,9 +7,9 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.eclipse.jetty.util.ajax.JSON;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.util.PythonInterpreter;
+//import org.python.core.PyObject;
+//import org.python.core.PyString;
+//import org.python.util.PythonInterpreter;
 
 import com.winterwell.gson.GsonBuilder;
 import com.winterwell.utils.IReplace;
@@ -23,7 +23,7 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 /**
  * Convert .csv to json - 
- * TODO Handling Python objects within the csv.
+ * ...Handling Python objects within the csv.
  * 
  * @author daniel
  *
@@ -72,17 +72,17 @@ public class JsonFromCSV {
 		w.close();
 	}
 
-	// throws an exception "ImportError: Cannot import site module"
-	static PythonInterpreter interpreter;
-	static {
-
-		Properties preprops = System.getProperties();		
-		Properties props = new Properties();
-		props.setProperty("python.import.site", "false");
-		PythonInterpreter.initialize(preprops, props, new String[0]);
-
-		interpreter = new PythonInterpreter();
-	}
+//	// throws an exception "ImportError: Cannot import site module"
+//	static PythonInterpreter interpreter;
+//	static {
+//
+//		Properties preprops = System.getProperties();		
+//		Properties props = new Properties();
+//		props.setProperty("python.import.site", "false");
+//		PythonInterpreter.initialize(preprops, props, new String[0]);
+//
+//		interpreter = new PythonInterpreter();
+//	}
 	
 	private static Object convertCell(String v) {
 		try {
