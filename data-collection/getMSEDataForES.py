@@ -12,7 +12,7 @@ import requests, json, time, datetime, csv, sys
 from pandas.io.json import json_normalize
 
 # path to data folder
-path = './data'
+path = '../data/raw'
 
 # define iteration run of this script for batch running
 # data collection iteration (batch api requests) < should probs turn this into a args script
