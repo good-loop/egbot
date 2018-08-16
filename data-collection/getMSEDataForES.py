@@ -118,12 +118,12 @@ print "---------------END---------------"
 print "Questions looked at: ", q_count, "Answers looked at: ", ans_count, ", Requests made: ", req_count
 
 # exporting dataset
-with open(pathOut + '/output_mse_agg.json', 'w') as outfile:  
+with open(pathOut + '/output.json', 'w') as outfile:  
     json.dump(final, outfile)
-with open(pathOut + '/output_mse_agg_es.txt', 'w') as f:
+with open(pathOut + '/output.txt', 'w') as f:
     for i in range(0,len(final)):
         print >> f, '{\"index\":{}}\n', final[i] 
 try:
-	json_normalize(final).to_csv(pathOut + '/output_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), int(max)), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(pathOut + '/output.csv', sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
 
