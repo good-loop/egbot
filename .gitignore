@@ -7,3 +7,5 @@ web/build
 node_modules/
 bob.log
 dependencies
+egbot.log
+web/style/*.css

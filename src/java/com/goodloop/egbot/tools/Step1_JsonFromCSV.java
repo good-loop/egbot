@@ -25,10 +25,12 @@ import com.winterwell.utils.log.Log;
  * Convert .csv to json - 
  * ...Handling Python objects within the csv.
  * 
+ * The main method will convert all .csv files in data/raw, putting outputs into data/build
+ * 
  * @author daniel
  *
  */
-public class JsonFromCSV {
+public class Step1_JsonFromCSV {
 
 	public static void main(String[] args) throws IOException {
 		// all files
@@ -49,6 +51,7 @@ public class JsonFromCSV {
 		w.write("[\n	");
 		String[] cols = r.next();
 		boolean first = true;
+		int cnt = 0;
 		for (String[] row : r) {
 			if ( ! first) w.write(",\n	");
 			first = false;
@@ -66,10 +69,12 @@ public class JsonFromCSV {
 			// write it out
 			String json = JSON.toString(jobj);
 			w.write(json);
+			cnt++;
 		}
 		w.write("\n]\n");
 		r.close();
 		w.close();
+		Log.i("jsonfromcsv", "...wrote "+cnt+" to "+fout);
 	}
 
 //	// throws an exception "ImportError: Cannot import site module"
