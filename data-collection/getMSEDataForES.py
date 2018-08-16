@@ -11,8 +11,10 @@
 import requests, json, time, datetime, csv, sys
 from pandas.io.json import json_normalize
 
-# path to data folder
-path = '../data/raw'
+# path to data folders
+pathIn = '../data/raw'
+pathOut = '../data/build'
+
 
 # define iteration run of this script for batch running
 # data collection iteration (batch api requests) < should probs turn this into a args script
@@ -26,7 +28,7 @@ site = 'math.stackexchange'
 max = time.time()
 min = 0
 
-with open(path+"/input.json", "r") as read_file:
+with open(pathIn+"/input.json", "r") as read_file:
     whole = json.load(read_file)
 
 qidList = []
@@ -78,9 +80,7 @@ while check:
                 for ans in question["answers"]:
                     if ans["answer_id"] in aids:
                         question_ext = question.copy()
-                        question_ext["answers"] = ""
-                        question_ext["body_markdown"] = ""
-                        question_ext["egbot_answer_body"] = ""#ans["body_markdown"]
+                        question_ext["egbot_answer_body"] = ans["body_markdown"]
                         question_ext["egbot_answer_id"] = ans["answer_id"]
                         for line in whole:
                             if line["aid"] == ans["answer_id"]:
@@ -118,12 +118,12 @@ print "---------------END---------------"
 print "Questions looked at: ", q_count, "Answers looked at: ", ans_count, ", Requests made: ", req_count
 
 # exporting dataset
-with open(path + '/output_mse_agg.json', 'w') as outfile:  
+with open(pathOut + '/output_mse_agg.json', 'w') as outfile:  
     json.dump(final, outfile)
-with open(path + '/output_mse_agg_es.txt', 'w') as f:
+with open(pathOut + '/output_mse_agg_es.txt', 'w') as f:
     for i in range(0,len(final)):
         print >> f, '{\"index\":{}}\n', final[i] 
 try:
-	json_normalize(final).to_csv(path + '/output_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), int(max)), sep=',', encoding='utf-8')
+	json_normalize(final).to_csv(pathOut + '/output_mse_aggregate_%d_%d_%d.csv' % (iteration, int(current), int(max)), sep=',', encoding='utf-8')
 except UnicodeEncodeError as e: print(e)
 
