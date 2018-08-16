@@ -1,5 +1,6 @@
 /bin/
 data/build
+data/results
 data-collection/data
 pom.bob.xml
 web/build

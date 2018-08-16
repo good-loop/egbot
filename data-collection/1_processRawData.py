@@ -2,45 +2,42 @@
 ## Description: Process raw dedoose data into build data                        ###
 ## Status: WIP															        ###
 ###################################################################################
-
-import sys, time
+import json, time, datetime, sys
 import pandas as pd
 
 # script settings
 iteration = 0 																				## UPDATE THIS: to improve data management
 
-# path to data folder
-path = '/home/irina/data'
+# path to data folders
+pathIn = '../data/raw'
+pathOut = '../data/build'
 
 if len(sys.argv) > 1:
     dataset = sys.argv[1]
-    datacol = raw_input("What is the name of the DATA column? (press enter if not known)\n") 
-    labelcol = raw_input("What is the name of the LABEL column? (press enter if not known) \n") 
+    datacol = raw_input('What is the name of the DATA column? (press enter if not known)\n') 
+    labelcol = raw_input('What is the name of the LABEL column? (press enter if not known) \n') 
 
     if datacol and labelcol:
         cols = [datacol,labelcol]
     else:
-        cols = None
+        #cols = None
+        dataset = pathIn + '/d127+labelled.json'
+        cols = ['egbot_answer_body','egbot_answer_id','egbot_answer_label'] 
 else:
-    dataset = path + '/dedoose.csv'
-    cols = ['Excerpt','Label'] #['Excerpt Copy','Meta Label']
-
+    dataset = pathIn + '/d127+labelled.json'
+    cols = ['egbot_answer_body','egbot_answer_id','egbot_answer_label'] 
 
 ## read data
+df = pd.DataFrame()
 try:
-    df = pd.read_csv(dataset, usecols=cols, encoding='utf-8')
+    with open(dataset, 'r') as read_file:
+        df = pd.read_json(read_file, encoding='utf-8')
+    df = df[cols]
 except IOError:
-    print "Fatal Error: Sorry, couldn't find " + dataset
+    print 'Fatal Error: Sorry, couldn\'t find ' + dataset
     sys.exit(0)
 
-#df = df[:20] # smaller version for testing purposes (because excel can't open files that are too big ;_;)
-
-df['ID'] = range(1,df.shape[0]+1) # id > 0, because of the principle of least astonishment 
-
-# exporting dataset to csv
-try:
-    outputfile = path + '/1_processRawData_%d_%d.csv' % (iteration, int(time.time()))
-    df.to_csv(outputfile, sep=',', index=False, encoding='utf-8')
-except UnicodeEncodeError as e: print(e)
-
-print outputfile
+# exporting dataset
+with open(pathOut + '/build_test.json', 'w') as outfile:  
+    json.dump(df.to_dict(), outfile)
+    #print outfile
