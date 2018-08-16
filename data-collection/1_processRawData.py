@@ -2,8 +2,7 @@
 ## Description: Process raw dedoose data into build data                        ###
 ## Status: WIP															        ###
 ###################################################################################
-import json, time, datetime, sys
-import pandas as pd
+import json, sys, pandas as pd
 
 # script settings
 iteration = 0 																				## UPDATE THIS: to improve data management
@@ -34,8 +33,9 @@ try:
         df = pd.read_json(read_file, encoding='utf-8')
     df = df[cols]
 except IOError:
-    print 'Fatal Error: Sorry, couldn\'t find ' + dataset
+    print 'Fatal Error: Sorry, couldn\'t find the dataset'
     sys.exit(0)
+
 
 # exporting dataset
 with open(pathOut + '/build_test.json', 'w') as outfile:  
