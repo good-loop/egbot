@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jetty.util.ajax.JSON;
@@ -24,6 +25,10 @@ import com.winterwell.utils.log.Log;
 /**
  * Convert .csv to json - 
  * ...Handling Python objects within the csv.
+ * 
+ * Assumes:
+ *  - You have .csv files of MathStackExchange (MSE) questions, as created by the python scripts.
+ *  - These are in data/raw
  * 
  * The main method will convert all .csv files in data/raw, putting outputs into data/build
  * 
@@ -89,13 +94,24 @@ public class Step1_JsonFromCSV {
 //		interpreter = new PythonInterpreter();
 //	}
 	
-	private static Object convertCell(String v) {
-		try {
+	/**
+	 * Detect single \s (not allowed in json ??except as unicode markers)
+	 * 
+	 * TODO json explicit unicode support??
+	 * TODO also detect at start/end string 
+	 */
+	static Pattern UNESCAPED_SLASH = Pattern.compile("[^\\\\]\\\\[^\\\\]");
+	
+	private static Object convertCell(String v0) {
+		String v = v0;
+		try {			
 			if (Utils.isBlank(v)) return null;
 			
 			// _Someone_ (well: Irina) stored Python and ad-hoc formatted strings instead of json
 			// convert some Python strings into standard json
-			if (v.contains("u'") || v.contains("u\"")) {
+			if (v.contains("u'") || v.contains("u\"")
+					|| UNESCAPED_SLASH.matcher(v).find()) 
+			{
 				v = convertPythonToJson(v);
 			}
 			Pattern array = Pattern.compile("^\\[\\w");
@@ -116,7 +132,7 @@ public class Step1_JsonFromCSV {
 			}
 			return v;
 		} catch(Exception ex) {
-			Log.e(v, ex);
+			Log.e(v+"\n\n"+v0, ex);
 			return "";
 		}
 	}
