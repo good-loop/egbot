@@ -71,12 +71,16 @@ public class Step2_CSVIntoES {
 	}
 
 	private static void bulkUploadToES(File f) throws IOException {
-		BulkRequestBuilder bulk = esjc.prepareBulk();
-		bulk.setDebug(false);
 		IESRouter router = Dep.get(IESRouter.class);
 		// use a streaming reader
 		JsonReader reader = new JsonReader(FileUtils.getReader(f));
+		// TODO and a streaming writer, for now we'll chunk
+		BulkRequestBuilder bulk = esjc.prepareBulk();
+		bulk.setDebug(false);
+//		bulk.openStream();
+		// go...
         reader.beginArray();
+        int cnt = 0;
         while (reader.hasNext()) {
         	SEQuestion q = gson.fromJson(reader, SEQuestion.class);
             String id = q.getId();
@@ -88,6 +92,16 @@ public class Step2_CSVIntoES {
             ESHttpRequest indexq = esjc.prepareIndex(path);
 			indexq.setBodyMap(q);
 			bulk.add(indexq); // but we are building this in memory!
+			cnt ++;
+			if (bulk.getActions().size() > 1000) {
+				Log.d(LOGTAG, "Save - cnt: "+cnt);
+		        // save chunk
+		        BulkResponse resp = bulk.get();
+		        Log.d(LOGTAG, "...Saved");
+		        // go again
+				bulk = esjc.prepareBulk();
+				bulk.setDebug(false);				
+			}
         }
         reader.endArray();
         reader.close();
@@ -100,5 +114,6 @@ public class Step2_CSVIntoES {
         	String json = resp.getJson();
         	System.out.println(json);
         }
+        Log.d(LOGTAG, "DONE: "+f);
 	}
 }

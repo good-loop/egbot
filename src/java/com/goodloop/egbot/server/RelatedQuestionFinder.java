@@ -17,7 +17,8 @@ public class RelatedQuestionFinder {
 	public List<SEQuestion> run(String q) {
 		IESRouter router = Dep.get(IESRouter.class);
 		ESHttpClient esc = Dep.get(ESHttpClient.class);
-		SearchRequestBuilder search = esc.prepareSearch(router.getPath(SEQuestion.class, null).index());
+		String index = router.getPath(SEQuestion.class, null).index();
+		SearchRequestBuilder search = esc.prepareSearch(index);
 		search.setDebug(true);
 		
 		// similarity

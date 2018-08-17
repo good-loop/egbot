@@ -103,7 +103,7 @@ public class Step1_JsonFromCSV {
 	static Pattern UNESCAPED_SLASH = Pattern.compile("[^\\\\]\\\\[^\\\\]");
 	
 	private static Object convertCell(String v0) {
-		String v = v0;
+		String v = v0+"";
 		try {			
 			if (Utils.isBlank(v)) return null;
 			
@@ -122,8 +122,12 @@ public class Step1_JsonFromCSV {
 			}
 			
 			if (v.startsWith("[") || v.startsWith("{")) {
-				Object vobj = JSON.parse(v);
-				return vobj;
+				// but not markdown [link title] format!
+				char c1 = v.charAt(1);
+				if (c1=='"' || c1=='[' || c1=='{') {
+					Object vobj = JSON.parse(v);
+					return vobj;
+				}
 			}
 			if (MathUtils.isNumber(v)) {
 				double nv = MathUtils.toNum(v);
@@ -137,7 +141,7 @@ public class Step1_JsonFromCSV {
 		}
 	}
 
-	private static String convertPythonToJson(String v) {
+	static String convertPythonToJson(String v) {
 //		interpreter.eval("\ndef to_json(d):\n	d;\n"); // json.dumps(ast.literal_eval(d))
 //		PyObject ToJson = interpreter.get("to_json");
 //		PyObject result = ToJson.__call__(new PyString(v));
@@ -149,14 +153,31 @@ public class Step1_JsonFromCSV {
 		vjson = vjson.replaceAll("False", "false");
 		vjson = vjson.replaceAll("True", "true");
 		
-		vjson = vjson.replaceAll("\\\\u", "\\\\\\\\u");
-		vjson = vjson.replaceAll("\\\\x", "\\\\\\\\x");
-//		vjson = StrUtils.replace(vjson, Pattern.compile("&#"), (sb, match) -> {
-//			System.out.println(match.group());
-//		});
-//		for(int i=0; i<v.length(); i++) {
-//			char c = v.charAt(i);
+		// unicode and escape \s
+		vjson = vjson.replaceAll("\\\\", "\\\\\\\\");
+//		vjson = vjson.replaceAll("\\\\u", "\\\\\\\\u");
+//		vjson = vjson.replaceAll("\\\\x", "\\\\\\\\x");
+		// stray \s
+		String vjson2 = StrUtils.replace(vjson, UNESCAPED_SLASH, (sb, m) -> {
+			String g = m.group();
+			sb.append(g.charAt(0));
+			sb.append("\\\\");
+			sb.append(g.charAt(g.length()-1));
+		});
+		
+		// for debug
+//		try {
+//			if (vjson2.startsWith("{") || vjson2.startsWith("[")) {
+//				// but not markdown [link title] format!
+//				char c1 = v.charAt(1);
+//				if (c1=='"' || c1=='[' || c1=='{') {
+//					Object vobj = JSON.parse(vjson2);
+//				}
+//			}
+//		} catch(Exception ex) {
+//			ex.printStackTrace();
 //		}
-		return vjson;
+		
+		return vjson2;
 	}
 }
