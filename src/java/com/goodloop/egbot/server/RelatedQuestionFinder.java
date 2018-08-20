@@ -22,7 +22,7 @@ public class RelatedQuestionFinder {
 		search.setDebug(true);
 		
 		// similarity
-		MoreLikeThisQueryBuilder esq = ESQueryBuilders.similar(q, Arrays.asList("body_markdown"));
+		MoreLikeThisQueryBuilder esq = ESQueryBuilders.similar(q, Arrays.asList("body_markdown","egbot_answer_body"));
 		esq.setMinTermFreq(1);
 		esq.setMinDocFreq(1);
 		search.setQuery(esq);

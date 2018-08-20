@@ -44,7 +44,11 @@ public class Step2_CSVIntoES {
 		buildDataDir.mkdirs();
 		for(File f : buildDataDir.listFiles()) {
 			if ( ! f.getName().endsWith(".json")) continue;
-			bulkUploadToES(f);
+			try {
+				bulkUploadToES(f);
+			} catch(Throwable ex) {
+				Log.e(ex);
+			}
 		}
 	}
 
