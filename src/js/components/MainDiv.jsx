@@ -70,15 +70,19 @@ class MainDiv extends Component {
 					</Card>		
 					<Card>
 						<div className="row">
-							<div className="col-md-6 question-area-wrapper">
+							<div className="col-md-4 question-area-wrapper">
 								<div className="input-group question-area">
-									<div><b>Try out EgBot!</b></div>
+									<div><b>Type in your question</b></div>
 									<QuestionForm />
 								</div>
-								<AnswerPanel />
 							</div>
-							<div className="col-md-6 play">
-								<img className="play-demo" src="https://i.imgur.com/ZR17qnE.png" />
+							<div className="col-md-4 play">
+								<div><b>See some similar Q&A's</b></div>
+								<SimilarAnswerPanel />
+							</div>
+							<div className="col-md-4 play">
+								<div><b>See what EgBot says</b></div>
+								<EgBotAnswerPanel />
 							</div>
 						</div>
 					</Card>	
@@ -104,23 +108,53 @@ const QuestionForm = () => {
 			<PropControl 
 				path={qpath} prop='q'
 				type="textarea" 
-				label="Type in your question"
+				label=""
+				rows="3"
 			/>
-			<Misc.SubmitButton path={qpath} url='/ask' responsePath={apath()}>Ask</Misc.SubmitButton>
+			<div className="btn-group" role="group" aria-label="">
+				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url='/ask' responsePath={apath()}>Ask</Misc.SubmitButton>
+			</div>
 		</div>
 	);
 };
 
 
-const AnswerPanel = () => {
+const SimilarAnswerPanel = () => {
 	let askResponse = DataStore.getValue(apath()) || {};
+
+	console.log(askResponse);
+
 	if ( ! askResponse.answer) {
-		return (<div className='well'>...</div>);
+		return (<div className='well'></div>);
 	}
+	let question = askResponse.answer; 
 	let answer = askResponse.answer; 
 	return (<div className='well'>
-		{answer.body_markdown || answer}
+		<div className='qa-question'>
+			<div><b>Question</b></div> 
+			<div>{askResponse.related[0].body_markdown}</div>
+		</div><br/>
+		<div className='qa-answer'>
+			<div><b>Answer</b></div>
+			<div>{answer.body_markdown || answer}</div>
+		</div><br/>
+		<div>
+			<button type="button" className="btn btn-default question-button">Next</button>
+		</div>
 	</div>);
+};
+
+const EgBotAnswerPanel = () => {
+	let askResponse = DataStore.getValue(apath()) || {};
+
+	console.log(askResponse);
+
+	if ( ! askResponse.answer) {
+		return (<div className='well'></div>);
+	}
+	let question = askResponse.answer; 
+	let answer = askResponse.answer; 
+	return (<div className='well'></div>);
 };
 
 export default MainDiv;
