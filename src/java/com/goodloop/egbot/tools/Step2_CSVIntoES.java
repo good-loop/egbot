@@ -85,27 +85,33 @@ public class Step2_CSVIntoES {
 		// go...
         reader.beginArray();
         int cnt = 0;
-        while (reader.hasNext()) {
-        	SEQuestion q = gson.fromJson(reader, SEQuestion.class);
-            String id = q.getId();
-            if (id==null) {
-            	Log.e(LOGTAG, "No Id?! "+q);
-            	continue;
-            }
-			ESPath path = router.getPath(SEQuestion.class, id);
-            ESHttpRequest indexq = esjc.prepareIndex(path);
-			indexq.setBodyMap(q);
-			bulk.add(indexq); // but we are building this in memory!
-			cnt ++;
-			if (bulk.getActions().size() > 1000) {
-				Log.d(LOGTAG, "Save - cnt: "+cnt);
-		        // save chunk
-		        BulkResponse resp = bulk.get();
-		        Log.d(LOGTAG, "...Saved");
-		        // go again
-				bulk = esjc.prepareBulk();
-				bulk.setDebug(false);				
-			}
+        int err = 0;
+		while (reader.hasNext()) {
+        	try {
+	        	SEQuestion q = gson.fromJson(reader, SEQuestion.class);
+	            String id = q.getId();
+	            if (id==null) {
+	            	Log.e(LOGTAG, "No Id?! "+q);
+	            	continue;
+	            }
+				ESPath path = router.getPath(SEQuestion.class, id);
+	            ESHttpRequest indexq = esjc.prepareIndex(path);
+				indexq.setBodyMap(q);
+				bulk.add(indexq); // but we are building this in memory!
+				cnt ++;
+				if (bulk.getActions().size() > 1000) {
+					Log.d(LOGTAG, "Save - cnt: "+cnt);
+			        // save chunk
+			        BulkResponse resp = bulk.get();
+			        Log.d(LOGTAG, "...Saved");
+			        // go again
+					bulk = esjc.prepareBulk();
+					bulk.setDebug(false);				
+				}
+        	} catch(Throwable ex) {
+        		Log.w(LOGTAG, ex);
+        		err++;
+        	}
         }
         reader.endArray();
         reader.close();
@@ -118,6 +124,6 @@ public class Step2_CSVIntoES {
         	String json = resp.getJson();
         	System.out.println(json);
         }
-        Log.d(LOGTAG, "DONE: "+f);
+        Log.d(LOGTAG, "DONE: "+f+" with errors: "+err);
 	}
 }
