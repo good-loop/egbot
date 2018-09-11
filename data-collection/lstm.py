@@ -18,33 +18,41 @@ from six.moves import cPickle
 import spacy
 nlp = spacy.load('en')
 
-data_dir = '/home/irina/winterwell/egbot/data'# data directory
+data_dir = '/home/irina/winterwell/egbot/data-collection/data'# data directory
 save_dir = 'save' # directory to store models
 seq_length = 30 # sequence length
 sequences_step = 1 #step to create sequences
 
-file_list = ["test-input"]
+file_list = ["101"]
 
 vocab_file = os.path.join(save_dir, "words_vocab.pkl")
 
 def create_wordlist(doc):
     wl = []
     for word in doc:
-        if word.text not in ("\n","\n\n"):
+        if word.text not in ("\n","\n\n",'\u2009','\xa0'):
             wl.append(word.text.lower())
     return wl
 
 wordlist = []
 for file_name in file_list:
-    input_file = os.path.join(data_dir, file_name + ".json")
+    input_file = os.path.join(data_dir, file_name + ".txt")
     #read data
-    df = pd.read_json(codecs.open(input_file, 'r', 'utf-8')).
-    data = df['egbot_answer_body'].values.tolist()
-    for ans in data:
-        #create sentences
-        doc = nlp(ans)
-        wl = create_wordlist(doc)
-        wordlist = wordlist + wl
+    with codecs.open(input_file, "r", encoding="utf-8") as f:
+        data = f.read()
+    #create sentences
+    doc = nlp(data)
+    wl = create_wordlist(doc)
+    wordlist = wordlist + wl
+    # input_file = os.path.join(data_dir, file_name + ".json")
+    # #read data
+    # df = pd.read_json(codecs.open(input_file, 'r', 'utf-8')).
+    # data = df['egbot_answer_body'].values.tolist()
+    # for ans in data:
+    #     #create sentences
+    #     doc = nlp(ans)
+    #     wl = create_wordlist(doc)
+    #     wordlist = wordlist + wl
 
 # count the number of words
 word_counts = collections.Counter(wordlist)
@@ -58,7 +66,7 @@ vocab = {x: i for i, x in enumerate(vocabulary_inv)}
 words = [x[0] for x in word_counts.most_common()]
 
 #size of the vocabulary
-vocab_size = len(words),'\u2009','\xa0
+vocab_size = len(words)
 print("vocab size: ", vocab_size)
 
 #save the words and vocabulary
@@ -142,7 +150,7 @@ def sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 #initiate sentences
-seed_sentences = "this is an example"
+seed_sentences = "In brief, to write a history, we must know more than mere facts."
 generated = ''
 sentence = []
 for i in range (seq_length):
