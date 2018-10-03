@@ -9,3 +9,4 @@ bob.log
 dependencies
 egbot.log
 web/style/*.css
+data-collection/*.txt
