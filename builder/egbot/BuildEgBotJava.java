@@ -16,10 +16,11 @@ public class BuildEgBotJava extends BuildTask {
 	@Override
 	public Collection<? extends BuildTask> getDependencies() {
 		return Arrays.asList(
-			new MavenDependencyTask()
-				.addDependency("org.python","jython-standalone", "2.7.1")
-//				.setForceUpdate(true)
-				.setIncSrc(true)			
+				// Jython would be nice -- if we can figure out the setup
+//			new MavenDependencyTask()
+//				.addDependency("org.python","jython-standalone", "2.7.1")
+////				.setForceUpdate(true)
+//				.setIncSrc(true)			
 				);
 	}
 	

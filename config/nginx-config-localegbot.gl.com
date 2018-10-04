@@ -2,10 +2,10 @@
 server {
 	listen   80; ## listen for ipv4; this line is default and implied
 
-	root /home/daniel/winterwell/sogive-app/web;
+	root /home/daniel/winterwell/egbot/web;
 	index index.html;
 
-	server_name local.sogive.org;
+	server_name localegbot.good-loop.com;
 
 	location / {
 			try_files $uri $uri/ @backend;
@@ -14,7 +14,7 @@ server {
 	}
 
 	location @backend {
-			proxy_pass              http://localhost:8282;
+			proxy_pass              http://localhost:8641;
 			proxy_set_header        X-Real-IP $remote_addr;
 			proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header        Host $http_host;

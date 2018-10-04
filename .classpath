@@ -13,5 +13,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.webappbase"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="dependencies/libtensorflow_jni.jar"/>
+	<classpathentry kind="lib" path="dependencies/libtensorflow.jar"/>
+	<classpathentry kind="lib" path="dependencies/tensorflow.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

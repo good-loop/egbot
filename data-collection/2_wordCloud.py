@@ -19,7 +19,7 @@ pathOut = '../data/results'
 # tf-idf: statistical measure to evaluate the importance of a word to a document in 
 #         a collection, the importance increases proportionally to the number of times
 #         a word appears in the document but is offset by the frequency of the word in the corpus
-mode = 'default' #'tf-idf'
+mode = 'tf-idf'#'default'#
 
 #========== reading data 
 with open(pathIn+'/build_test.json', 'r') as read_file:
@@ -27,7 +27,9 @@ with open(pathIn+'/build_test.json', 'r') as read_file:
 
 egbotdo = dict()
 egbotdont = dict()
-
+appDoAndDont = dict()
+totalWordsDo = 0
+totalWordsDont = 0
 docount = 0
 dontcount = 0
 # remove stopwords => nltk 
@@ -46,28 +48,31 @@ for index, row in df.iterrows():
         dontcount += 1
 
     for word in words:
+        if word in appDoAndDont:
+            appDoAndDont[word] += 1
+        else:
+            appDoAndDont[word] = 1  
         if label in "TRUE":
+            totalWordsDo += 1
             if word in egbotdo:
                 egbotdo[word] += 1
             else:
                 egbotdo[word] = 1         
         else:
+            totalWordsDont += 1
             if word in egbotdont:
                 egbotdont[word] += 1
             else:
                 egbotdont[word] = 1
 
-# optional inverse document freq
+# optional tf-idf
 if mode in 'tf-idf':
     appdo = dict()
     appdont = dict()
-    totalWordsDo = 0
-    totalWordsDont = 0
 
     for index, row in df.iterrows():
         words = row['egbot_answer_body']
         for word in egbotdo.keys():
-            totalWordsDo += 1
             if word in words:
                 if word in appdo:
                     appdo[word] += 1
@@ -75,24 +80,24 @@ if mode in 'tf-idf':
                     appdo[word] = 1
 
         for word in egbotdont.keys():
-            totalWordsDont += 1
             if word in words:
                 if word in appdont:
                     appdont[word] += 1
                 else:
                     appdont[word] = 1
-                
+            
     for word in egbotdo.keys():
-        tf = egbotdo[word]/float(totalWordsDo)
-        idf = np.log(df.shape[0]/(appdo[word]+appdont[word]))
-        #egbotdo[word] = tf # relative term freq
-        egbotdo[word] = int(tf*idf*100000) # multiplication by 100000 and conversion is required if we want word cloud to be able to display it 
 
+        tf = egbotdo[word]
+        idf = np.log((totalWordsDo+totalWordsDont)/(appDoAndDont[word]))
+        #egbotdo[word] = tf # relative term freq
+        egbotdo[word] = int(tf*idf) # conversion is required if we want word cloud to be able to display it      
+            
     for word in egbotdont.keys():
-        tf = egbotdont[word]/float(totalWordsDont)
-        idf = np.log(df.shape[0]/(appdo[word]+appdont[word]))
+        tf = egbotdont[word]
+        idf = np.log((totalWordsDo+totalWordsDont)/(appDoAndDont[word]))
         #egbotdont[word] = tf # relative term freq
-        egbotdont[word] = int(tf*idf*100000) # multiplication by 100000 and conversion is required if we want word cloud to be able to display it 
+        egbotdont[word] = int(tf*idf) # conversion is required if we want word cloud to be able to display it      
 
 # sort them based on frequency count, descending
 freq_do = sorted(egbotdo.items(), key=operator.itemgetter(1), reverse=True)
