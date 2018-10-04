@@ -1,0 +1,52 @@
+MultinomialNB
+
+Best score: 0.764
+Best parameters set:
+        clf__alpha: 0.1
+        clf__fit_prior: True
+        tfidf__norm: 'l2'
+        tfidf__smooth_idf: True
+        tfidf__sublinear_tf: True
+        tfidf__use_idf: False
+        vect__max_df: 1.0
+        vect__max_features: None
+        vect__ngram_range: (1, 2) 
+
+Best score: 0.772
+Best parameters set:
+        clf__alpha: 0.05
+        clf__fit_prior: True
+        tfidf__norm: 'l1'
+        tfidf__smooth_idf: True
+        tfidf__sublinear_tf: True
+        tfidf__use_idf: False
+        vect__max_df: 0.5
+        vect__max_features: None
+        vect__ngram_range: (1, 1)
+
+Best score: 0.772
+Best parameters set:
+        clf__alpha: 0.05
+        clf__fit_prior: True
+        tfidf__norm: 'l1'
+        tfidf__sublinear_tf: True
+        tfidf__use_idf: False
+        vect__max_df: 0.5
+        vect__ngram_range: (1, 1)
+
+KNNClassifier
+
+Best score: 0.795
+Best parameters set:
+	clf__algorithm: 'ball_tree'
+	clf__n_neighbors: 7
+	clf__p: 1
+	clf__weights: 'distance'
+	tfidf__norm: 'l1'
+	tfidf__smooth_idf: True
+	tfidf__sublinear_tf: True
+	tfidf__use_idf: False
+	vect__max_df: 1.0
+	vect__max_features: 10000
+	vect__ngram_range: (1, 3)
+
