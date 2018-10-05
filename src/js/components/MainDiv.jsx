@@ -124,19 +124,23 @@ const SimilarAnswerPanel = () => {
 
 	console.log(askResponse);
 
-	if ( ! askResponse.answer) {
+	if ( ! askResponse.relatedAs) {
 		return (<div className='well'></div>);
 	}
-	let question = askResponse.answer; 
-	let answer = askResponse.answer; 
+	let relatedQs = askResponse.relatedQs[0].body_markdown; 
+	console.log(relatedQs);
+
+	let relatedAs = askResponse.relatedAs[0]; 
+	console.log(relatedAs);
+
 	return (<div className='well'>
 		<div className='qa-question'>
 			<div><b>Question</b></div> 
-			<div>{askResponse.related[0].body_markdown}</div>
+			<div>{relatedQs}</div>
 		</div><br/>
 		<div className='qa-answer'>
 			<div><b>Answer</b></div>
-			<div>{answer.body_markdown || answer}</div>
+			<div>{relatedAs.body_markdown || relatedAs}</div>
 		</div><br/>
 		<div>
 			<button type="button" className="btn btn-default question-button">Next</button>
@@ -147,14 +151,15 @@ const SimilarAnswerPanel = () => {
 const EgBotAnswerPanel = () => {
 	let askResponse = DataStore.getValue(apath()) || {};
 
-	console.log(askResponse);
-
-	if ( ! askResponse.answer) {
+	if ( ! askResponse.generatedAnswer) {
 		return (<div className='well'></div>);
 	}
-	let question = askResponse.answer; 
-	let answer = askResponse.answer; 
-	return (<div className='well'></div>);
+	let generatedAnswer = askResponse.generatedAnswer; 
+	return (<div className='well'>
+		<div className='qa-answer'>
+			<div>{generatedAnswer || 'Sorry, I don\'t know'}</div>
+		</div>
+	</div>);
 };
 
 export default MainDiv;
