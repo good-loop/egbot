@@ -1,5 +1,5 @@
 
-# script that loads trained model and vocabulary and generates a sentence based on a seed sentence
+# script that loads trained model and vocabulary and generates a sentence based on a seed sentence (adapted for integration with JEP)
 # @author irina @zero-point
 
 # import libraries
@@ -12,20 +12,20 @@ import numpy as np
 import argparse
 import os
 
-file_list = ['math-sm'];
-save_dir = 'data/models/' + file_list[0] # directory to store models
-seq_length = 30 # sequence length
+modelVersion = 'v2'
+load_dir = 'data/models/final/' + modelVersion # directory where models are stored
+seq_length = 30 # sequence length (depends on how the model was trained)
 sequences_step = 1 #step to create sequences
 
 # load vocabulary
-with open(os.path.join(save_dir, "words_vocab.pkl"),'rb') as f:
+with open(os.path.join(load_dir, "words_vocab.pkl"),'rb') as f:
     (words, vocab, vocabulary_inv) = pickle.load(f)
 
 # vocabulary size
 vocab_size = len(words)
 
 # load the model
-model = load_model(save_dir + "/" + 'gen_sentences_lstm_model.final.hdf5')
+model = load_model(load_dir + "/" + 'gen_sentences_lstm_model.final.hdf5')
 
 
 # helper function to sample an index from a probability array

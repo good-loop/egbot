@@ -1,3 +1,6 @@
+# script that loads trained model and vocabulary and generates a sentence based on a seed sentence
+# @author irina @zero-point
+
 from __future__ import print_function
 from keras.models import load_model
 import pickle
@@ -21,10 +24,13 @@ args = parser.parse_args()
 if args.model:
     save_dir = args.model
 else:
-    file_list = ['math-sm'];
-    save_dir = '../data/models/' + file_list[0] # directory to store models
+    modelVersion = 'v2'
+    save_dir = 'data/models/final/' + modelVersion # directory where models are stored
 
-seq_length = args.answer_size # sequence length
+if args.answer_size:
+    seq_length = args.answer_size # sequence length
+else:
+    seq_length = 30 # sequence length (depends on how the model was trained)
 sequences_step = 1 #step to create sequences
 
 # load vocabulary
@@ -39,8 +45,8 @@ vocab_size = len(words)
 print("loading model...")
 model = load_model(save_dir + "/" + 'gen_sentences_lstm_model.final.hdf5')
 
+# helper function to sample an index from a probability array
 def sample(preds, temperature=1.0):
-    # helper function to sample an index from a probability array
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
@@ -53,7 +59,7 @@ if args.seed:
     seed_sentences = args.seed
 else:
     seed_sentences = '' #"let us suppose that we toss up a penny a great many times the results of the successive throws may be conceived to form a "
-#generated = ''
+
 sentence = []
 for i in range (seq_length):
     sentence.append("a")
@@ -96,4 +102,3 @@ for i in range(seq_length):
 
 #print(generatedStr)
 print('EgBot came up with this: ' + ' '.join(generated))
-
