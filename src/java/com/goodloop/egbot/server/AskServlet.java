@@ -13,6 +13,7 @@ import com.winterwell.es.fail.ESException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.web.ajax.JSend;
 import com.winterwell.web.ajax.JThing;
@@ -39,44 +40,116 @@ public class AskServlet implements IServlet {
 		jsend.send(state);
 	}
 
+	/**
+	 * search ES and filter for questions that have accepted answers
+	 * @param q 
+	 * @return answered questions
+	 */
 	private List findRelatedQuestion(String q) {
 		// By Analogy to previous Q
 		// Find related Qs
-		List relatedQs = new RelatedQuestionFinder().run(q);
+		List relatedQsES = new RelatedQuestionFinder().run(q);
+		List relatedQs = new ArrayList();
 		
-		findRelatedAnswer(relatedQs);
+		// possibly redundant code
+		for (int i=0; i<relatedQsES.size(); i++) {
+			if (relatedQsES!=null &&  ! relatedQsES.isEmpty()) {
+				Object rq = relatedQsES.get(i);
+				double noOfAnswers = SimpleJson.get(rq, "answer_count");
+				for (int j=0; j<noOfAnswers; j++) {
+					Object answer = SimpleJson.get(rq, "answers", j);	
+					boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
+					if (accepted) {
+						relatedQs.add(rq);
+					}
+				}
+			}
+		} 
+		
 		return relatedQs;
 	}
 
+	/**
+	 * filter for answers that were accepted
+	 * @param q 
+	 * @return list of answers
+	 */
 	private  List findRelatedAnswer(List relatedQs) {
 		// TODO adapt related Q into an answer
 		List relatedAs = new ArrayList();
 		
+		// possibly redundant code
 		for (int i=0; i<relatedQs.size(); i++) {
 			if (relatedQs!=null &&  ! relatedQs.isEmpty()) {
 				Object rq = relatedQs.get(i);
-				Object answer = SimpleJson.get(rq, "answers", 0);
-				if (answer!=null ) {
-					relatedAs.add(answer);
+				double noOfAnswers = SimpleJson.get(rq, "answer_count");
+				for (int j=0; j<noOfAnswers; j++) {
+					Object answer = SimpleJson.get(rq, "answers", j);	
+					boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
+					if (accepted) {
+						relatedAs.add(answer);
+					}
 				}
 			}
 		}
 		return relatedAs;
 	}
-
-	private Object generateAnswer(String q) throws UnsupportedEncodingException {
-		Object answer = "";
-		String pathToScript = System.getProperty("user.dir") 
-				+ "/data-collection/lstmTestModelJepVersion.py";
-		try {
-			Jep jep = new Jep(new JepConfig().addSharedModules("tensorflow"));
-			jep.runScript(pathToScript);
-			answer = jep.getValue("generateResults('" + q + "')");
-			jep.close();
-		} catch (JepException e) {
-			e.printStackTrace();
+	
+	static JEPActor jepActor = new JEPActor();
+	
+	private synchronized Object generateAnswer(String q) throws Exception {
+		JEPCall msg = new JEPCall("generateResults('" + q + "')");
+		jepActor.send(msg);
+		while(msg.output==null) {
+			Utils.sleep(10);
 		}
-		
-		return answer;
+		return msg.output;
 	}
 }
+
+
+class JEPActor extends Actor<JEPCall> {
+
+	@Override
+	protected void shutdown() throws Exception {
+		jep.close();
+	}
+	
+	private static Jep jep;
+
+	private Jep initJEP() throws JepException {
+		if (jep != null) return jep;
+		String pathToScript = System.getProperty("user.dir") 
+				+ "/data-collection/lstmTestModelJepVersion.py";
+		jep = new Jep(new JepConfig().addSharedModules("tensorflow"));
+		jep.runScript(pathToScript);
+		return jep;
+	}
+
+	@Override
+	protected void consume(JEPCall msg, Actor from) throws Exception {
+		jep = initJEP();
+		
+		Object answer = jep.getValue(msg.call);
+		msg.output = answer;
+	}
+	
+	
+}
+
+class JEPCall {
+	
+	@Override
+	public String toString() {
+		return "JEPCall [call=" + call + ", output=" + output + "]";
+	}
+
+	final String call;
+
+	public JEPCall(String string) {
+		call = string;
+	}
+
+	volatile Object output;
+}
+

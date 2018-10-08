@@ -25,6 +25,8 @@ public class RelatedQuestionFinder {
 		MoreLikeThisQueryBuilder esq = ESQueryBuilders.similar(q, Arrays.asList("body_markdown","egbot_answer_body"));
 		esq.setMinTermFreq(1);
 		esq.setMinDocFreq(1);
+		Object hasans = ESQueryBuilders.existsQuery("answers");
+		ESQueryBuilders.must(esq, hasans );
 		search.setQuery(esq);
 		
 		List<SEQuestion> qs = search.get().getSearchResults(SEQuestion.class);
