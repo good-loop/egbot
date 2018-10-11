@@ -23,6 +23,12 @@ import BS3 from '../base/components/BS3';
 // Pages
 import BasicAccountPage from '../base/components/AccountPageWidgets';
 import E404Page from '../base/components/E404Page';
+import TestPage from './EgbotTestPage';
+
+import ReactMarkdown from 'react-markdown';
+//import MathJax from '@matejmazur/react-mathjax';
+//import MathJax from 'react-mathjax';
+import Script from 'react-load-script';
 
 class MainDiv extends Component {
 
@@ -56,6 +62,18 @@ class MainDiv extends Component {
 		if (window.onerror) window.onerror("Caught error", null, null, null, error);
 	}
 
+	handleScriptCreate() {
+		this.setState({ scriptLoaded: false });
+	}
+
+	handleScriptError() {
+		this.setState({ scriptError: true });
+	}
+
+	handleScriptLoad() {
+		this.setState({ scriptLoaded: true });
+	}   
+	
 	render() {
 		return (
 			<div className="container avoid-navbar">
@@ -118,20 +136,27 @@ const QuestionForm = () => {
 	);
 };
 
+let _handleClick = (carouselPosition, carouselTotal) => {
+	// find the next q&a pair to show, starting from the beginning when reaching the end
+	carouselPosition = (carouselPosition+1)%carouselTotal;
+	DataStore.setValue(['widget', 'similarAnswerPanel', 'carouselPosition'], carouselPosition);
+};
 
 const SimilarAnswerPanel = () => {
+	let test = "Consider $$N$$ as the set of ... ";
+
 	let askResponse = DataStore.getValue(apath()) || {};
-
 	console.log(askResponse);
-
 	if ( ! askResponse.relatedAs) {
-		return (<div className='well'></div>);
+		return (<div className='well'></div>
+		);
 	}
-	let relatedQs = askResponse.relatedQs[0].body_markdown; 
-	console.log(relatedQs);
 
-	let relatedAs = askResponse.relatedAs[0]; 
-	console.log(relatedAs);
+	//MathJax.Hub.Queue(["Typeset",MathJax.Hub,"MathExample"]);
+	let carouselTotal = askResponse.relatedQs.length;
+	let carouselPosition = DataStore.getValue(['widget', 'similarAnswerPanel', 'carouselPosition']) || 0; // goes through the q&a pairs to display one at a time
+	let relatedQs = askResponse.relatedQs[carouselPosition].body_markdown; 
+	let relatedAs = askResponse.relatedAs[carouselPosition]; 
 
 	return (<div className='well'>
 		<div className='qa-question'>
@@ -143,8 +168,14 @@ const SimilarAnswerPanel = () => {
 			<div>{relatedAs.body_markdown || relatedAs}</div>
 		</div><br/>
 		<div>
-			<button type="button" className="btn btn-default question-button">Next</button>
+			<button type="button" className="btn btn-default question-button" onClick={() => _handleClick(carouselPosition, carouselTotal)}>Next</button>
 		</div>
+		{/* <Script
+			url="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"
+			onCreate={this.handleScriptCreate.bind(this)}
+			onError={this.handleScriptError.bind(this)}
+			onLoad={this.handleScriptLoad.bind(this)}
+		/> */}
 	</div>);
 };
 
