@@ -51,7 +51,8 @@ public class MarkovModel {
 		}
 		wmc = new WordMarkovChain<>();
 		for (int fileNumber=1; fileNumber<=8; fileNumber++) {
-			File file = new File("data/build/MathStackExchangeAPI_Part_" + fileNumber + ".json");
+			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
+			File file = new File("data/build/slim/MathStackExchangeAPI_Part_" + fileNumber + ".json");
 	
 			Gson gson = new Gson();
 			JsonReader jr = new JsonReader(FileUtils.getReader(file));
@@ -74,7 +75,7 @@ public class MarkovModel {
 						wmc.train1(prev, word, 1);
 					}
 					c++;
-					if (c % 1000 == 0) System.out.println(c+"...");
+					if (c % 1000 == 0) System.out.println(c+" map size"+wmc.getNumStates()+"...");
 				}			
 			} 
 		}
