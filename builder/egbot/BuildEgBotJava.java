@@ -16,6 +16,8 @@ public class BuildEgBotJava extends BuildTask {
 	protected void doTask() throws Exception {
 		MavenDependencyTask mdt = new MavenDependencyTask();
 		mdt.addDependency("black.ninia","jep","3.8.2");
+		mdt.addDependency("org.tensorflow", "tensorflow", "1.11.0");
+		mdt.addDependency("org.deeplearning4j","deeplearning4j-core","1.0.0-beta2");
 		mdt.run();
 	}
 }

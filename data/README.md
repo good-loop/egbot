@@ -7,6 +7,7 @@ build: json MSE data
 2 versions
 MathStackExchangeAPI_Part_1_TimeStamps_1512760268_1535031491.json is the more recent
 Use these!
+Download from https://zenodo.org/communities/egbot?page=1&size=20
 
 models: neural net models, as made by python tensorflow scripts
 

@@ -1,5 +1,7 @@
 package com.goodloop.egbot;
 
+import java.io.File;
+
 import com.winterwell.es.ESPath;
 import com.winterwell.es.IESRouter;
 import com.winterwell.utils.io.Option;
@@ -21,4 +23,6 @@ public class EgbotConfig implements IESRouter, ISiteConfig {
 		return port;
 	}
 
+	public File srcDataDir = new File("data/build"); 
+	
 }

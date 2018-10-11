@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="builder"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/elasticsearch-java-client"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.datalog"/>
@@ -12,10 +11,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.webappbase"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="dependencies/libtensorflow_jni.jar"/>
-	<classpathentry kind="lib" path="dependencies/libtensorflow.jar"/>
-	<classpathentry kind="lib" path="dependencies/tensorflow.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.nlp"/>
 	<classpathentry kind="lib" path="dependencies/annotations.jar"/>
 	<classpathentry kind="lib" path="dependencies/artoolkitplus.jar"/>
 	<classpathentry kind="lib" path="dependencies/cloning.jar"/>
@@ -66,6 +62,7 @@
 	<classpathentry kind="lib" path="dependencies/jai-imageio-core.jar"/>
 	<classpathentry kind="lib" path="dependencies/javacpp.jar"/>
 	<classpathentry kind="lib" path="dependencies/javacv.jar"/>
+	<classpathentry kind="lib" path="dependencies/jep.jar"/>
 	<classpathentry kind="lib" path="dependencies/jna-platform.jar"/>
 	<classpathentry kind="lib" path="dependencies/jna.jar"/>
 	<classpathentry kind="lib" path="dependencies/joda-time.jar"/>
@@ -86,55 +83,18 @@
 	<classpathentry kind="lib" path="dependencies/libfreenect.jar"/>
 	<classpathentry kind="lib" path="dependencies/libfreenect2.jar"/>
 	<classpathentry kind="lib" path="dependencies/librealsense.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-dnn-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-dnn-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-dnn-platform.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-dnn-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-dnn.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-linux-x86.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-platform.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl-windows-x86.jar"/>
-	<classpathentry kind="lib" path="dependencies/mkl.jar"/>
+	<classpathentry kind="lib" path="dependencies/libtensorflow_jni.jar"/>
+	<classpathentry kind="lib" path="dependencies/libtensorflow.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-api.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-base64.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-buffer.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-common.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-context.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-jackson.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-android-arm.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-android-arm64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-android-x86.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-native-api.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-ios-arm64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-ios-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-platform.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/nd4j-native.jar"/>
 	<classpathentry kind="lib" path="dependencies/nearestneighbor-core.jar"/>
 	<classpathentry kind="lib" path="dependencies/neoitertools.jar"/>
 	<classpathentry kind="lib" path="dependencies/objenesis.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-android-arm.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-android-arm64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-android-x86.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-ios-arm64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-ios-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-linux-x86.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-platform.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas-windows-x86.jar"/>
-	<classpathentry kind="lib" path="dependencies/openblas.jar"/>
 	<classpathentry kind="lib" path="dependencies/opencsv.jar"/>
 	<classpathentry kind="lib" path="dependencies/opencv-android-arm.jar"/>
 	<classpathentry kind="lib" path="dependencies/opencv-android-arm64.jar"/>
@@ -159,10 +119,11 @@
 	<classpathentry kind="lib" path="dependencies/stax2-api.jar"/>
 	<classpathentry kind="lib" path="dependencies/stream.jar"/>
 	<classpathentry kind="lib" path="dependencies/t-digest.jar"/>
+	<classpathentry kind="lib" path="dependencies/tensorflow.jar"/>
 	<classpathentry kind="lib" path="dependencies/tesseract.jar"/>
 	<classpathentry kind="lib" path="dependencies/threetenbp.jar"/>
 	<classpathentry kind="lib" path="dependencies/videoinput.jar"/>
-	<classpathentry kind="lib" path="dependencies/jep.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.nlp"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/code.sens"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
