@@ -25,7 +25,7 @@ import BasicAccountPage from '../base/components/AccountPageWidgets';
 import E404Page from '../base/components/E404Page';
 import TestPage from './EgbotTestPage';
 
-import ReactMarkdown from 'react-markdown';
+import MDText from '../base/components/MDText';
 //import MathJax from '@matejmazur/react-mathjax';
 //import MathJax from 'react-mathjax';
 import Script from 'react-load-script';
@@ -161,11 +161,11 @@ const SimilarAnswerPanel = () => {
 	return (<div className='well'>
 		<div className='qa-question'>
 			<div><b>Question</b></div> 
-			<div>{relatedQs}</div>
+			<div><MDText source={relatedQs} /></div>
 		</div><br/>
 		<div className='qa-answer'>
 			<div><b>Answer</b></div>
-			<div>{relatedAs.body_markdown || relatedAs}</div>
+			<div><MDText source={relatedAs.body_markdown || relatedAs} /></div>
 		</div><br/>
 		<div>
 			<button type="button" className="btn btn-default question-button" onClick={() => _handleClick(carouselPosition, carouselTotal)}>Next</button>
