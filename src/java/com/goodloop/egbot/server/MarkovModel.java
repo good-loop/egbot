@@ -44,6 +44,7 @@ public class MarkovModel {
 
 	public MarkovModel() {
 		sig = new String[] {"w-1", "w-2"};
+		// FIXME WWModel has its own desc which clashes with this and causes a bug :(
 		desc = new Desc<>("MSE-all", newModel().getClass())
 				.setTag("egbot");
 		desc.put("sig", Printer.toString(sig));
