@@ -64,6 +64,8 @@ public class MarkovModel {
 			return;
 		}
 		wmc = newModel();
+		System.out.println(wmc);
+		
 		
 		EgbotConfig config = new EgbotConfig();
 		
@@ -122,7 +124,7 @@ public class MarkovModel {
 	}
 	
 	private ITrainable.Supervised<Cntxt, Tkn> newModel() {
-		if (true) {
+		if (false) {
 			// a simple markov model -- will eat memory!
 			return new WordMarkovChain<>();
 		}
