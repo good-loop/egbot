@@ -21,9 +21,10 @@ https://zenodo.org/communities/egbot?page=1&size=20
 ## Running Egbot Application Locally
 
 ### Requirements
-java 1.8.0_181
-jep 3.8.2                  
-TODO: add rest of application requirements
+python 3.5
+pip3 8.1
+java 1.8
+(install required python packages listed in requirements.txt using pip)
 
 ## Training Models (Optional, recommended using default trained model found in data/models/final/v1)
 
@@ -32,5 +33,5 @@ python 3.5
 pip 18.0                   
 cuda 8.0
 cudnn
-(install required python packages listed in data-collection/train-lstm-requirements.txt)
+(install required python packages listed in data-collection/train-lstm-requirements.txt using pip)
 
