@@ -12,10 +12,9 @@ You are advised to get some snapshot data, rather than run these yourself.
 
 Data should then be kept in the `data\raw` folder.
 
-In G-Drive: "EgBot Data":
+In G-Drive: "EgBot Data" (which has manually labeled data):
 https://drive.google.com/drive/u/0/folders/1K6US9Zy3WCJN0HKlCOejoT6cTnwBAlz-
 
-We also have a Zenodo folder
+We also have a Zenodo folder (which has the latest MathStackExchange dataset)
 https://zenodo.org/communities/egbot?page=1&size=20
-But this is not as complete
 
