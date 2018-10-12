@@ -15,6 +15,7 @@ import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.datalog.Rate;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
+import com.winterwell.depot.IHasDesc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
@@ -54,7 +55,11 @@ public class MarkovModel {
 	}
 	
 	void save() {
-		Depot.getDefault().put(desc, wmc);
+		// TODO: check with DW whether the code below makes sense
+		// had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
+		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
+		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
+		Depot.getDefault().put(((IHasDesc) wmc).getDesc(), wmc);
 	}
 	
 	public void train () throws IOException {
@@ -64,9 +69,7 @@ public class MarkovModel {
 			return;
 		}
 		wmc = newModel();
-		System.out.println(wmc);
-		
-		
+		System.out.println(wmc);		
 		EgbotConfig config = new EgbotConfig();
 		
 		List<File> files;
