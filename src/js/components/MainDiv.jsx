@@ -109,6 +109,14 @@ const apath = () => {
 };
 
 const QuestionForm = () => {
+
+	const onEnterPress = (e) => {
+		if(e.keyCode === 13 && e.shiftKey === false) {
+			e.preventDefault();
+			document.querySelector(".question-button").click();
+		}
+	};
+
 	return (
 		<div>
 			<PropControl 
@@ -116,6 +124,7 @@ const QuestionForm = () => {
 				type="textarea" 
 				label=""
 				rows="3"
+				onKeyDown={onEnterPress}
 			/>
 			<div className="btn-group" role="group" aria-label="">
 				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url='/ask' responsePath={apath()}>Ask</Misc.SubmitButton>
