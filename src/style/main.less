@@ -1,4 +1,6 @@
 @import "../js/base/style/main-base.less";
+@import "./MathWidget.less";
+
 @base-color: black;
 @text-color: white;
 @text-highlight: black;
@@ -54,10 +56,11 @@
 .well {
 	min-height: 80px;
 	margin-top: 10px;
+}
 
-	.qa-question, .qa-answer img {
-		width: 15vw;
-	}
+//handles images in posts (but careful around MathJax)
+.qa-question img, .qa-answer img {
+	width: 15vw;
 }
 
 textarea {

@@ -1,6 +1,7 @@
 // TODO: change it to lose only carriage returns for the math children
 
 // gets rid of annoying carriage returns brought by MDText
-.MathWidget div, .MathWidget p {
+// last child is useful to avoid removing unecessarily
+.MathWidget div, .MathWidget p:nth-last-child(1) {
     display: inline;
 }
