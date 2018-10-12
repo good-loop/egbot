@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
 import SJTest, {assert,assMatch} from 'sjtest';
-import MathJax from '@matejmazur/react-mathjax';
+const MathJax = require('react-mathjax2');
 import MDText from '../base/components/MDText';
 
 const mathSplitter = (text) => {
@@ -29,6 +28,7 @@ const mathSplitter = (text) => {
 window.mathSplitter = mathSplitter;
 
 const MathWidget = ({children}) => {
+	console.log(MathJax);
 	let bits = mathSplitter(children);
 	// TODO use this once weve sorted out the errors
 	let res = bits.map( (e,i) => e ? (i%2===0 ? <MDText source={e} key={i} /> : <MathJax.Context key={i}><MathJax.Node inline key={i}>{e}</MathJax.Node></MathJax.Context>) : null );

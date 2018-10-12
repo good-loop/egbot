@@ -4,10 +4,9 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
-
 import SJTest, {assert,assMatch} from 'sjtest';
 import Login from 'you-again';
-import MathJax from '@matejmazur/react-mathjax';
+const MathJax = require('react-mathjax2');
 import MDText from '../base/components/MDText';
 
 const mathSplitter = (text) => {
