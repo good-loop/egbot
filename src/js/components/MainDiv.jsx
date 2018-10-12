@@ -25,10 +25,7 @@ import BasicAccountPage from '../base/components/AccountPageWidgets';
 import E404Page from '../base/components/E404Page';
 import TestPage from './EgbotTestPage';
 
-import MDText from '../base/components/MDText';
-//import MathJax from '@matejmazur/react-mathjax';
-//import MathJax from 'react-mathjax';
-import Script from 'react-load-script';
+import MathWidget from './MathWidget';
 
 class MainDiv extends Component {
 
@@ -62,19 +59,10 @@ class MainDiv extends Component {
 		if (window.onerror) window.onerror("Caught error", null, null, null, error);
 	}
 
-	handleScriptCreate() {
-		this.setState({ scriptLoaded: false });
-	}
-
-	handleScriptError() {
-		this.setState({ scriptError: true });
-	}
-
-	handleScriptLoad() {
-		this.setState({ scriptLoaded: true });
-	}   
-	
 	render() {
+		if ((""+window.location).indexOf("test") !== -1) {
+			return <TestPage />;
+		}	
 		return (
 			<div className="container avoid-navbar">
 				<div className="page MyPage">
@@ -143,7 +131,6 @@ let _handleClick = (carouselPosition, carouselTotal) => {
 };
 
 const SimilarAnswerPanel = () => {
-	let test = "Consider $$N$$ as the set of ... ";
 
 	let askResponse = DataStore.getValue(apath()) || {};
 	console.log(askResponse);
@@ -161,21 +148,15 @@ const SimilarAnswerPanel = () => {
 	return (<div className='well'>
 		<div className='qa-question'>
 			<div><b>Question</b></div> 
-			<div><MDText source={relatedQs} /></div>
+			<div><MathWidget>{relatedQs}</MathWidget></div>
 		</div><br/>
 		<div className='qa-answer'>
 			<div><b>Answer</b></div>
-			<div><MDText source={relatedAs.body_markdown || relatedAs} /></div>
+			<div><MathWidget>{relatedAs.body_markdown || relatedAs}</MathWidget>></div>
 		</div><br/>
 		<div>
 			<button type="button" className="btn btn-default question-button" onClick={() => _handleClick(carouselPosition, carouselTotal)}>Next</button>
 		</div>
-		{/* <Script
-			url="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"
-			onCreate={this.handleScriptCreate.bind(this)}
-			onError={this.handleScriptError.bind(this)}
-			onLoad={this.handleScriptLoad.bind(this)}
-		/> */}
 	</div>);
 };
 

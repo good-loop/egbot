@@ -6,8 +6,8 @@ import MathJax from '@matejmazur/react-mathjax';
 import MDText from '../base/components/MDText';
 
 const mathSplitter = (text) => {
-	let r = /\$.+?\$/g;
-	assMatch(text,String,"EgbotTestPage error: this is not a String");
+	let r = /\$+.+?\$+/g;
+	assMatch(text,String,"MathWidget error: this is not a String");
 	// non maths bits
 	let bits1 = text.split(r);
 	console.warn("bits1",bits1);
@@ -31,7 +31,7 @@ window.mathSplitter = mathSplitter;
 const MathWidget = ({children}) => {
 	let bits = mathSplitter(children);
 	// TODO use this once weve sorted out the errors
-	let res = bits.map( (e,i) => e ? (i%2===0 ? <MDText source={e} key={i} /> : <MathJax.Context key={i}><MathJax.Node key={i}>{e}</MathJax.Node></MathJax.Context>) : null );
+	let res = bits.map( (e,i) => e ? (i%2===0 ? <MDText source={e} key={i} /> : <MathJax.Context key={i}><MathJax.Node inline key={i}>{e}</MathJax.Node></MathJax.Context>) : null );
                                             
 	return(
 		<div className='MathWidget'>
