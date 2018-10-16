@@ -21,10 +21,23 @@ https://zenodo.org/communities/egbot?page=1&size=20
 ## Running Egbot Application Locally
 
 ### Requirements
-python 3.5
+python 3.5 -- e.g. add this to .bashrc to avoid Python 2
+	alias python='python3.5'
 pip3 8.1
 java 1.8
-(install required python packages listed in requirements.txt using pip)
+
+Install required python packages listed in requirements.txt using pip
+
+Install required Java jars using bob
+
+Set the environment variables:
+ 
+`LD_PRELOAD` path to your libpythonVERSION.so
+`LD_LIBRARY_PATH` path to the jepVERSION.so 
+
+e.g. 
+	export LD_PRELOAD="$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libpython3.5m.so"
+	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/python3.5/dist-packages:/home/irina/.local/lib/python3.5/site-packages"
 
 ## Training Models (Optional, recommended using default trained model found in data/models/final/v1)
 
