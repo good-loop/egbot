@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "babel-plugin-transform-react-remove-prop-types": "^0.4.18",
-    "chart.js": "^2.7.2",
+    "chart.js": "^2.7.3",
     "data-pivot": "^0.3.1",
     "easy-enums": "^1.1.6",
     "easyi18n": "^1.1.1",
@@ -45,7 +45,7 @@
     "remark": "^9.0.0",
     "remark-math": "^1.0.4",
     "remark-rehype": "^3.0.1",
-    "sjtest": "^0.4.7",
+    "sjtest": "^0.4.8",
     "wwutils": "^0.9.3",
     "you-again": "^0.7.9"
   },
