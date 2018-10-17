@@ -25,7 +25,7 @@ if args.model:
     save_dir = args.model
 else:
     modelVersion = 'v2'
-    save_dir = 'data/models/final/' + modelVersion # directory where models are stored
+    save_dir = '../data/models/final/' + modelVersion # directory where models are stored
 
 if args.answer_size:
     seq_length = args.answer_size # sequence length
@@ -35,7 +35,7 @@ sequences_step = 1 #step to create sequences
 
 # load vocabulary
 print("loading vocabulary...")
-with open(os.path.join(save_dir, "words_vocab.pkl"),'rb') as f:
+with open(os.path.abspath(os.path.join(save_dir, "words_vocab.pkl")),'rb') as f:
     (words, vocab, vocabulary_inv) = pickle.load(f)
 
 # vocabulary size
