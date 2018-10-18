@@ -5,6 +5,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.tensorflow.Graph;
+import org.tensorflow.Session;
+import org.tensorflow.Tensor;
+import org.tensorflow.TensorFlow;
+
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
@@ -29,7 +34,7 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = generateAnswer(q);
+		Object generatedAnswer = ""; //generateAnswerJavaTF(q);
 		
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -97,13 +102,27 @@ public class AskServlet implements IServlet {
 	
 	static JEPActor jepActor = new JEPActor();
 	
-	private synchronized Object generateAnswer(String q) throws Exception {
+	private synchronized Object generateAnswerJEP(String q) throws Exception {
 		JEPCall msg = new JEPCall("generateResults('" + q + "')");
 		jepActor.send(msg);
 		while(msg.output==null) {
 			Utils.sleep(10);
 		}
 		return msg.output;
+	}
+	
+	private Object generateAnswerJavaTF(String q) throws Exception {
+		try (Graph g = new Graph()) {
+		      final String value = "Hello from " + TensorFlow.version();
+		      try (Tensor t = Tensor.create(value.getBytes("UTF-8"))) {
+		        g.opBuilder("Const", "MyConst").setAttr("dtype", t.dataType()).setAttr("value", t).build();
+		      }
+		      try (Session s = new Session(g);
+		          Tensor output = s.runner().fetch("MyConst").run().get(0)) {
+		        System.out.println(new String(output.bytesValue(), "UTF-8"));
+		      }
+		}
+		return "";
 	}
 }
 
