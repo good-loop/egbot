@@ -11,6 +11,7 @@ import C from '../C';
 // import ServerIO from '../plumbing/ServerIO';
 // import ActionMan from '../plumbing/ActionMan';
 // Widgets
+import Messaging, {notifyUser} from '../base/plumbing/Messaging';
 import MessageBar from '../base/components/MessageBar';
 import NavBar from '../base/components/NavBar';
 import LoginWidget from '../base/components/LoginWidget';
@@ -63,8 +64,10 @@ class MainDiv extends Component {
 		if ((""+window.location).indexOf("test") !== -1) {
 			return <TestPage />;
 		}	
+
 		return (
 			<div className="container avoid-navbar">
+				<MessageBar />
 				<div className="page MyPage">
 					<Card>
 						<div className="header">
@@ -89,6 +92,7 @@ class MainDiv extends Component {
 							<div className="col-md-4 play">
 								<div><b>See what EgBot says</b></div>
 								<EgBotAnswerPanel />
+								<FeedbackButtons />
 							</div>
 						</div>
 					</Card>	
@@ -109,6 +113,10 @@ const apath = () => {
 };
 
 const QuestionForm = () => {
+	// talking to the online servlet by default so as to allow running the app locally without an ES setup
+	let askServlet = 'https://egbot.good-loop.com/ask';
+	//let askServlet = 'http://local.egbot.com/ask';
+	notifyUser("Using server " + askServlet);
 
 	const onEnterPress = (e) => {
 		if(e.keyCode === 13 && e.shiftKey === false) {
@@ -127,7 +135,7 @@ const QuestionForm = () => {
 				onKeyDown={onEnterPress}
 			/>
 			<div className="btn-group" role="group" aria-label="">
-				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url='/ask' responsePath={apath()}>Ask</Misc.SubmitButton>
+				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url={askServlet} responsePath={apath()}>Ask</Misc.SubmitButton>
 			</div>
 		</div>
 	);
@@ -137,6 +145,16 @@ let _handleClick = (carouselPosition, carouselTotal) => {
 	// find the next q&a pair to show, starting from the beginning when reaching the end
 	carouselPosition = (carouselPosition+1)%carouselTotal;
 	DataStore.setValue(['widget', 'similarAnswerPanel', 'carouselPosition'], carouselPosition);
+};
+
+const FeedbackButtons = () => {
+	return (
+		<div className="feedback">
+			<span className="feedback-question">Was this helpful?</span>
+			<button className="btn icon-btn btn-primary"><span className="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span></button>
+			<button className="btn icon-btn btn-primary"><span className="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span></button>
+		</div>
+	);
 };
 
 const SimilarAnswerPanel = () => {
