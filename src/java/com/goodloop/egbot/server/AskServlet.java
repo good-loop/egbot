@@ -15,6 +15,9 @@ import jep.JepConfig;
 import jep.JepException;
 
 import com.winterwell.es.fail.ESException;
+import com.winterwell.maths.ITrainable;
+import com.winterwell.maths.stats.distributions.cond.Cntxt;
+import com.winterwell.nlp.io.Tkn;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.log.Log;
@@ -34,7 +37,7 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = ""; //generateAnswerJavaTF(q);
+		Object generatedAnswer = generateAnswerMM(q); //generateAnswerJavaTF(q);
 		
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -43,6 +46,16 @@ public class AskServlet implements IServlet {
 			);
 		JSend jsend = new JSend(data);
 		jsend.send(state);
+	}
+	
+	/**
+	 * use trained markov model to generate an answer
+	 */
+	private Object generateAnswerMM(String q) throws Exception {
+		MarkovModel mm = new MarkovModel();
+		mm.load(); // TODO: check that I can actually load a specific trained model
+		String answer = mm.sample(q);	//TODO: check that it can return a gen answer based on a string?
+		return answer;
 	}
 
 	/**
