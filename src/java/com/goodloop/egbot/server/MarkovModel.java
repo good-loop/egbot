@@ -56,11 +56,12 @@ public class MarkovModel {
 		sig = new String[] {"w-1", "w-2"};
 		tokeniserFactory = new WordAndPunctuationTokeniser();
 		ssFactory = new SitnStream(null, tokeniserFactory, sig);
-		// FIXME WWModel has its own desc which clashes with this and causes a bug :(
+		// NB: WWModel has its own desc which clashes with this and causes a bug :(
+		// save load needs depot to be initialised
+		Depot.getDefault().init();
 		wmc = newModel();		
 		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-all", wmc.getClass());
 		desc.setTag("egbot");
-		desc.put("sig", Printer.toString(sig));
 	}
 	
 	public void load() {
