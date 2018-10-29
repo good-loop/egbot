@@ -50,12 +50,13 @@ def generateResults(seed_sentences=''):
         sentence[seq_length-i-1]=seed[len(seed)-i-1]
 
     #generate the text
-    generated = seed
+    generated = [] #seed
     for i in range(seq_length):
         #create the vector
         x = np.zeros((1, seq_length, vocab_size))
         for t, word in enumerate(sentence):
-            x[0, t, vocab[word]] = 1.
+            if word in vocab.keys():
+                x[0, t, vocab[word]] = 1.
 
         #calculate next word
         preds = model.predict(x, verbose=0)[0]

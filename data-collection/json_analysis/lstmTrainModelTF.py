@@ -1,13 +1,6 @@
 from __future__ import print_function
-from keras.backend.tensorflow_backend import set_session
-from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Dropout
-from keras.layers import LSTM, Input, Flatten, Bidirectional
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.metrics import categorical_accuracy
 from sklearn import decomposition
+from tensorflow.python.saved_model import tag_constants
 import tensorflow as tf
 import pandas as pd
 import numpy as np
@@ -194,11 +187,6 @@ callbacks=[EarlyStopping(patience=4, monitor='val_loss'),
 #                  callbacks=callbacks,
 #                  validation_split=0.01)
 
-config = tf.ConfigProto()
-#config.gpu_options.allow_growth = True
-#config.gpu_options.per_process_gpu_memory_fraction = 0.8
-sess = tf.Session(config=config)
-set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 with tf.device('/gpu:0'):
     history = md.fit_generator(
@@ -211,8 +199,23 @@ with tf.device('/gpu:0'):
                         validation_steps=1,
                         verbose=1)
 
-#save the model
-md.save(save_dir + "/" + 'gen_sentences_lstm_model.final.hdf5')
+
+with tf.Graph().as_default():
+    with tf.Session as sess:
+
+        inputs = {
+            "batch_size": batch_size,
+            "features": features,
+            "labels": labels,
+        }
+
+        outputs = {"prediction": model_output}
+
+        #save the model
+        modelPath = save_dir + '/gen_sentences_lstm_model.final.pb'
+        tf.saved_model.simple_save(
+            sess, modelPath, inputs, outputs
+        )
 
 print("\nTa-Dah! Finished training.")
 print("\nI saved the model here for you: " + os.path.abspath(save_dir))
