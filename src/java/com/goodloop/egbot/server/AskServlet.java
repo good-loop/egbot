@@ -1,6 +1,8 @@
 package com.goodloop.egbot.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,7 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = generateAnswerMM(q); //generateAnswerJavaTF(q);
+		Object generatedAnswer = generateAnswerCL(q); 
 		
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -46,6 +48,33 @@ public class AskServlet implements IServlet {
 			);
 		JSend jsend = new JSend(data);
 		jsend.send(state);
+	}
+	
+	/**
+	 * run the python LSTM test script using the command line
+	 */
+	private Object generateAnswerCL(String q) throws Exception {
+		String answer = null;
+        Process p = Runtime.getRuntime().exec("python lstmTestModel.py");
+        
+        BufferedReader stdInput = new BufferedReader(new 
+             InputStreamReader(p.getInputStream()));
+
+        BufferedReader stdError = new BufferedReader(new 
+             InputStreamReader(p.getErrorStream()));
+
+        // read the output from the command
+        while ((answer = stdInput.readLine()) != null) {
+            System.out.println(answer);
+        }
+        
+        String error;
+		// read any errors from the attempted command
+        while ((error = stdError.readLine()) != null) {
+            System.out.println(error);
+        }
+        
+		return answer;
 	}
 	
 	/**

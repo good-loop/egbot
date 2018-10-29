@@ -12,7 +12,7 @@ import org.tensorflow.types.UInt8;
 
 public class TrainLSTM {
 	
-	static void train() {
+	static void train() {		
 		// Java TensorFlow documentation: https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/package-summary
 		
 		// TODO: turn below python Keras code into Java TF code
