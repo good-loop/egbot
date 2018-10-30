@@ -10,6 +10,11 @@ import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
 import org.tensorflow.types.UInt8;
 
+/**
+ * @testedby {@link TrainLSTMTest}
+ * @author daniel
+ *
+ */
 public class TrainLSTM {
 	
 	static void train() {		
