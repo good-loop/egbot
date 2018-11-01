@@ -1,10 +1,18 @@
 package com.goodloop.egbot.server;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+import org.tensorflow.Graph;
 import org.tensorflow.SavedModelBundle;
+import org.tensorflow.Session;
 import org.tensorflow.Tensor;
+import org.tensorflow.Tensors;
 import org.tensorflow.framework.MetaGraphDef;
 import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
@@ -16,44 +24,122 @@ import org.tensorflow.types.UInt8;
  *
  */
 public class TrainLSTM {
+	String[] vocab;
 	
-	static void train() {		
-		// Java TensorFlow documentation: https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/package-summary
-		
-		// TODO: turn below python Keras code into Java TF code
-		//model = Sequential()
-		//model.add(Bidirectional(LSTM(rnn_size, activation="relu"),input_shape=(seq_length, vocab_size)))
-		//model.add(Dropout(0.6))
-		//model.add(Dense(vocab_size))
-		//model.add(Activation('softmax'))
-		//
-		//optimizer = Adam(lr=learning_rate)
-		//callbacks=[EarlyStopping(patience=2, monitor='val_loss')]
-		//model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=[categorical_accuracy])
+	TrainLSTM(){
+		initVocab();
 	}
 	
-	static void sample() throws Exception {
-		 String modelPath = "\\data\\models\\v3\\latest.pb";
+	/*
+	 * initialise vocabulary
+	 */
+	void initVocab(){	
+		// TODO: write up proper vocab loading or building
+		vocab = new String[] {"here", "is", "a", "question", "and", "there", "is", "an", "answer", "what", "probability", "the", "measure", "of", "likelihood", "that", "event", "will", "occur"};
+	}
+	
+	/*
+	 * train the model
+	 */
+	void train() throws IOException {	
+		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
+		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		final byte[] graphDef = Files.readAllBytes(Paths.get(graphPath));
+		final String checkpointDir = "/data/models/final/v3/checkpoint";
+	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+
+	    try (Graph graph = new Graph();
+	        Session sess = new Session(graph);
+	        Tensor<String> checkpointPrefix =
+	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	    	
+	    	graph.importGraphDef(graphDef);
+	    	// initialise or restore.
+			// The names of the tensors in the graph are printed out by the program that created the graph
+	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+			if (checkpointExists) {
+				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+			} else {
+				sess.runner().addTarget("init").run();
+			}
+			System.out.print("Starting from       : ");
+			printVariables(sess);
+		
+			// train a bunch of times.
+			// (will be much more efficient if we sent batches instead of individual values).
+			String[] testInstances = new String[] {"here is a question", "what is probability"};
+			String[] testTargets = new String[] {"and there is an answer", "probability is the measure of the likelihood that an event will occur"};
+			int num_epochs = 5; // training epochs
+			for (int i = 1; i <= num_epochs; i++) {
+				for (int j = 0; j < testInstances.length; j++) {
+					String testInstance = testInstances[j];
+					String testTarget = testTargets[j];
+					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoFeatureVector(testInstance));
+							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(testTarget))) {
+						sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("train").run();
+						}
+				}
+				System.out.printf("After %d examples: ", i*testInstances.length);
+				printVariables(sess);
+			}
+
+			// checkpoint
+			sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
+
+			// inference 
+			try (Tensor<?> input = Tensors.create(wordsIntoFeatureVector(testInstances[0]));
+					Tensor<?> output =
+							sess.runner().feed("input", input).fetch("output").run().get(0).expect(Float.class)) {
+				System.out.printf(
+						"Instance: %f \n Prediction: %f \n",
+						input.toString(), output.toString());
+			}     
+	    }
+	}
+	
+	/*
+	 * sample from the model
+	 */
+	void sample() throws Exception {
+		 String modelPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		 try (SavedModelBundle model = SavedModelBundle.load(modelPath, "serve")) {
 			 printSignature(model);
-			 String question = "what is a probability";
+			 String question = "what is probability";
 			 List<Tensor<?>> outputs = null;
-			 try (Tensor<UInt8> questionTensor = makeTensor(question)) {
+			 try (Tensor<Float> questionTensor = Tensors.create(wordsIntoFeatureVector(question))) {
 				 outputs = model
 				          .session()
 				          .runner()
-				          .feed("question", questionTensor)
-				          .fetch("answer")
+				          .feed("input", questionTensor)
+				          .fetch("output")
 				          .run();
 			}
-			try (Tensor<String> answer = outputs.get(0).expect(String.class);) {
-				// TODO convert tensor to string
+			try (Tensor<Float> answerTensor = outputs.get(0).expect(Float.class);) {
+				String answer = featureVectorIntoWords(answerTensor);
 			}			 
 		 }
 	}
 	
-	private static Tensor<UInt8> makeTensor(String input) {
-		// TODO return words (could be question or answer) in the form of tensor
+	Float[] wordsIntoFeatureVector(String words) {
+		// TODO there should be a more efficient way of doing this
+		
+		String[] splitted = words.split("\\s+");
+		Float[] wordsOneHotEncoded = new Float[100000];
+		Arrays.fill(wordsOneHotEncoded, 0);
+		
+		for (int i = 1; i <= splitted.length; i++) {
+			for (int j = 1; j <= vocab.length; j++) {	
+				if (vocab[j] == splitted[i]) {
+					wordsOneHotEncoded[j] = (float) 1;
+				} 
+			}
+		}
+		
+		return wordsOneHotEncoded;
+	}
+	
+	String featureVectorIntoWords(Tensor<Float> answerTensor) {
+		// TODO transform tensor into words
 		return null;
 	}
 
@@ -84,5 +170,13 @@ public class TrainLSTM {
 		      i++, numOutputs, entry.getKey(), t.getName(), t.getDtype());
 		}
 		System.out.println("-----------------------------------------------");
+	}
+	
+	private static void printVariables(Session sess) {
+	    List<Tensor<?>> values = sess.runner().fetch("W/read").fetch("b/read").run();
+	    System.out.printf("W = %f\tb = %f\n", values.get(0).floatValue(), values.get(1).floatValue());
+	    for (Tensor<?> t : values) {
+	      t.close();
+	    }
 	}
 }

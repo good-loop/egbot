@@ -13,8 +13,8 @@ num_hidden = 128 # hidden layer num of features
 seq_length = 30
 
 # tf Graph input
-X = tf.placeholder("float", [None, seq_length, 1])
-Y = tf.placeholder(tf.float32, [None, vocab_size], name='target') # training target
+X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
+Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
 
 # Define weights
 weights = {
