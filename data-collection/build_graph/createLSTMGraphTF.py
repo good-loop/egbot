@@ -77,5 +77,5 @@ print('Operation to restore a checkpoint:       ', saver_def.restore_op_name)
 print('Tensor to read value of W                ', weights['out'].value().name)
 print('Tensor to read value of b                ', biases['out'].value().name)
 
-with open('lstmGraphTF.pb', 'wb') as f:
+with open('../../data/models/final/v3/lstmGraphTF.pb', 'wb') as f:
   f.write(tf.get_default_graph().as_graph_def().SerializeToString())
