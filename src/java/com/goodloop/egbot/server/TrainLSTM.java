@@ -1,6 +1,7 @@
 package com.goodloop.egbot.server;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -120,11 +121,11 @@ public class TrainLSTM {
 		 }
 	}
 	
-	Float[] wordsIntoFeatureVector(String words) {
+	float[] wordsIntoFeatureVector(String words) {
 		// TODO there should be a more efficient way of doing this
 		
 		String[] splitted = words.split("\\s+");
-		Float[] wordsOneHotEncoded = new Float[100000];
+		float[] wordsOneHotEncoded = new float[100000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
 		Arrays.fill(wordsOneHotEncoded, 0);
 		
 		for (int i = 1; i <= splitted.length; i++) {
@@ -138,7 +139,7 @@ public class TrainLSTM {
 		return wordsOneHotEncoded;
 	}
 	
-	String featureVectorIntoWords(Tensor<Float> answerTensor) {
+	String featureVectorIntoWords(Tensor<?> answerTensor) {
 		// TODO transform tensor into words
 		return null;
 	}
