@@ -3,6 +3,7 @@ package com.goodloop.egbot.server;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +32,7 @@ public class TrainLSTM {
 		initVocab();
 	}
 	
-	/*
+	/**
 	 * initialise vocabulary
 	 */
 	void initVocab(){	
@@ -39,13 +40,15 @@ public class TrainLSTM {
 		vocab = new String[] {"here", "is", "a", "question", "and", "there", "is", "an", "answer", "what", "probability", "the", "measure", "of", "likelihood", "that", "event", "will", "occur"};
 	}
 	
-	/*
+	/**
 	 * train the model
 	 */
 	void train() throws IOException {	
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		final byte[] graphDef = Files.readAllBytes(Paths.get(graphPath));
+		Path gp = Paths.get(graphPath);
+		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		final byte[] graphDef = Files.readAllBytes(gp);
 		final String checkpointDir = "/data/models/final/v3/checkpoint";
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
