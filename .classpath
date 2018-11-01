@@ -84,7 +84,7 @@
 	<classpathentry kind="lib" path="dependencies/libfreenect2.jar"/>
 	<classpathentry kind="lib" path="dependencies/librealsense.jar"/>
 	<classpathentry kind="lib" path="dependencies/libtensorflow_jni.jar"/>
-	<classpathentry kind="lib" path="dependencies/libtensorflow.jar"/>
+	<classpathentry kind="lib" path="dependencies/libtensorflow.jar" sourcepath="dependencies/libtensorflow-sources.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-api.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-base64.jar"/>
 	<classpathentry kind="lib" path="dependencies/nd4j-buffer.jar"/>

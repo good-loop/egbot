@@ -12,3 +12,6 @@ dependencies
 egbot.log
 web/style/*.css
 data-collection/*.txt
+egbot.log*
+boblog
+lib

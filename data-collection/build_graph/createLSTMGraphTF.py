@@ -1,16 +1,23 @@
 # based on BiDirLSTM https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/bidirectional_rnn.py
 # and saved in pb format https://github.com/tensorflow/models/blob/master/samples/languages/java/training/model/create_graph.py
 
+# Just create an empty graph -- no training
+
 import tensorflow as tf
+import os
 
 # Training Parameters
 learning_rate = 0.001
 training_steps = 10000
 batch_size = 128
 display_step = 200
-vocab_size = 100000 # TODO: put in real number
+vocab_size = 1000 # TODO: put in real number
 num_hidden = 128 # hidden layer num of features
 seq_length = 30
+
+# check now that we're in the right place
+egbotdir = os.path.abspath('../..')
+assert egbotdir.endswith("egbot")
 
 # tf Graph input
 X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
@@ -77,5 +84,24 @@ print('Operation to restore a checkpoint:       ', saver_def.restore_op_name)
 print('Tensor to read value of W                ', weights['out'].value().name)
 print('Tensor to read value of b                ', biases['out'].value().name)
 
+def mkdir(path):
+	try:
+		os.mkdir(path)
+	except:
+		print("meh")
+
+mkdir('../../data/models')
+mkdir('../../data/models/final')
+mkdir('../../data/models/final/v3')
+mkdir('../../data/models/final/v3/logdir')
+
+sess = tf.Session()
+
 with open('../../data/models/final/v3/lstmGraphTF.pb', 'wb') as f:
   f.write(tf.get_default_graph().as_graph_def().SerializeToString())
+
+# write to log c.f. https://stackoverflow.com/questions/37128652/creating-log-directory-in-tensorboard
+summary_writer = tf.summary.FileWriter('../../data/models/final/v3/logdir', sess.graph)
+# tf.train.SummaryWriter('../../data/models/final/v3/logdir', sess.graph_def)
+# tf.get_default_graph().as_graph_def()) #
+

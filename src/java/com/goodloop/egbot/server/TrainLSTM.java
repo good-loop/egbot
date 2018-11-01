@@ -13,12 +13,16 @@ import java.util.Random;
 import org.tensorflow.Graph;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
+import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
 import org.tensorflow.framework.MetaGraphDef;
 import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
 import org.tensorflow.types.UInt8;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import com.winterwell.utils.containers.Containers;
 
 /**
  * @testedby {@link TrainLSTMTest}
@@ -37,7 +41,7 @@ public class TrainLSTM {
 	 */
 	void initVocab(){	
 		// TODO: write up proper vocab loading or building
-		vocab = new String[] {"here", "is", "a", "question", "and", "there", "is", "an", "answer", "what", "probability", "the", "measure", "of", "likelihood", "that", "event", "will", "occur"};
+		vocab = new String[] {"UNKNOWN", "here", "is", "a", "question", "and", "there", "is", "an", "answer", "what", "probability", "the", "measure", "of", "likelihood", "that", "event", "will", "occur"};
 	}
 	
 	/**
@@ -78,12 +82,16 @@ public class TrainLSTM {
 				for (int j = 0; j < testInstances.length; j++) {
 					String testInstance = testInstances[j];
 					String testTarget = testTargets[j];
-					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoFeatureVector(testInstance));
-							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(testTarget))) {
+					// NB: try-with to ensure C level resources are released
+					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(testInstance));
+							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(testTarget))) 
+					{
 						// The names of the tensors and operations in the graph are printed out by the program that created the graph
 				    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-						sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("Adam").run(); // Adam is the name of the train operation because it uses Adam optimiser
-						}
+						Runner runner = sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("Adam");
+//						runner.run(); // Adam is the name of the train operation because it uses Adam optimiser
+						runner.runAndFetchMetadata();
+					}
 				}
 				System.out.printf("After %d examples: ", i*testInstances.length);
 				printVariables(sess);
@@ -103,6 +111,23 @@ public class TrainLSTM {
 	    }
 	}
 	
+	/**
+	 * 
+	 * @param testInstance
+	 * @return e.g. [[7], [13], [12] ...] 30 long  to match seq_length=30
+	 */
+	private float[] wordsIntoInputVector(String testInstance) {
+		String[] words = tokenise(testInstance);		
+		float[] input = new float[30];
+		for (int i = 0; i < words.length; i++) {
+			String word = words[i];
+			int wordIndex = Containers.indexOf(word, vocab);
+			if (wordIndex== -1) wordIndex = 0; // which is UNKNOWN
+			input[i] = wordIndex;
+		}
+		return input;
+	}
+
 	/*
 	 * sample from the model
 	 */
@@ -126,10 +151,15 @@ public class TrainLSTM {
 		 }
 	}
 	
+	/**
+	 * 
+	 * @param words
+	 * @return bag-of-words 1-hot encoded, vocab_length=1000 long
+	 */
 	float[] wordsIntoFeatureVector(String words) {
 		// TODO there should be a more efficient way of doing this
 		
-		String[] splitted = words.split("\\s+");
+		String[] splitted = tokenise(words);
 		float[] wordsOneHotEncoded = new float[1000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
 		Arrays.fill(wordsOneHotEncoded, 0);
 		
@@ -142,6 +172,11 @@ public class TrainLSTM {
 		}
 		
 		return wordsOneHotEncoded;
+	}
+
+	private String[] tokenise(String words) {
+		String[] splitted = words.split("\\s+");
+		return splitted;
 	}
 	
 	String featureVectorIntoWords(Tensor<?> answerTensor) {
