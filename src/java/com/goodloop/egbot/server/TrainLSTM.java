@@ -56,7 +56,7 @@ public class TrainLSTM {
 	    	
 	    	graph.importGraphDef(graphDef);
 	    	// initialise or restore.
-			// The names of the tensors in the graph are printed out by the program that created the graph
+			// The names of the tensors and operations in the graph are printed out by the program that created the graph
 	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 			if (checkpointExists) {
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
@@ -77,7 +77,9 @@ public class TrainLSTM {
 					String testTarget = testTargets[j];
 					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoFeatureVector(testInstance));
 							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(testTarget))) {
-						sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("train").run();
+						// The names of the tensors and operations in the graph are printed out by the program that created the graph
+				    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+						sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("Adam").run(); // Adam is the name of the train operation because it uses Adam optimiser
 						}
 				}
 				System.out.printf("After %d examples: ", i*testInstances.length);
