@@ -37,7 +37,7 @@ public class SampleTrainedLSTM {
 	 * loading tensorflow graph (requires appropriate operation name)
 	 */
 	private static Object generateAnswerJavaTF(String q) throws IllegalArgumentException, IOException {
-        
+        // TODO how do we generate this file??
 		String modelPath = System.getProperty("user.dir") + "/latest.pb";	
 		try (Graph graph = new Graph()){
 			graph.importGraphDef(Files.readAllBytes(Paths.get(modelPath)));

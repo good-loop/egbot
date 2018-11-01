@@ -1,6 +1,7 @@
 package com.goodloop.egbot.server;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -20,8 +21,10 @@ import com.winterwell.es.fail.ESException;
 import com.winterwell.maths.ITrainable;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
 import com.winterwell.nlp.io.Tkn;
+import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.web.SimpleJson;
@@ -53,27 +56,15 @@ public class AskServlet implements IServlet {
 	/**
 	 * run the python LSTM test script using the command line
 	 */
-	private Object generateAnswerCL(String q) throws Exception {
-		String answer = null;
-        Process p = Runtime.getRuntime().exec("python lstmTestModel.py");
-        
-        BufferedReader stdInput = new BufferedReader(new 
-             InputStreamReader(p.getInputStream()));
-
-        BufferedReader stdError = new BufferedReader(new 
-             InputStreamReader(p.getErrorStream()));
-
-        // read the output from the command
-        while ((answer = stdInput.readLine()) != null) {
-            System.out.println(answer);
-        }
-        
-        String error;
-		// read any errors from the attempted command
-        while ((error = stdError.readLine()) != null) {
-            System.out.println(error);
-        }
-        
+	private Object generateAnswerCL(String q) throws Exception {		
+		File inputTextFile = File.createTempFile("q", ".txt");
+		FileUtils.write(inputTextFile, q);
+		// TODO have lstmTestModel.py read from the file parameter
+        Proc proc = new Proc("python lstmTestModel.py "+inputTextFile.getAbsolutePath());
+        proc.start();
+        proc.waitFor();
+        String answer = proc.getOutput();
+        proc.close();
 		return answer;
 	}
 	
