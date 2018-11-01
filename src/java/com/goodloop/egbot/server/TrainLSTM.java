@@ -64,7 +64,7 @@ public class TrainLSTM {
 				sess.runner().addTarget("init").run();
 			}
 			System.out.print("Starting from       : ");
-			printVariables(sess);
+			//printVariables(sess);
 		
 			// train a bunch of times.
 			// (will be much more efficient if we sent batches instead of individual values).
@@ -125,11 +125,11 @@ public class TrainLSTM {
 		// TODO there should be a more efficient way of doing this
 		
 		String[] splitted = words.split("\\s+");
-		float[] wordsOneHotEncoded = new float[100000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
+		float[] wordsOneHotEncoded = new float[1000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
 		Arrays.fill(wordsOneHotEncoded, 0);
 		
-		for (int i = 1; i <= splitted.length; i++) {
-			for (int j = 1; j <= vocab.length; j++) {	
+		for (int i = 0; i < splitted.length; i++) {
+			for (int j = 0; j < vocab.length; j++) {	
 				if (vocab[j] == splitted[i]) {
 					wordsOneHotEncoded[j] = (float) 1;
 				} 
