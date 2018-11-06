@@ -21,7 +21,7 @@ assert egbotdir.endswith("egbot")
 
 # tf Graph input
 X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
-Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
+Y = tf.placeholder(tf.float32, [None, None], name='target')
 
 # Define weights
 weights = {
@@ -38,8 +38,12 @@ def BiRNN(x, weights, biases):
     # Current data input shape: (batch_size, timesteps, n_input)
     # Required shape: 'timesteps' tensors list of shape (batch_size, num_input)
 
-    # Unstack to get a list of 'timesteps' tensors of shape (batch_size, num_input)
-    x = tf.unstack(x, seq_length, 1)
+    # reshape to [1, n_input]
+    x = tf.reshape(x, [-1, seq_length])
+
+    # Generate a n_input-element sequence of inputs
+    # (eg. [had] [a] [general] -> [20] [6] [33])
+    x = tf.split(x, seq_length, 1)
 
     # Define lstm cells with tensorflow
     # Forward direction cell
@@ -54,11 +58,10 @@ def BiRNN(x, weights, biases):
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
 logits = BiRNN(X, weights, biases)
-prediction = tf.nn.softmax(logits)
+prediction = tf.nn.softmax(logits, name="output")
 
 # Define loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2 (
-    logits=logits, labels=Y))
+loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss_op)
 

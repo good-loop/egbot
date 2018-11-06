@@ -53,7 +53,7 @@ public class TrainLSTM {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = "/data/models/final/v3/checkpoint";
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint";
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    try (Graph graph = new Graph();
@@ -65,9 +65,11 @@ public class TrainLSTM {
 	    	// initialise or restore.
 			// The names of the tensors and operations in the graph are printed out by the program that created the graph
 	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-			if (checkpointExists) {
+			if (checkpointExists) {						
+				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
+				System.out.println("Initialising model ...");
 				sess.runner().addTarget("init").run();
 			}
 			System.out.print("Starting from       : ");
@@ -75,8 +77,12 @@ public class TrainLSTM {
 		
 			// train a bunch of times.
 			// (will be much more efficient if we sent batches instead of individual values).
-			String[] testInstances = new String[] {"here is a question", "what is probability"};
-			String[] testTargets = new String[] {"and there is an answer", "probability is the measure of the likelihood that an event will occur"};
+			String[] testInstances = new String[10];
+			Arrays.fill(testInstances, "here is a question");
+			String[] testTargets = new String[10];
+			Arrays.fill(testTargets, "and there is an answer");
+			//String[] testInstances = new String[] {"here is a question here is a question here is a question here is a question here is a question here is a question here is a question here is", "what is probability", "here is a question here is a question here is a question here is a question here is a question here is a question here is a question here is", "what is probability", "here is a question here is a question here is a question here is a question here is a question here is a question here is a question here is", "what is probability"};
+			//String[] testTargets = new String[] {"and there is an answer", "probability is the measure of the likelihood that an event will occur", "and there is an answer", "probability is the measure of the likelihood that an event will occur", "and there is an answer", "probability is the measure of the likelihood that an event will occur"};
 			int num_epochs = 5; // training epochs
 			for (int i = 1; i <= num_epochs; i++) {
 				for (int j = 0; j < testInstances.length; j++) {
@@ -86,6 +92,8 @@ public class TrainLSTM {
 					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(testInstance));
 							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(testTarget))) 
 					{
+						System.out.println("Shape: " + instanceTensor.toString());
+						System.out.println("Shape: " + targetTensor.toString());
 						// The names of the tensors and operations in the graph are printed out by the program that created the graph
 				    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 						Runner runner = sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("Adam");
@@ -94,7 +102,7 @@ public class TrainLSTM {
 					}
 				}
 				System.out.printf("After %d examples: ", i*testInstances.length);
-				printVariables(sess);
+				//printVariables(sess);
 			}
 
 			// checkpoint
@@ -116,14 +124,14 @@ public class TrainLSTM {
 	 * @param testInstance
 	 * @return e.g. [[7], [13], [12] ...] 30 long  to match seq_length=30
 	 */
-	private float[] wordsIntoInputVector(String testInstance) {
+	private float[][] wordsIntoInputVector(String testInstance) {
 		String[] words = tokenise(testInstance);		
-		float[] input = new float[30];
+		float[][] input = new float[30][1];
 		for (int i = 0; i < words.length; i++) {
 			String word = words[i];
 			int wordIndex = Containers.indexOf(word, vocab);
 			if (wordIndex== -1) wordIndex = 0; // which is UNKNOWN
-			input[i] = wordIndex;
+			input[i][0] = wordIndex;
 		}
 		return input;
 	}
@@ -156,17 +164,17 @@ public class TrainLSTM {
 	 * @param words
 	 * @return bag-of-words 1-hot encoded, vocab_length=1000 long
 	 */
-	float[] wordsIntoFeatureVector(String words) {
+	float[][] wordsIntoFeatureVector(String words) {
 		// TODO there should be a more efficient way of doing this
 		
 		String[] splitted = tokenise(words);
-		float[] wordsOneHotEncoded = new float[1000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
-		Arrays.fill(wordsOneHotEncoded, 0);
+		float[][] wordsOneHotEncoded = new float[1][1000]; // let's say the vocab size is 100000 (this needs to be defined when building the graph in python)
+		//Arrays.fill(wordsOneHotEncoded, 0);
 		
 		for (int i = 0; i < splitted.length; i++) {
 			for (int j = 0; j < vocab.length; j++) {	
 				if (vocab[j] == splitted[i]) {
-					wordsOneHotEncoded[j] = (float) 1;
+					wordsOneHotEncoded[0][j] = (float) 1;
 				} 
 			}
 		}
