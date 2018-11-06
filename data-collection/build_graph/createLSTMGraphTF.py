@@ -11,7 +11,7 @@ learning_rate = 0.001
 training_steps = 10000
 batch_size = 128
 display_step = 200
-vocab_size = 1000 # TODO: put in real number
+vocab_size = 20 # TODO: put in real number
 num_hidden = 128 # hidden layer num of features
 seq_length = 30
 
@@ -21,7 +21,7 @@ assert egbotdir.endswith("egbot")
 
 # tf Graph input
 X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
-Y = tf.placeholder(tf.float32, [None, None], name='target')
+Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
 
 # Define weights
 weights = {
@@ -58,7 +58,8 @@ def BiRNN(x, weights, biases):
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
 logits = BiRNN(X, weights, biases)
-prediction = tf.nn.softmax(logits, name="output")
+prediction = tf.identity(logits, name='output')
+#prediction = tf.nn.softmax(logits, name="output")
 
 # Define loss and optimizer
 loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y))
