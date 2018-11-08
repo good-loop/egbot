@@ -11,7 +11,7 @@ learning_rate = 0.001
 training_steps = 10000
 batch_size = 128
 display_step = 200
-vocab_size = 20 # TODO: put in real number
+vocab_size = 58 # TODO: put in real number
 num_hidden = 128 # hidden layer num of features
 seq_length = 30
 
@@ -26,10 +26,10 @@ Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
 # Define weights
 weights = {
     # Hidden layer weights => 2*n_hidden because of forward + backward cells
-    'out': tf.Variable(tf.random_normal([2*num_hidden, vocab_size]), name='W')
+    'out': tf.Variable(tf.random_normal([2*num_hidden, vocab_size], seed=42, mean=1.0), name='W')
 }
 biases = {
-    'out': tf.Variable(tf.random_normal([vocab_size]), name='b')
+    'out': tf.Variable(tf.random_normal([vocab_size], seed=24, mean=1.0), name='b')
 }
 
 def BiRNN(x, weights, biases):
@@ -50,25 +50,28 @@ def BiRNN(x, weights, biases):
     lstm_fw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.nn.relu)
     # Backward direction cell
     lstm_bw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.nn.relu)
+    #rnn_cell = tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.BasicLSTMCell(num_hidden),tf.nn.rnn_cell.BasicLSTMCell(num_hidden)])
 
     # Get lstm cell output
     outputs, _, _ = tf.nn.static_bidirectional_rnn (lstm_fw_cell, lstm_bw_cell, x, dtype=tf.float32)
+    #outputs, states = tf.nn.static_rnn(rnn_cell, x, dtype=tf.float32)
 
     # Linear activation, using rnn inner loop last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
 logits = BiRNN(X, weights, biases)
-prediction = tf.identity(logits, name='output')
-#prediction = tf.nn.softmax(logits, name="output")
+#prediction = tf.identity(logits, name='output')
+prediction = tf.nn.softmax(logits, name="output")
 
 # Define loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-train_op = optimizer.minimize(loss_op)
+loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name="loss_op")
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
+train_op = optimizer.minimize(loss_op, name="train_op")
 
 # Evaluate model (with test logits, for dropout to be disabled)
-correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1), name="correct_pred")
+#correct = tf.nn.in_top_k(logits, Y, 1, name="correct_pred")
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()

@@ -1,14 +1,21 @@
 package com.goodloop.egbot.server;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Random;
 
 import org.tensorflow.Graph;
@@ -22,8 +29,21 @@ import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
 import org.tensorflow.types.UInt8;
 
+import com.goodloop.egbot.EgbotConfig;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import com.winterwell.gson.Gson;
+import com.winterwell.gson.stream.JsonReader;
+import com.winterwell.json.JSONObject;
+import com.winterwell.maths.stats.distributions.cond.Cntxt;
+import com.winterwell.maths.stats.distributions.cond.Sitn;
+import com.winterwell.nlp.corpus.SimpleDocument;
+import com.winterwell.nlp.io.SitnStream;
+import com.winterwell.nlp.io.Tkn;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.time.RateCounter;
+import com.winterwell.utils.time.TUnit;
+import com.winterwell.utils.web.SimpleJson;
 
 /**
  * @testedby {@link TrainLSTMTest}
@@ -31,29 +51,115 @@ import com.winterwell.utils.containers.Containers;
  *
  */
 public class TrainLSTM {
-	String[] vocab;
+	// input: training data and vocab
+	List<List<String>> trainingDataArray;
+	HashMap<Integer, String> vocab;
 	int vocab_size;
-	int seq_length;
-	int ckptVersion = 25;//new Random().nextInt(10000);
-	
-	TrainLSTM(){
+
+	// training parameters
+	int num_epochs = 50; 	// training epochs
+	int seq_length = 30; 	// sequence length
+	// checkpoint version to identify trained model
+	int ckptVersion = new Random().nextInt(1000000);
+
+	TrainLSTM() throws IOException{
+		trainingDataArray = loadTrainingData();
+//		String trainingData = "long ago , the mice had a general council to consider what measures they could take to outwit their common enemy , the cat . some said this , and some said that but at last a young mouse got up and said he had a proposal to make , which he thought would meet the case . you will all agree , said he , that our chief danger consists in the sly and treacherous manner";
+//		List<String> temp = new ArrayList<String>(Arrays.asList(tokenise(trainingData)));			
+//		trainingDataArray = new ArrayList<List<String>>();
+//		trainingDataArray.add(temp);
+		//int trainingDatasize = trainingDataArray.length-1;
 		initVocab();
+		
+		System.out.printf("Ckeckpoint no: %s\n", ckptVersion);
+		//System.out.printf("Training Data size: %s\n", trainingDatasize);
+		System.out.printf("Vocabulary size: %s\n", vocab_size);
+		System.out.println();
 	}
 	
 	/**
+	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
+	 */
+	private List<List<String>> loadTrainingData() throws IOException {
+		EgbotConfig config = new EgbotConfig();
+		List<File> files = null;
+		if (false) {
+			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
+			// Use this for extra speed if youve run the slimming script
+			// python script data-collection/slimming.py
+			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
+		} else {
+			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
+				}
+			}));
+		}
+		// always have the same ordering
+		Collections.sort(files);
+		
+		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
+		
+		List<List<String>> trainingData = new ArrayList<List<String>>(); 
+		for(File file : files) {
+			System.out.println("File: "+file+"...");
+			Gson gson = new Gson();
+			JsonReader jr = new JsonReader(FileUtils.getReader(file));
+			jr.beginArray();
+						
+			int c=0;
+			while(jr.hasNext()) {
+				Map qa = gson.fromJson(jr, Map.class);			
+				Number answer_count = (Number) qa.get("answer_count");
+				if (answer_count.intValue() > 0) {
+					String question_body = (String) qa.get("body_markdown");
+					// TODO: get correct answer, rather than first answer in the list
+					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+					ArrayList<String> temp = new ArrayList<String>(Arrays.asList(tokenise(question_body + " " + answer_body)));
+					trainingData.add(temp);
+					c++;
+					rate.plus(1);
+					if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+				}			
+			} 
+			break;
+		}
+		return trainingData;
+	}
+
+	/**
 	 * initialise vocabulary
 	 */
-	void initVocab(){	
-		// TODO: write up proper vocab loading or building (vocab_size has to be the same in the script that constructs the graph)
-		vocab = new String[] {"UNKNOWN", "and", "there", "is", "an", "answer", "here", "is", "a", "question", "what", "probability", "the", "measure", "of", "likelihood", "that", "event", "will", "occur"};
-		vocab_size = vocab.length; 
-		seq_length = 30;
+	private void initVocab(){	
+		// TODO: write up vocab loading (vocab_size has to be the same size in the script that constructs the graph)
+		// should I use a TreeSet instead of a HashMap, log(n) for basic operations and unique https://stackoverflow.com/questions/13259535/how-to-maintain-a-unique-list-in-java
+		
+	    vocab = new HashMap<Integer, String>();		
+	    vocab.put(0,"UNKNOWN");
+		vocab.put(1,"START");
+		vocab.put(2,"END");
+		vocab.put(3,"ERROR");
+		
+		// construct vocab
+		int vocabIdx = 4;
+		for (int i = 0; i < trainingDataArray.size(); i++) {
+			List<String> qa = trainingDataArray.get(i);
+			for (int j = 0; j < qa.size(); j++) {
+				if (!vocab.containsValue(qa.get(j))) {
+					vocab.put(vocabIdx, qa.get(j));				
+					vocabIdx += 1;
+				}
+			}
+			System.out.printf("Vocabulary size: %s\n", vocab.size());
+		}		
+		vocab_size = vocab.size(); 
 	}
 	
 	/**
 	 * train the model
 	 */
-	void train() throws IOException {	
+	public void train() throws IOException {	
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
@@ -79,45 +185,72 @@ public class TrainLSTM {
 				sess.runner().addTarget("init").run();
 			}
 			System.out.print("Starting from: \n");
-			//printVariables(sess);
-
-			//TODO: does the input have to be set (seq_length = 30)?
-			String trainingData = "here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer ";
-			String[] trainingDataArray = tokenise(trainingData);
-			String[] instanceArray = new String[seq_length];
-			//System.arraycopy(trainingDataArray, 0, instanceArray, 0, seq_length);
-			String target = ""; //trainingDataArray[seq_length];
-			int noOfInstances = trainingDataArray.length-seq_length;
+			printVariables(sess);
+			
+			List<Tensor<?>> runner = null;
 			
 			// train a bunch of times.
 			// (will be much more efficient if we sent batches instead of individual values).
-			int num_epochs = 5; // training epochs
-			for (int i = 1; i <= num_epochs; i++) {
-				for (int j = 0; j < noOfInstances; j++) {
-					System.arraycopy( trainingDataArray, j, instanceArray, 0, seq_length);
-					target = trainingDataArray[seq_length+j];
-					System.out.printf("Instance: %s\n Target: %s \n", Arrays.deepToString(instanceArray), target);
-					
-					// NB: try-with to ensure C level resources are released
-					try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(instanceArray));
-							Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(target))) {
-						// The names of the tensors and operations in the graph are printed out by the program that created the graph
-				    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-						Runner runner = sess.runner().feed("input", instanceTensor).feed("target", targetTensor).addTarget("Adam");
-//						runner.run(); // Adam is the name of the train operation because it uses Adam optimiser
-						runner.runAndFetchMetadata();
+			for (int epoch = 1; epoch <= num_epochs; epoch++) {
+				for (int qaIdx = 0; qaIdx < trainingDataArray.size(); qaIdx++) {
+					List<String> temp = trainingDataArray.get(qaIdx);
+					String[] qa = temp.toArray(new String[temp.size()]);
+					//System.out.println(Arrays.toString(qa.toArray(new String[qa.size()])));
+					//int noOfInstances = trainingDataArray.get(qaIdx).size();
+					int noOfInstances = 70;// trainingDataArray.length-seq_length;
+					for (int wordIdx = 0; wordIdx < noOfInstances; wordIdx++) {
+						String[] instanceArray = new String[seq_length];
+						String target = "";
+						Arrays.fill(instanceArray, "START");
+						if (wordIdx < seq_length) {
+							System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
+							target = qa[wordIdx+1];
+						}
+						else {
+							// TODO: cover the case where the instance stream reached the end of the training data (aka filling in END tags)
+							System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
+							target = qa[wordIdx+1];
+						}
+						System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+								epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);
+						// NB: try-with to ensure C level resources are released
+						try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(instanceArray));
+								Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(target))) {
+							// The names of the tensors and operations in the graph are printed out by the program that created the graph
+					    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+							runner = sess.runner()
+									.feed("input", instanceTensor)
+									.feed("target", targetTensor)
+									.addTarget("train_op")
+									.fetch("correct_pred")
+									.fetch("accuracy")
+									.run();
+						}
 					}
 				}
-				System.out.printf("After %d examples: \n", i*noOfInstances);
-				//printVariables(sess);
+				if (epoch%100 == 0) {
+					boolean[] bArray = new boolean[1];
+ 					try(Tensor correct_pred = runner.get(0)){
+						correct_pred.copyTo(bArray);
+					}
+ 					// TODO: can't seem to fetch accuracy scores
+					//System.out.printf("Correct pred: %b \n", bArray[0]);
+					//System.out.printf("Accuracy: %f \n", runner.get(1).floatValue());
+					System.out.printf("After %d examples: \n", epoch*trainingDataArray.size());
+					
+					printVariables(sess);
+					closeTensors(runner);
+				}
 			}
 
 			// checkpoint
 			sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
 			
 			// inference 
-			String testInstance = "here is a question and there is an answer here is a question and there is an answer here is a question and there is an answer here is a";
-			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(tokenise(testInstance)));
+			String[] testInstance = new String[30];
+			List<String> temp = trainingDataArray.get(0);
+			System.arraycopy(temp.toArray(new String[temp.size()]), 0, testInstance, 0, 30);
+			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(testInstance));
 					Tensor<?> output =
 							sess.runner().feed("input", input).fetch("output").run().get(0).expect(Float.class)) {
 				float[][] outputArray = new float[1][vocab_size];
@@ -125,9 +258,24 @@ public class TrainLSTM {
 				String nextWord = mostLikelyWord(outputArray);
 				System.out.printf(
 						"Instance: %s \n Prediction: %s \n",
-						testInstance, nextWord);
-			}     
+						Arrays.deepToString(testInstance), nextWord);
+			}    
 	    }
+	}
+	
+	/*
+	 * close tensors to release memory used by them (to be used when try catch statement can't be used)
+	 */
+	private static void closeTensors(final Collection<Tensor<?>> ts) {      
+	    for (final Tensor<?> t : ts) {
+	        try {
+	            t.close();
+	        } catch (final Exception e) {
+	            System.err.println("Error closing Tensor.");
+	            e.printStackTrace();
+	        }
+	    }
+	    ts.clear();
 	}
 	
 	/**
@@ -138,21 +286,34 @@ public class TrainLSTM {
 	private float[][] wordsIntoInputVector(String[] words) {
 		//System.out.println("\n");
 		//System.out.println(testInstance);		
-		float[][] input = new float[30][1];
+		float[][] input = new float[seq_length][1];
 		for (int i = 0; i < words.length; i++) {
 			String word = words[i];
-			int wordIndex = Containers.indexOf(word, vocab);
-			if (wordIndex== -1) wordIndex = 0; // which is UNKNOWN
+			int wordIndex = 0; // index 0 represents UNKNOWN
+			if (vocab.containsValue(word)) wordIndex = getKeyByValue(vocab, word); 
 			input[i][0] = wordIndex;
 		}
 		//System.out.println(Arrays.deepToString(input));
 		return input;
 	}
 	
+	/**
+	 * get key based on value in a HashMap
+	 */
+	private static <T, E> int getKeyByValue(Map<T, E> map, E value) {
+	    for (Entry<T, E> entry : map.entrySet()) {
+	        if (Objects.equals(value, entry.getValue())) {
+	            return (int) entry.getKey();
+	        }
+	    }
+	    return 0;
+	}
+	
 	private String mostLikelyWord(float[][] vector) {
 		String word = "<ERROR>";
-		System.out.println("------");
-		System.out.println(Arrays.deepToString(vector));
+		String[] vocabArray = vocab.values().toArray(new String[0]);
+	    System.out.printf("Vocabulary:\t %s\n", Arrays.toString(vocabArray));
+	    System.out.printf("Probabilities:\t %s\n", Arrays.toString(vector[0]));
 		// find word with highest prob
 		float max = vector[0][0];
 		int wordIndex = 0;
@@ -161,15 +322,46 @@ public class TrainLSTM {
 				wordIndex = Containers.indexOf(e, vector[0]);
 				max = e;
 			}
-		word = vocab[wordIndex];
-		
+		if (wordIndex!=0) {
+			word = vocab.get(wordIndex);
+		}
 		return word;
+	}
+	
+	/**
+	 * 
+	 * @param words
+	 * @return bag-of-words 1-hot encoded, vocab_size long
+	 */
+	private float[][] wordsIntoFeatureVector(String words) {
+		// TODO there should be a more efficient way of doing this
+		
+		String[] splitted = tokenise(words);
+		float[][] wordsOneHotEncoded = new float[1][vocab_size]; 
+		Arrays.fill(wordsOneHotEncoded[0], 0);
+		
+		for (int i = 0; i < splitted.length; i++) {
+			for (int j = 0; j < vocab.size(); j++) {	
+				if (vocab.get(j) == splitted[i]) {
+					wordsOneHotEncoded[0][j] = (float) 1;
+				} 
+			}
+		}
+		
+		//System.out.println(Arrays.deepToString(wordsOneHotEncoded));
+		
+		return wordsOneHotEncoded;
+	}
+
+	private String[] tokenise(String words) {
+		String[] splitted = words.split("\\s+");
+		return splitted;
 	}
 
 	/*
 	 * sample a series of words from the model
 	 */
-	String sampleSeries(String question, int expectedAnswerLength) throws Exception {
+	public String sampleSeries(String question, int expectedAnswerLength) throws Exception {
 		String answer = "<ERROR>";
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
@@ -229,8 +421,7 @@ public class TrainLSTM {
 		System.out.printf(
 				"Instance: %s \n Prediction: %s \n",
 				question, answer);
-	    return answer;
-		
+	    return answer;		
 		
 //		 String modelPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 //		 try (SavedModelBundle model = SavedModelBundle.load(modelPath, "serve")) {
@@ -254,7 +445,7 @@ public class TrainLSTM {
 	/*
 	 * sample a word from the model
 	 */
-	String sampleWord(String question) throws Exception {
+	public String sampleWord(String question) throws Exception {
 		String nextWord = "<ERROR>";
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
@@ -293,37 +484,7 @@ public class TrainLSTM {
 	}
 	
 	
-	/**
-	 * 
-	 * @param words
-	 * @return bag-of-words 1-hot encoded, vocab_size long
-	 */
-	float[][] wordsIntoFeatureVector(String words) {
-		// TODO there should be a more efficient way of doing this
-		
-		String[] splitted = tokenise(words);
-		float[][] wordsOneHotEncoded = new float[1][vocab_size]; 
-		Arrays.fill(wordsOneHotEncoded[0], 0);
-		
-		for (int i = 0; i < splitted.length; i++) {
-			for (int j = 0; j < vocab.length; j++) {	
-				if (vocab[j] == splitted[i]) {
-					wordsOneHotEncoded[0][j] = (float) 1;
-				} 
-			}
-		}
-		
-		//System.out.println(Arrays.deepToString(wordsOneHotEncoded));
-		
-		return wordsOneHotEncoded;
-	}
-
-	private String[] tokenise(String words) {
-		String[] splitted = words.split("\\s+");
-		return splitted;
-	}
-	
-	String featureVectorIntoWords(Tensor<?> answerTensor) {
+	private String featureVectorIntoWords(Tensor<?> answerTensor) {
 		// TODO transform tensor into words
 		return null;
 	}
@@ -357,9 +518,13 @@ public class TrainLSTM {
 		System.out.println("-----------------------------------------------");
 	}
 	
-	private static void printVariables(Session sess) {
+	private void printVariables(Session sess) {
 	    List<Tensor<?>> values = sess.runner().fetch("W/read").fetch("b/read").run();
-	    System.out.printf("W = %f\tb = %f\n", values.get(0).intValue(), values.get(1).intValue());
+	    float[][] w = new float[256][vocab_size];
+	    values.get(0).copyTo(w);
+	    float[] b = new float[vocab_size];
+	    values.get(1).copyTo(b);
+	    System.out.printf("W0 = %s\nb = %s\n\n", Arrays.toString(w[0]), Arrays.toString(b));
 	    for (Tensor<?> t : values) {
 	      t.close();
 	    }
