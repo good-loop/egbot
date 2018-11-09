@@ -8,12 +8,12 @@ import os
 
 # Training Parameters
 learning_rate = 0.001
-training_steps = 10000
-batch_size = 128
-display_step = 200
-vocab_size = 58 # TODO: put in real number
-num_hidden = 128 # hidden layer num of features
-seq_length = 30
+#training_steps = 10000
+#batch_size = 128
+#display_step = 200
+vocab_size = 116 # TODO: put in real number
+num_hidden = 256 # hidden layer num of features
+seq_length = 3
 
 # check now that we're in the right place
 egbotdir = os.path.abspath('../..')
@@ -25,7 +25,7 @@ Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
 
 # Define weights
 weights = {
-    # Hidden layer weights => 2*n_hidden because of forward + backward cells
+    # Hidden layer weights => 2*num_hidden because of forward + backward cells
     'out': tf.Variable(tf.random_normal([2*num_hidden, vocab_size], seed=42, mean=1.0), name='W')
 }
 biases = {

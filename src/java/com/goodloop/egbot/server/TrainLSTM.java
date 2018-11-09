@@ -57,22 +57,23 @@ public class TrainLSTM {
 	int vocab_size;
 
 	// training parameters
-	int num_epochs = 50; 	// training epochs
-	int seq_length = 30; 	// sequence length
+	int seq_length = 3; 	// sequence length
+	int num_epochs = 50000; // training epochs
+	int num_hidden = 256; // number of hidden layers
 	// checkpoint version to identify trained model
 	int ckptVersion = new Random().nextInt(1000000);
 
 	TrainLSTM() throws IOException{
-		trainingDataArray = loadTrainingData();
-//		String trainingData = "long ago , the mice had a general council to consider what measures they could take to outwit their common enemy , the cat . some said this , and some said that but at last a young mouse got up and said he had a proposal to make , which he thought would meet the case . you will all agree , said he , that our chief danger consists in the sly and treacherous manner";
-//		List<String> temp = new ArrayList<String>(Arrays.asList(tokenise(trainingData)));			
-//		trainingDataArray = new ArrayList<List<String>>();
-//		trainingDataArray.add(temp);
+		//trainingDataArray = loadTrainingData();
+		String trainingData = "long ago , the mice had a general council to consider what measures they could take to outwit their common enemy , the cat . some said this , and some said that but at last a young mouse got up and said he had a proposal to make , which he thought would meet the case . you will all agree , said he , that our chief danger consists in the sly and treacherous manner in which the enemy approaches us . now , if we could receive some signal of her approach , we could easily escape from her . i venture , therefore , to propose that a small bell be procured , and attached by a ribbon round the neck of the cat . by this means we should always know when she was about , and could easily retire while she was in the neighbourhood . this proposal met with general applause , until an old mouse got up and said  that is all very well , but who is to bell the cat ? the mice looked at one another and nobody spoke . then the old mouse said it is easy to propose impossible remedies .";
+		List<String> temp = new ArrayList<String>(Arrays.asList(tokenise(trainingData)));			
+		trainingDataArray = new ArrayList<List<String>>();
+		trainingDataArray.add(temp);
 		//int trainingDatasize = trainingDataArray.length-1;
 		initVocab();
 		
 		System.out.printf("Ckeckpoint no: %s\n", ckptVersion);
-		//System.out.printf("Training Data size: %s\n", trainingDatasize);
+		System.out.printf("Training Data size: %s\n", temp.size());
 		System.out.printf("Vocabulary size: %s\n", vocab_size);
 		System.out.println();
 	}
@@ -111,19 +112,25 @@ public class TrainLSTM {
 			int c=0;
 			while(jr.hasNext()) {
 				Map qa = gson.fromJson(jr, Map.class);			
-				Number answer_count = (Number) qa.get("answer_count");
-				if (answer_count.intValue() > 0) {
+				Boolean is_answered = (Boolean) qa.get("is_answered");
+				if (is_answered) {
 					String question_body = (String) qa.get("body_markdown");
-					// TODO: get correct answer, rather than first answer in the list
-					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-					ArrayList<String> temp = new ArrayList<String>(Arrays.asList(tokenise(question_body + " " + answer_body)));
-					trainingData.add(temp);
-					c++;
-					rate.plus(1);
-					if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+					double answer_count = (double) qa.get("answer_count");
+					for (int j = 0; j < answer_count; j++) {					
+						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+						if (is_accepted) {
+							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+							ArrayList<String> temp = new ArrayList<String>();
+							temp.add(question_body);
+							temp.add(answer_body);
+							trainingData.add(temp);
+							c++;
+							rate.plus(1);
+							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+						}
+					}
 				}			
 			} 
-			break;
 		}
 		return trainingData;
 	}
@@ -132,7 +139,7 @@ public class TrainLSTM {
 	 * initialise vocabulary
 	 */
 	private void initVocab(){	
-		// TODO: write up vocab loading (vocab_size has to be the same size in the script that constructs the graph)
+		// TODO: write up vocab saving and loading (vocab_size has to be the same size in the script that constructs the graph) but how should i save it? 
 		// should I use a TreeSet instead of a HashMap, log(n) for basic operations and unique https://stackoverflow.com/questions/13259535/how-to-maintain-a-unique-list-in-java
 		
 	    vocab = new HashMap<Integer, String>();		
@@ -151,7 +158,6 @@ public class TrainLSTM {
 					vocabIdx += 1;
 				}
 			}
-			System.out.printf("Vocabulary size: %s\n", vocab.size());
 		}		
 		vocab_size = vocab.size(); 
 	}
@@ -188,6 +194,11 @@ public class TrainLSTM {
 			printVariables(sess);
 			
 			List<Tensor<?>> runner = null;
+			float trainAccuracy = 0;
+			float predAccuracy = 0;
+
+			ArrayList<Float> accuracies = new ArrayList<Float>();
+			ArrayList<Float> predictions = new ArrayList<Float>();
 			
 			// train a bunch of times.
 			// (will be much more efficient if we sent batches instead of individual values).
@@ -211,8 +222,11 @@ public class TrainLSTM {
 							System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
 							target = qa[wordIdx+1];
 						}
-						System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-								epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);
+//						if (epoch%100 == 0 && wordIdx == 0) {
+//							System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+//									epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
+//						}
+
 						// NB: try-with to ensure C level resources are released
 						try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(instanceArray));
 								Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(target))) {
@@ -225,44 +239,86 @@ public class TrainLSTM {
 									.fetch("correct_pred")
 									.fetch("accuracy")
 									.run();
+							
+//							boolean[] bArray = new boolean[1];
+//		 					try(Tensor correct_pred = runner.get(0)){
+//								correct_pred.copyTo(bArray);
+////							 	if(bArray[0]) {
+////							 		predictions.add((float)1);
+////							 	}
+////							 	else {
+////							 		predictions.add((float)0);
+////							 	}
+//		 					}
+							float acc = runner.get(1).floatValue();
+							accuracies.add(acc);
+							closeTensors(runner);
 						}
 					}
 				}
-				if (epoch%100 == 0) {
-					boolean[] bArray = new boolean[1];
- 					try(Tensor correct_pred = runner.get(0)){
-						correct_pred.copyTo(bArray);
+				String nextWord = "";
+				if (epoch%100 == 0) {				
+					// inference 
+					String[] testInstance = new String[seq_length];
+					List<String> temp = trainingDataArray.get(0);
+					String[] tempArray = temp.toArray(new String[temp.size()]);
+					int startIdx = new Random().nextInt(temp.size()-seq_length);
+					System.arraycopy(tempArray, startIdx, testInstance, 0, seq_length);
+					try (Tensor<?> input = Tensors.create(wordsIntoInputVector(testInstance));
+						Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tempArray[startIdx+seq_length]))) {
+						List<Tensor<?>> outputs = sess.runner()
+								.feed("input", input)
+								.feed("target", target)
+								.fetch("output")
+								.fetch("correct_pred")
+								.fetch("accuracy")
+								.run();
+						
+						float[][] outputArray = new float[1][vocab_size];
+						outputs.get(0).copyTo(outputArray);
+						nextWord = mostLikelyWord(outputArray);
+						
+						boolean[] bArray = new boolean[1];
+	 					try(Tensor correct_pred = outputs.get(1)){
+							correct_pred.copyTo(bArray);
+	 					}
+						if(bArray[0]) {
+					 		predictions.add((float)1);
+					 	}
+					 	else {
+					 		predictions.add((float)0);
+					 	}
+											
+						float sum = 0;
+						for (float i : predictions)
+						    sum = sum + i;		 				 	
+						predAccuracy = sum / predictions.size() * 100;
+						
+						sum = 0;
+						for (float i : accuracies)
+						    sum = sum + i;
+						trainAccuracy = sum / accuracies.size() * 100;
+
+						closeTensors(outputs);
+					}    
+					if (epoch%1000 == 0) {
+						printVariables(sess);
+						System.out.printf("\nAfter %d examples: \n", epoch*trainingDataArray.size());
+						System.out.printf("Correct pred: %f \n", predAccuracy);
+						System.out.printf("Accuracy: %f \n", trainAccuracy);
+						
+						System.out.printf(
+								" Instance: %s \n Prediction: %s \n Target: %s \n",
+								Arrays.deepToString(testInstance), nextWord, tempArray[startIdx+seq_length]);
 					}
- 					// TODO: can't seem to fetch accuracy scores
-					//System.out.printf("Correct pred: %b \n", bArray[0]);
-					//System.out.printf("Accuracy: %f \n", runner.get(1).floatValue());
-					System.out.printf("After %d examples: \n", epoch*trainingDataArray.size());
-					
-					printVariables(sess);
-					closeTensors(runner);
 				}
 			}
 
 			// checkpoint
 			sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
-			
-			// inference 
-			String[] testInstance = new String[30];
-			List<String> temp = trainingDataArray.get(0);
-			System.arraycopy(temp.toArray(new String[temp.size()]), 0, testInstance, 0, 30);
-			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(testInstance));
-					Tensor<?> output =
-							sess.runner().feed("input", input).fetch("output").run().get(0).expect(Float.class)) {
-				float[][] outputArray = new float[1][vocab_size];
-				output.copyTo(outputArray);
-				String nextWord = mostLikelyWord(outputArray);
-				System.out.printf(
-						"Instance: %s \n Prediction: %s \n",
-						Arrays.deepToString(testInstance), nextWord);
-			}    
 	    }
 	}
-	
+
 	/*
 	 * close tensors to release memory used by them (to be used when try catch statement can't be used)
 	 */
@@ -312,8 +368,8 @@ public class TrainLSTM {
 	private String mostLikelyWord(float[][] vector) {
 		String word = "<ERROR>";
 		String[] vocabArray = vocab.values().toArray(new String[0]);
-	    System.out.printf("Vocabulary:\t %s\n", Arrays.toString(vocabArray));
-	    System.out.printf("Probabilities:\t %s\n", Arrays.toString(vector[0]));
+	    //System.out.printf("Vocabulary:\t %s\n", Arrays.toString(vocabArray));
+	    //System.out.printf("Probabilities:\t %s\n", Arrays.toString(vector[0]));
 		// find word with highest prob
 		float max = vector[0][0];
 		int wordIndex = 0;
@@ -340,16 +396,23 @@ public class TrainLSTM {
 		float[][] wordsOneHotEncoded = new float[1][vocab_size]; 
 		Arrays.fill(wordsOneHotEncoded[0], 0);
 		
+		int rem = -1;
+		// don't we always expect just one word? 
 		for (int i = 0; i < splitted.length; i++) {
-			for (int j = 0; j < vocab.size(); j++) {	
-				if (vocab.get(j) == splitted[i]) {
-					wordsOneHotEncoded[0][j] = (float) 1;
-				} 
+			if (vocab.containsValue(splitted[i])) {
+				int vocabIdx = getKeyByValue(vocab, splitted[i]);
+				wordsOneHotEncoded[0][vocabIdx] = (float) 1;
+				rem = vocabIdx;
+			}
+			else {
+				System.out.printf("Couldn't find word in vocab: %s\n", words);
+				System.exit(0);
 			}
 		}
-		
-		//System.out.println(Arrays.deepToString(wordsOneHotEncoded));
-		
+//		System.out.println(words);
+//		System.out.println(Arrays.deepToString(wordsOneHotEncoded));
+//		System.out.printf("Idx: %d\n", rem);
+
 		return wordsOneHotEncoded;
 	}
 
@@ -381,14 +444,12 @@ public class TrainLSTM {
 				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
-				//System.out.print("Error: Couldn't restore model ...");
-				//return "";
-				System.out.println("Initialising model ...");
-				sess.runner().addTarget("init").run();
+				System.out.print("Error: Couldn't restore model ...");
+				return "";
 			}
 			
 			String[] questionArray = tokenise(question);
-			// if the question is shorter than the set seq_length, we fill in the beginning slots with UNKNOWN
+			// if the question is shorter than the set seq_length, we fill in the beginning slots with START
 			// using a set seq_length is necessary for the lstm
 			if(questionArray.length < seq_length) {
 				String[] temp = new String[seq_length];
@@ -520,7 +581,7 @@ public class TrainLSTM {
 	
 	private void printVariables(Session sess) {
 	    List<Tensor<?>> values = sess.runner().fetch("W/read").fetch("b/read").run();
-	    float[][] w = new float[256][vocab_size];
+	    float[][] w = new float[num_hidden*2][vocab_size]; // 2*num_hidden because of forward + backward cells
 	    values.get(0).copyTo(w);
 	    float[] b = new float[vocab_size];
 	    values.get(1).copyTo(b);
