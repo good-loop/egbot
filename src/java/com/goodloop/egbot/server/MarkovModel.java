@@ -117,9 +117,6 @@ public class MarkovModel {
 		
 		for(File file : files) {
 			System.out.println("File: "+file+"...");
-//		for (int fileNumber=1; fileNumber<=8; fileNumber++) {
-//			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-//			File file = new File("data/build/slim/MathStackExchangeAPI_Part_" + fileNumber + ".json");
 	
 			Gson gson = new Gson();
 			JsonReader jr = new JsonReader(FileUtils.getReader(file));
@@ -144,6 +141,7 @@ public class MarkovModel {
 					if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
 				}			
 			} 
+			jr.close();
 		}
 		// save
 		save();
