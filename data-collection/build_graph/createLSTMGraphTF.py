@@ -38,10 +38,10 @@ def BiRNN(x, weights, biases):
     # Current data input shape: (batch_size, timesteps, n_input)
     # Required shape: 'timesteps' tensors list of shape (batch_size, num_input)
 
-    # reshape to [1, n_input]
+    # reshape to [1, seq_length]
     x = tf.reshape(x, [-1, seq_length])
 
-    # Generate a n_input-element sequence of inputs
+    # Generate a seq_length-element sequence of inputs
     # (eg. [had] [a] [general] -> [20] [6] [33])
     x = tf.split(x, seq_length, 1)
 
