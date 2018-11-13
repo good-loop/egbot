@@ -28,13 +28,22 @@ public class ConstructEvaluationSet {
 		constructEvalSet(loadData());
 	}
 
+	/**
+	 * 
+	 * @param initialSet list of mappings with keys ("question", "answer") 
+	 * @throws IOException
+	 */
 	private static void constructEvalSet(ArrayList<Map<String, String>> initialSet) throws IOException {
 		
 		evalSet = new ArrayList<Map<String, String>>();
-		for (int i = 0; i < desiredEvalSetSize*5; i+=5) {
-			Map<String, String> temp = initialSet.get(i);
-			temp.put("question", temp.get("question"));
-			temp.put("right", temp.get("answer"));
+		for (int i = 0; i < initialSet.size()-4; i++) {
+			
+			if (evalSet.size() == desiredEvalSetSize) break;
+			
+			
+			Map<String, String> temp = new HashMap(initialSet.get(i));
+			//temp.put("question", temp.get("question"));
+			//temp.put("right", temp.get("answer"));
 			temp.put("wrong1", initialSet.get(i+1).get("answer"));
 			temp.put("wrong2", initialSet.get(i+2).get("answer"));
 			temp.put("wrong3", initialSet.get(i+3).get("answer"));
