@@ -1,8 +1,10 @@
 package com.goodloop.egbot.server;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+
+import org.eclipse.jetty.util.ajax.JSON;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.gson.Gson;
@@ -21,40 +25,49 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
 
 public class ConstructEvaluationSet {
-	static ArrayList<Map<String, String>> evalSet;
+	static ArrayList<Map<String, Object>> evalSet;
 	static int desiredEvalSetSize = 100;
 	
 	public static void main(String[] args) throws IOException {
-		constructEvalSet(loadData());
+		evalSet = constructEvalSet(loadData());
+		saveData(evalSet);
+	}
+
+	private static void saveData(ArrayList<Map<String, Object>> set) throws FileNotFoundException {
+		Gson g = new Gson();
+		PrintWriter out = new PrintWriter("eval.json");
+		out.print(g.toJson(set));
+		out.close();
 	}
 
 	/**
 	 * 
 	 * @param initialSet list of mappings with keys ("question", "answer") 
+	 * @return 
 	 * @throws IOException
 	 */
-	private static void constructEvalSet(ArrayList<Map<String, String>> initialSet) throws IOException {
+	private static ArrayList<Map<String, Object>> constructEvalSet(ArrayList<Map<String, String>> initialSet) throws IOException {
 		
-		evalSet = new ArrayList<Map<String, String>>();
+		ArrayList<Map<String, Object>> set = new ArrayList<Map<String, Object>>();
 		for (int i = 0; i < initialSet.size()-4; i++) {
 			
-			if (evalSet.size() == desiredEvalSetSize) break;
+			// if we have reached our desired size, stop
+			if (set.size() == desiredEvalSetSize) break;
 			
+			// copy question and answer pair e.g. [ { "question": "let ...", "answer": "well ..." } ]
+			Map<String, Object> temp = new HashMap(initialSet.get(i));
 			
-			Map<String, String> temp = new HashMap(initialSet.get(i));
-			//temp.put("question", temp.get("question"));
-			//temp.put("right", temp.get("answer"));
-			temp.put("wrong1", initialSet.get(i+1).get("answer"));
-			temp.put("wrong2", initialSet.get(i+2).get("answer"));
-			temp.put("wrong3", initialSet.get(i+3).get("answer"));
-			temp.put("wrong4", initialSet.get(i+4).get("answer"));
-			evalSet.add(temp);
-			
-//			for (Map.Entry<String, String> entry : temp.entrySet()) {
-//			    System.out.println(entry.getKey()+" : "+entry.getValue());
-//			}
+			// also adding 4 wrong answers in the form of a string array e.g. [ { ..., "wrong": ["try ...", "maybe ...", "this ...", "if ..."] } ]
+			String[] wrongs = new String[4];
+			for (int j = 1; j <= 4; j++) {
+				wrongs[j-1] = initialSet.get(i+j).get("answer");
+			}
+			temp.put("wrong", wrongs);
+			set.add(temp);
 		}
-		System.out.printf("Evaluation set size: %d", evalSet.size());
+		
+		System.out.printf("Evaluation set size: %d", set.size());
+		return set;
 	}	
 	
 	/**
