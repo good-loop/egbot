@@ -22,9 +22,8 @@ public class TrainLSTMTest {
 	public void testTrain() throws IOException {
 		int ckptVersion = new Random().nextInt(1000000);
 		TrainLSTM lstm = new TrainLSTM(ckptVersion);
-
-		int vocabVersion = 957780;
-		lstm.loadVocab(vocabVersion);
+		lstm.loadAndInitVocab();
+		lstm.loadVocab(ckptVersion);
 		lstm.loadAndTrain();
 	}
 	
