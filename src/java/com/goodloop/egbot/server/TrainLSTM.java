@@ -60,6 +60,7 @@ public class TrainLSTM {
 	// input: training data and vocab
 	//List<List<String>> trainingDataArray;
 	HashMap<Integer, String> vocab;
+	HalfLifeMap<String, Integer> hlVocab;
 	int vocab_size;
 	
 	//private SitnStream ssFactory;
@@ -71,6 +72,10 @@ public class TrainLSTM {
 	// checkpoint version to identify trained model
 	int ckptVersion;
 
+	TrainLSTM() throws IOException{
+		ckptVersion = new Random().nextInt(1000000);
+	}
+	
 	TrainLSTM(int version) throws IOException{
 		// record unique identifier for model 
 		ckptVersion = version;
@@ -104,7 +109,9 @@ public class TrainLSTM {
 		 	
 		// construct vocab that auto-prunes and discards words that appear rarely
 		// hlVocab is a map where the key to be the word and the value to be the word counts
-		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(1000000);
+//		HalfLifeMap<String, Integer> 
+		hlVocab = new HalfLifeMap<String, Integer>(1000000);
+		// TODO: figure out why the vocab is meant to have 1mil entries, but ends up with 1,375,589
 
 		// load files
 		EgbotConfig config = new EgbotConfig();
@@ -137,29 +144,29 @@ public class TrainLSTM {
 			while(jr.hasNext()) {
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							String[] temp = tokenise(question_body + " " + answer_body);
-							for (String word : temp) {		
-								if (!word.equals("") && hlVocab.containsKey(word)) {
-									int count = hlVocab.get(word) + 1;
-									hlVocab.put(word, count);
-								}
-								else {
-									hlVocab.put(word, 1);
-								}	
-							}
-							c++;
-							rate.plus(1);
-							if (c % 100 == 0) System.out.println(c+" "+rate+"..."+hlVocab.size());
-						}
-					}
-				}	
+				if ( ! is_answered) continue;
+				String question_body = (String) qa.get("body_markdown");
+				double answer_count = (double) qa.get("answer_count");
+				boolean is_accepted = false;
+				for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
+					is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+					if ( ! is_accepted) continue;
+					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+					String[] temp = tokenise(question_body + " " + answer_body);
+					for (String word : temp) {
+						if (word.isEmpty()) continue;
+						Integer cnt = hlVocab.get(word);
+						if (cnt!=null) {
+							int count = cnt + 1;
+							hlVocab.put(word, count);
+						} else {
+							hlVocab.put(word, 1);
+						}		
+					}			
+					c++;
+					rate.plus(1);
+					if (c % 100 == 0) System.out.println("Count: "+c+"\t Rate: "+rate+"\t Vocab size: "+hlVocab.size());
+				}		
 			} 
 			jr.close();
 		}
@@ -175,6 +182,7 @@ public class TrainLSTM {
 			}
 		}		
 		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
+		System.out.printf("Ckeckpoint no: %s\n", String.valueOf(ckptVersion));
 	}
 	
 	/**
