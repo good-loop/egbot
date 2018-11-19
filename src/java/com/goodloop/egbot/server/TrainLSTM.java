@@ -41,7 +41,9 @@ import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.json.JSONObject;
 import com.winterwell.maths.datastorage.HalfLifeMap;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
+import com.winterwell.maths.stats.distributions.cond.ICondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Sitn;
+import com.winterwell.maths.stats.distributions.discrete.IFiniteDistribution;
 import com.winterwell.nlp.corpus.SimpleDocument;
 import com.winterwell.nlp.io.SitnStream;
 import com.winterwell.nlp.io.Tkn;
@@ -808,6 +810,85 @@ public class TrainLSTM {
 	    }
 	    return nextWord;
 	}
+	
+	/**
+	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
+	 * @param q question
+	 * @param t target answer
+	 * @return
+	 * @throws IOException 
+	 */
+	public double scoreAnswer(String q, String t) throws IOException {
+		double score = 0; 
+
+		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
+		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		
+		Path gp = Paths.get(graphPath);
+		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		final byte[] graphDef = Files.readAllBytes(gp);
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint";
+	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+
+	    // load graph
+	    try (Graph graph = new Graph();
+	        Session sess = new Session(graph);
+	        Tensor<String> checkpointPrefix =
+	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	    	
+	    	graph.importGraphDef(graphDef);
+			if (checkpointExists) {						
+				System.out.println("Restoring model ...");
+				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+			} else {
+				System.out.print("Error: Couldn't restore model ...");
+				return 0;
+			}
+			
+			// tokenise input
+			String[] qArray = tokenise(q);
+			String[] tArray = tokenise(t);
+			
+			// ensure we take the last 30 words of the question (or if it's < 30, then fill it with <START> tags at the beginning)
+			String[] instanceArray = new String[seq_length];
+			Arrays.fill(instanceArray, "START");
+			if (qArray.length < seq_length) {
+				System.arraycopy(qArray, 0, instanceArray, seq_length-qArray.length, seq_length);
+			}
+			else {
+				System.arraycopy(qArray, qArray.length-seq_length, instanceArray, 0, seq_length);
+			}
+			
+			// for each target word
+			for (int i = 0; i < tArray.length; i++) {
+				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(instanceArray));
+					Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tArray[i]))) {
+					List<Tensor<?>> outputs = sess.runner()
+							.feed("input", input)
+							.feed("target", target)
+							.fetch("output") // prediction
+							.fetch("correct_pred") // validation accuracy
+							.run();
+					
+					// copy output tensors to array
+					float[][] outputArray = new float[1][vocab_size];
+					outputs.get(0).copyTo(outputArray);
+					// find out the position of the target word in the vocab
+					int targetPos = getKeyByValue(vocab,tArray[i]);
+					// find out the prob of that word, as returned from the model
+					float probWord = outputArray[0][targetPos];
+					// add the log prob to the score
+					score += Math.log(probWord);
+				}
+				
+				//shift questionArray to include the next targer word at the end so as to allow us to generate the next word after that
+				System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
+				instanceArray[seq_length-1] = tArray[i];
+			}
+			// avg the score and then return it
+			return score/tArray.length;
+	    }		
+	}	
 	
 	/**
 	 * Prints out the signature of the model, which specifies what type of model is being exported, 

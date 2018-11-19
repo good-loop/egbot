@@ -35,7 +35,8 @@ public class ConstructEvaluationSet {
 
 	private static void saveData(ArrayList<Map<String, Object>> set) throws FileNotFoundException {
 		Gson g = new Gson();
-		PrintWriter out = new PrintWriter("eval.json");
+		String evalPath = System.getProperty("user.dir") + "/data/eval.json";	
+		PrintWriter out = new PrintWriter(evalPath);
 		out.print(g.toJson(set));
 		out.close();
 	}
