@@ -3,6 +3,7 @@ package com.goodloop.egbot.server;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -82,7 +83,10 @@ public class MarkovModel {
 		assert d2.equals(desc);
 		Depot.getDefault().put(desc, wmc);
 	}
-	
+	/**
+	 * TODO break this out into a common train-over-MSE-data class
+	 * @throws IOException
+	 */
 	public void train () throws IOException {
 		assert wmc != null;
 		// load if we can
@@ -97,18 +101,22 @@ public class MarkovModel {
 		EgbotConfig config = new EgbotConfig();
 		
 		List<File> files;
+		assert config.srcDataDir.isDirectory() : config.srcDataDir;
 		if (false) {
 			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
 			// Use this for extra speed if youve run the slimming script
 			// python script data-collection/slimming.py
 			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
 		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
+			File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
 				@Override
 				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
+					return name.startsWith("MathStackExchangeAPI_Part") 
+							&& (name.endsWith(".json") || name.endsWith(".json.zip"));
 				}
-			}));
+			});
+			assert fs != null && fs.length > 0 : config.srcDataDir;
+			files = Arrays.asList(fs);
 		}
 		// always have the same ordering
 		Collections.sort(files);
@@ -119,7 +127,14 @@ public class MarkovModel {
 			System.out.println("File: "+file+"...");
 	
 			Gson gson = new Gson();
-			JsonReader jr = new JsonReader(FileUtils.getReader(file));
+			// zip or plain json?
+			Reader r;
+			if (file.getName().endsWith(".zip")) {
+				r = FileUtils.getZIPReader(file);
+			} else {
+				r = FileUtils.getReader(file);
+			}
+			JsonReader jr = new JsonReader(r);
 			jr.beginArray();
 						
 			int c=0;
@@ -142,6 +157,8 @@ public class MarkovModel {
 				}			
 			} 
 			jr.close();
+			
+//			if (false) break;
 		}
 		// save
 		save();
