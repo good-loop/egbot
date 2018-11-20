@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -160,7 +161,7 @@ public class MarkovModel {
 			
 //			if (false) break;
 		}
-		// save
+		// save trained model
 		save();
 	}
 	
@@ -185,11 +186,6 @@ public class MarkovModel {
 
 		Sitn<Tkn> last = list.get(list.size()-1);
 		
-		//		// TODO: check with DW whether this makes sense
-//		String[] words = q.split("\\s+");
-//		String lastOne = words[words.length-1];
-//		Tkn start = new Tkn(lastOne);
-		
 		// hack test by sampling
 		Cntxt cntxt = last.context;
 		int max_length = 30;
@@ -198,7 +194,7 @@ public class MarkovModel {
 			IFiniteDistribution<Tkn> marginal = (IFiniteDistribution<Tkn>) ((ICondDistribution<Tkn, Cntxt>)wmc).getMarginal(cntxt);
 			// this is the most likely rather than a random sample
 			Tkn sampled = marginal.getMostLikely();
-			//Tkn sampled = ((ICondDistribution<Tkn, Cntxt>)wmc).sample(cntxt);
+			//Tkn sampled = ((ICond Distribution<Tkn, Cntxt>)wmc).sample(cntxt);
 			if (Tkn.END_TOKEN.equals(sampled)) {
 				break;
 			}
@@ -209,5 +205,40 @@ public class MarkovModel {
 		}
 		return answer;
 	}
-
+	
+	/**
+	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
+	 * @param q question
+	 * @param t target answer
+	 * @return 
+	 * @return
+	 */
+	public double scoreAnswer(String q, String t) {
+		SitnStream ssq = ssFactory.factory(q);
+		List<Sitn<Tkn>> qlist = Containers.getList(ssq);
+		Sitn<Tkn> last = qlist.get(qlist.size()-1);
+		Cntxt cntxt = last.context;
+		
+		SitnStream ssa = ssFactory.factory(t);		
+		List<Sitn<Tkn>> alist = Containers.getList(ssq);
+		
+		double score = 0; 
+		ICondDistribution<Tkn, Cntxt> cm = (ICondDistribution<Tkn, Cntxt>)wmc;
+		// for each target word
+		for (Sitn<Tkn> sitn : alist) {
+			double p = cm.logProb(sitn.outcome, sitn.context); 
+			System.out.println(p);
+			// add the log prob to the score
+			score += p;
+		}
+		// avg the score and then return it
+		return score/alist.size();
+	}
 }
+
+
+
+
+
+
+
