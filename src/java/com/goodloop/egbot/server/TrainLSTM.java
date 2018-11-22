@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,11 +46,20 @@ import com.winterwell.maths.stats.distributions.cond.Cntxt;
 import com.winterwell.maths.stats.distributions.cond.ICondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Sitn;
 import com.winterwell.maths.stats.distributions.discrete.IFiniteDistribution;
+import com.winterwell.nlp.NLPWorkshop;
 import com.winterwell.nlp.corpus.SimpleDocument;
+import com.winterwell.nlp.dict.Dictionary;
+import com.winterwell.nlp.dict.EmoticonDictionary;
+import com.winterwell.nlp.io.FilteredTokenStream;
+import com.winterwell.nlp.io.ITokenStream;
 import com.winterwell.nlp.io.SitnStream;
+import com.winterwell.nlp.io.StopWordFilter;
 import com.winterwell.nlp.io.Tkn;
+import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
+import com.winterwell.nlp.io.FilteredTokenStream.KInOut;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.KErrorPolicy;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
@@ -63,22 +74,59 @@ public class TrainLSTM {
 	//List<List<String>> trainingDataArray;
 	HashMap<Integer, String> vocab;
 	HalfLifeMap<String, Integer> hlVocab;
+	Random probCounter;
 	int vocab_size;
-	
+	List<File> files;
 	//private SitnStream ssFactory;
 
 	// training parameters
-	int seq_length = 3; 	// sequence length
-	int num_epochs = 1000; // training epochs
+	int seq_length = 30; 	// sequence length
+	int num_epochs = 10; // training epochs
 	int num_hidden = 256; // number of hidden layers
+	int idealVocabSize = 50000;
 	// checkpoint version to identify trained model
 	int ckptVersion;
 
+	/**
+	 * default constructor (where the model version is randomly generated)
+	 * @throws IOException
+	 */
 	TrainLSTM() throws IOException{
+		// find out the names of the files to be loaded
+		EgbotConfig config = new EgbotConfig();
+		files = null;
+		if (false) {
+			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
+			// Use this for extra speed if youve run the slimming script
+			// python script data-collection/slimming.py
+			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
+		} else {
+			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
+				}
+			}));
+		}
+		// always have the same ordering
+		Collections.sort(files);
+		
+		// random number generator for probabilistic counter (so as to get 90/10 split for training/testing)
+		probCounter = new Random();
+		probCounter.setSeed(42);
+		// record unique identifier for model 
 		ckptVersion = new Random().nextInt(1000000);
 	}
 	
+	/**
+	 * constructor (where the model version is specified and used to load the model later on)
+	 * @param version
+	 * @throws IOException
+	 */	
 	TrainLSTM(int version) throws IOException{
+		this(); // call default constructor
+		
+		System.out.println(files.toString());
 		// record unique identifier for model 
 		ckptVersion = version;
 		
@@ -104,35 +152,15 @@ public class TrainLSTM {
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
 	 */
-	public void loadAndInitVocab() throws IOException {
+	public int loadAndInitVocab() throws IOException {
 		// vocab has to be constructed and saved from all the text that will be used when training 
 		// this is because vocab_size defines the shape of the feature vectors
 		System.out.println("Loading files and initialising vocabulary");
 		 	
 		// construct vocab that auto-prunes and discards words that appear rarely
 		// hlVocab is a map where the key to be the word and the value to be the word counts
-//		HalfLifeMap<String, Integer> 
-		hlVocab = new HalfLifeMap<String, Integer>(1000000);
+		hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
 		// TODO: figure out why the vocab is meant to have 1mil entries, but ends up with 1,375,589
-
-		// load files
-		EgbotConfig config = new EgbotConfig();
-		List<File> files = null;
-		if (false) {
-			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-			// Use this for extra speed if youve run the slimming script
-			// python script data-collection/slimming.py
-			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
-		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
-				}
-			}));
-		}
-		// always have the same ordering
-		Collections.sort(files);
 		
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		
@@ -167,7 +195,7 @@ public class TrainLSTM {
 					}			
 					c++;
 					rate.plus(1);
-					if (c % 100 == 0) System.out.println("Count: "+c+"\t Rate: "+rate+"\t Vocab size: "+hlVocab.size());
+					if (c % 1000 == 0) System.out.println("Count: "+c+"\t Rate: "+rate+"\t Vocab size: "+hlVocab.size());
 				}		
 			} 
 			jr.close();
@@ -185,6 +213,23 @@ public class TrainLSTM {
 		}		
 		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
 		System.out.printf("Ckeckpoint no: %s\n", String.valueOf(ckptVersion));
+		return ckptVersion;
+	}
+	
+	/**
+	 * top 1000 words in the vocabulary
+	 */
+	public ArrayList<String> vocabTop(int topSize) throws IOException {
+		ArrayList<String> topArray = new ArrayList<String>(topSize);
+		HalfLifeMap<String, Integer> top = hlVocab;
+		//top.containsKey("dasd");
+		top.order(topSize);
+		for (String s : top.keySet()) {
+			//ITokenStream a = null;
+			System.out.println(s);
+			topArray.add(s);
+		}
+		return topArray;
 	}
 	
 	/**
@@ -193,29 +238,10 @@ public class TrainLSTM {
 	public void loadAndTrain() throws IOException {
 		// load files, save content locally and train using local data and loaded vocab from file
 		// TODO: check to make sure that the vocab was indeed constructed and is not an empty map 
-		
-		EgbotConfig config = new EgbotConfig();
-		List<File> files = null;
-		if (false) {
-			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-			// Use this for extra speed if youve run the slimming script
-			// python script data-collection/slimming.py
-			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
-		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part_1") && name.endsWith(".json");
-				}
-			}));
-		}
-		// always have the same ordering
-		Collections.sort(files);
-		
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		
+		List<List<String>> trainingBatch; 
+
 		for(File file : files) {
-			List<List<String>> trainingData = new ArrayList<List<String>>(); 
 			System.out.println("File: "+file+"...");
 			Gson gson = new Gson();
 			JsonReader jr = new JsonReader(FileUtils.getReader(file));
@@ -232,15 +258,27 @@ public class TrainLSTM {
 						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
 						if (is_accepted) {
 							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							trainingData.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
-							train(trainingData);
+							// probabilistic counter, adds data point to training only if it's not been reserved for testing  
+							// will select it for training 9 out 10 times
+							//if (probCounter.nextInt(10) != 0) {
+							trainingBatch = new ArrayList<List<String>>(); 
+							trainingBatch.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
+							//System.out.println(trainingBatch.size());
+							train(trainingBatch);
+							//}
 							c++;
 							rate.plus(1);
-							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+							if (c % 1000 == 0) {
+								// train in batches to prevent memory issues
+								//train(trainingBatch);
+								//trainingBatch = new ArrayList<List<String>>(); 
+								System.out.println(c+" "+rate+"...");
+							}
 						}
 					}
 				}	
 			} 
+			// close file to save memory
 			jr.close();
 		}
 	}
@@ -343,7 +381,7 @@ public class TrainLSTM {
 		// this is because vocab_size defines the shape of the feature vectors
 		System.out.println("Initialising vocabulary");
 		 		
-		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(1000000);
+		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
 		// construct vocab that auto-prunes and discards words that appear rarely
 		// hlVocab is a map where the key to be the word and the value to be the word counts
 		for (int i = 0; i < trainingDataArray.size(); i++) {
@@ -447,7 +485,7 @@ public class TrainLSTM {
 			System.out.print("Starting from: \n");
 			
 			// print out weight and bias initialisation
-			printVariables(sess);
+			//printVariables(sess);
 			
 			ArrayList<Float> trainAccuracies = new ArrayList<Float>();
 			ArrayList<Float> validAccuracies = new ArrayList<Float>();
@@ -557,8 +595,8 @@ public class TrainLSTM {
 					}    
 					
 					// update with information about training performance
-					if (epoch%100 == 0) {
-						printVariables(sess);
+					if (epoch%10 == 0) {
+						//printVariables(sess);
 						System.out.printf("\nAfter %d examples: \n", epoch*trainingDataArray.size());
 						System.out.printf("Validation accuracy: %f \n", validAccuracy);
 						System.out.printf("Training accuracy: %f \n", trainAccuracy);
@@ -662,8 +700,7 @@ public class TrainLSTM {
 				rem = vocabIdx;
 			}
 			else {
-				System.out.printf("Couldn't find word in vocab: %s\n", words);
-				System.exit(0);
+				//System.out.printf("Couldn't find word in vocab: %s\n", words);
 			}
 		}
 		return wordsOneHotEncoded;
@@ -674,11 +711,35 @@ public class TrainLSTM {
 	 * @param words
 	 * @return
 	 */
+	public String[] tokenise1(String words) {
+		WordAndPunctuationTokeniser t = new WordAndPunctuationTokeniser();
+		t.setSwallowPunctuation(true);
+		t.setLowerCase(true);
+		
+		ITokenStream _tokeniser = t;
+		_tokeniser = _tokeniser.factory(words);
+		StopWordFilter s = new StopWordFilter(_tokeniser);
+		List<Tkn> tknised = s.toList();
+		
+		String[] array = new String[tknised.size()];
+		int index = 0;
+		for (Tkn tk : tknised) {
+		  array[index] = tk.getText();
+		  index++;
+		}
+		return array;
+	}
+	
+	/**
+	 * helper function to tokenise sentences
+	 * @param words
+	 * @return
+	 */
 	private String[] tokenise(String words) {
 		String[] splitted = words.split("\\s+");
 		return splitted;
 	}
-
+	
 	/**
 	 * sample a series of words from the model
 	 * @param question
