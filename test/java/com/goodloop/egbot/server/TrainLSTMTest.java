@@ -10,35 +10,84 @@ import org.junit.Test;
 import com.winterwell.depot.Depot;
 
 public class TrainLSTMTest {
-	
+		
 //	@Test
 //	public void testInitVocab() throws IOException {
 //		int ckptVersion = new Random().nextInt(1000000);
 //		TrainLSTM lstm = new TrainLSTM(ckptVersion);
 //		lstm.loadAndInitVocab();
 //	}
-	
-	@Test
-	public void testTrain() throws IOException {
-		int ckptVersion = new Random().nextInt(1000000);
-		TrainLSTM lstm = new TrainLSTM(ckptVersion);
-		lstm.loadAndInitVocab();
-		lstm.loadVocab(ckptVersion);
-		lstm.loadAndTrain();
-	}
-	
+//	
+//	@Test
+//	public void testTrain() throws IOException {
+//		int ckptVersion = new Random().nextInt(1000000);
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		lstm.loadAndInitVocab();
+//		lstm.loadVocab(ckptVersion);
+//		lstm.loadAndTrain();
+//	}
+//	
 //	@Test
 //	public void testSampleSingleWord() throws Exception {
-//		TrainLSTM lstm = new TrainLSTM(785346);
-//		String sample = lstm.sampleSeries(", the mice",4);
-//		assertTrue(sample.equals("had a general council"));
+//		int ckptVersion = 432343;
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = 978513;
+//		lstm.loadVocab(vocabVersion);
+//		lstm.loadAndTrain();
+//		lstm.sampleWord("what is probability");
 //	}
 //	
 //	@Test
 //	public void testSampleSeriesOfWords() throws Exception {
-//		TrainLSTM lstm = new TrainLSTM(785346);
-//		String sample = lstm.sampleWord(", the mice");
-//		assertTrue(sample.equals("had"));
+//		int ckptVersion = 432343;
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = 978513;
+//		lstm.loadVocab(vocabVersion);
+//		lstm.loadAndTrain();
+//		lstm.sampleSeries("what is probability", 30);
+//	}
+//	
+//	@Test
+//	public void testVocab10() throws Exception {
+//		int ckptVersion = new Random().nextInt(1000000);
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = lstm.loadAndInitVocab();
+//		lstm.loadVocab(vocabVersion);
+//		lstm.vocabTop(10);
+//	}	
+	
+	
+//	@Test
+//	public void testA() throws Exception {
+//		// test constructing new vocab & training new model 
+//		int ckptVersion = new Random().nextInt(1000000);
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = lstm.loadAndInitVocab();
+//		lstm.loadVocab(vocabVersion);
+//		lstm.loadAndTrain();
+//		lstm.sampleSeries("what is probability", 30);
+//	}
+	
+	@Test
+	public void testB() throws Exception {
+		// test loading constructed vocab & training new model 
+		int ckptVersion = new Random().nextInt(1000000);
+		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+		int vocabVersion = 500822; //500822,98967; 74712,1433; 
+		lstm.loadVocab(vocabVersion);
+		lstm.loadAndTrain();
+		lstm.sampleSeries("what is probability", 30);
+	}
+	
+//	@Test
+//	public void testC() throws Exception {
+//		// testing loading constructed vocab & loading trained model
+//		int ckptVersion = 432343;
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = 978513;
+//		lstm.loadVocab(vocabVersion);
+//		lstm.loadAndTrain();
+//		lstm.sampleSeries("what is probability", 30);
 //	}
 
 }
