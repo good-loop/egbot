@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeSet;
 
 import org.eclipse.jetty.util.ajax.JSON;
@@ -23,22 +24,20 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
-
+/**
+ * generates evaluation set from egbot data 
+ * the eval set represents 10% 
+ *
+ */
 public class ConstructEvaluationSet {
 	static ArrayList<Map<String, Object>> evalSet;
-	static int desiredEvalSetSize = 100;
+	static Random probCounter;
 	
 	public static void main(String[] args) throws IOException {
+		probCounter = new Random();
+		probCounter.setSeed(42);
 		evalSet = constructEvalSet(loadData());
 		saveData(evalSet);
-	}
-
-	private static void saveData(ArrayList<Map<String, Object>> set) throws FileNotFoundException {
-		Gson g = new Gson();
-		String evalPath = System.getProperty("user.dir") + "/data/eval.json";	
-		PrintWriter out = new PrintWriter(evalPath);
-		out.print(g.toJson(set));
-		out.close();
 	}
 
 	/**
@@ -51,9 +50,6 @@ public class ConstructEvaluationSet {
 		
 		ArrayList<Map<String, Object>> set = new ArrayList<Map<String, Object>>();
 		for (int i = 0; i < initialSet.size()-4; i++) {
-			
-			// if we have reached our desired size, stop
-			if (set.size() == desiredEvalSetSize) break;
 			
 			// copy question and answer pair e.g. [ { "question": "let ...", "answer": "well ..." } ]
 			Map<String, Object> temp = new HashMap(initialSet.get(i));
@@ -103,7 +99,7 @@ public class ConstructEvaluationSet {
 			jr.beginArray();
 						
 			int c=0;
-			while(jr.hasNext() && initialSet.size() < desiredEvalSetSize*5) {
+			while(jr.hasNext()) {//&& initialSet.size() < desiredEvalSetSize+4) {
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
 				if (is_answered) {
@@ -116,10 +112,15 @@ public class ConstructEvaluationSet {
 							Map<String, String> temp  = new HashMap<String, String>();
 							temp.put("question", question_body);
 							temp.put("answer", answer_body);
-							initialSet.add(temp);
+							// probabilistic counter, adds data point to testing batch 1 out of 10 times   
+							if (probCounter.nextInt(10) == 0) {
+								initialSet.add(temp);
+							}
 							c++;
 							rate.plus(1);
-							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+							if (c % 1000 == 0) {
+								System.out.println(c+" "+rate+"...");
+							}
 						}
 					}
 				}			
@@ -127,4 +128,12 @@ public class ConstructEvaluationSet {
 		}
 		return initialSet;
 	}	
+	
+	private static void saveData(ArrayList<Map<String, Object>> set) throws FileNotFoundException {
+		Gson g = new Gson();
+		String evalPath = System.getProperty("user.dir") + "/data/eval.json";	
+		PrintWriter out = new PrintWriter(evalPath);
+		out.print(g.toJson(set));
+		out.close();
+	}
 }

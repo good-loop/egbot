@@ -24,7 +24,7 @@ public class EvaluatePredictions {
 
 	public static void main(String[] args) throws IOException {
 		loadEvalSet();
-		evaluateMarkov();
+		//evaluateMarkov();
 		//evaluateLSTM();
 	}
 
@@ -48,8 +48,6 @@ public class EvaluatePredictions {
 		for (int i = 0; i < evalSet.size(); i++) {
 			String question = (String) evalSet.get(i).get("question");
 			String target = (String) evalSet.get(i).get("question");
-			// TODO: evaluate answer
-			// feed it the target & then score
 			mm.scoreAnswer(question, target);
 		}
 	} 
@@ -57,9 +55,10 @@ public class EvaluatePredictions {
 	public void evaluateLSTM() throws Exception {
 		TrainLSTM lstm = new TrainLSTM(); // requires passing the ckpt version for a specific  model		
 		for (int i = 0; i < evalSet.size(); i++) {
-			String prediction = lstm.sampleSeries((String) evalSet.get(i).get("question"), expectedAnswerLength);
+			String question = (String) evalSet.get(i).get("question");
+			//String prediction = lstm.sampleSeries((String) evalSet.get(i).get("question"), expectedAnswerLength);
 			String target = (String) evalSet.get(i).get("question");
-			// TODO: evaluate answer
+			lstm.scoreAnswer(question, target);
 		}
 	} 	
 }
