@@ -24,7 +24,7 @@ public class EvaluatePredictions {
 
 	public static void main(String[] args) throws IOException {
 		loadEvalSet();
-		//evaluateMarkov();
+		evaluateMarkov();
 		//evaluateLSTM();
 	}
 
@@ -43,22 +43,34 @@ public class EvaluatePredictions {
 	}
 
 	public static void evaluateMarkov() throws IOException {
+		double avgScore = 0;
 		MarkovModel mm = new MarkovModel();
-		mm.load();
+		System.out.println("Training Markov Model ...");
+		mm.train();
+		//mm.load();
+		System.out.println("Scoring Model ...");
 		for (int i = 0; i < evalSet.size(); i++) {
 			String question = (String) evalSet.get(i).get("question");
 			String target = (String) evalSet.get(i).get("question");
-			mm.scoreAnswer(question, target);
+			avgScore += mm.scoreAnswer(question, target);
+			if(i%10000==0) {                                                                                                                                                                                                                                                           
+				System.out.printf("Avg score after %d examples: %f\n", i, avgScore/(i+1));
+			}
 		}
 	} 
 	
 	public void evaluateLSTM() throws Exception {
+		double avgScore = 0;
 		TrainLSTM lstm = new TrainLSTM(); // requires passing the ckpt version for a specific  model		
 		for (int i = 0; i < evalSet.size(); i++) {
 			String question = (String) evalSet.get(i).get("question");
 			//String prediction = lstm.sampleSeries((String) evalSet.get(i).get("question"), expectedAnswerLength);
 			String target = (String) evalSet.get(i).get("question");
 			lstm.scoreAnswer(question, target);
+			avgScore += lstm.scoreAnswer(question, target);
+			if(i%10000==0) {                                                                                                                                                                                                                                                           
+				System.out.printf("Avg score after %d examples: %f\n", i, avgScore/(i+1));
+			}
 		}
 	} 	
 }

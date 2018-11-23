@@ -227,7 +227,7 @@ public class MarkovModel {
 		// for each target word
 		for (Sitn<Tkn> sitn : alist) {
 			double p = cm.logProb(sitn.outcome, sitn.context); 
-			System.out.println(p);
+			//System.out.println(p);
 			// add the log prob to the score
 			score += p;
 		}
