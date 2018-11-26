@@ -223,11 +223,19 @@ public class TrainLSTM {
 		ArrayList<String> topArray = new ArrayList<String>(topSize);
 		HalfLifeMap<String, Integer> top = hlVocab;
 		//top.containsKey("dasd");
-		top.order(topSize);
-		for (String s : top.keySet()) {
+		
+//		top.order(topSize); 
+//		 Missing code in git? Also, this is probably not the way to sort
+		// as HalfLifeMap should not be a sorted map.
+
+		List<String> keysSortedByValue = Containers.getSortedKeys(top);
+		Collections.reverse(keysSortedByValue); // largest first
+				
+		for (String s : keysSortedByValue) {
 			//ITokenStream a = null;
 			System.out.println(s);
 			topArray.add(s);
+			if (topArray.size() == 1000) break;
 		}
 		return topArray;
 	}
