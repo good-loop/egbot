@@ -218,25 +218,19 @@ public class TrainLSTM {
 	}
 	
 	/**
-	 * top 1000 words in the vocabulary
+	 * top SIZE words in the vocabulary (where size could be 1000 for the 1000th most common words)
 	 */
-	public ArrayList<String> vocabTop(int topSize) throws IOException {
-		ArrayList<String> topArray = new ArrayList<String>(topSize);
-		HalfLifeMap<String, Integer> top = hlVocab;
-		//top.containsKey("dasd");
-		
-//		top.order(topSize); 
-//		 Missing code in git? Also, this is probably not the way to sort
-		// as HalfLifeMap should not be a sorted map.
+	public ArrayList<String> vocabTop(int size) throws IOException {
+		ArrayList<String> topArray = new ArrayList<String>(size);
 
-		List<String> keysSortedByValue = Containers.getSortedKeys(top);
+		List<String> keysSortedByValue = Containers.getSortedKeys(hlVocab);
 		Collections.reverse(keysSortedByValue); // largest first
 				
 		for (String s : keysSortedByValue) {
 			//ITokenStream a = null;
-			System.out.println(s);
+			//System.out.println(s);
 			topArray.add(s);
-			if (topArray.size() == 1000) break;
+			if (topArray.size() == size) break;
 		}
 		return topArray;
 	}
