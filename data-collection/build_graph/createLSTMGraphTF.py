@@ -11,7 +11,7 @@ learning_rate = 0.001
 #training_steps = 10000
 #batch_size = 128
 #display_step = 200
-vocab_size = 98967 # TODO: put in real number
+vocab_size = 12705 # TODO: put in real number
 num_hidden = 256 # hidden layer num of features
 seq_length = 30
 

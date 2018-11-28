@@ -73,7 +73,7 @@ public class TrainLSTMTest {
 		// test loading constructed vocab & training new model 
 		int ckptVersion = new Random().nextInt(1000000);
 		TrainLSTM lstm = new TrainLSTM(ckptVersion);
-		int vocabVersion = 500822; //500822,98967; 74712,1433; 
+		int vocabVersion = 857600; 
 		lstm.loadVocab(vocabVersion);
 		lstm.loadAndTrain();
 		lstm.sampleSeries("what is probability", 30);

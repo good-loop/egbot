@@ -83,7 +83,7 @@ public class TrainLSTM {
 	int seq_length = 30; 	// sequence length
 	int num_epochs = 10; // training epochs
 	int num_hidden = 256; // number of hidden layers
-	int idealVocabSize = 50000;
+	int idealVocabSize = 10000;
 	// checkpoint version to identify trained model
 	int ckptVersion;
 
@@ -104,7 +104,8 @@ public class TrainLSTM {
 			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
 				@Override
 				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
+					//!TODO: change this to train on all files
+					return name.startsWith("MathStackExchangeAPI_Part_1") && name.endsWith(".json");
 				}
 			}));
 		}
@@ -239,7 +240,8 @@ public class TrainLSTM {
 		// load files, save content locally and train using local data and loaded vocab from file
 		// TODO: check to make sure that the vocab was indeed constructed and is not an empty map 
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		List<List<String>> trainingBatch; 
+		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
+
 
 		for(File file : files) {
 			System.out.println("File: "+file+"...");
@@ -260,14 +262,16 @@ public class TrainLSTM {
 							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
 							// probabilistic counter, adds data point to training only if it's not been reserved for testing  
 							// will select it for training 9 out 10 times
-							//if (probCounter.nextInt(10) != 0) {
-							trainingBatch = new ArrayList<List<String>>(); 
-							trainingBatch.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
-							//System.out.println(trainingBatch.size());
-							train(trainingBatch);
-							//}
+							if (probCounter.nextInt(10) != 0) {
+								trainingBatch.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
+							}
 							c++;
 							rate.plus(1);
+							if (c % 10 == 0) {
+								System.out.println(trainingBatch.size());
+								train(trainingBatch);
+								trainingBatch = new ArrayList<List<String>>(); 
+							}
 							if (c % 1000 == 0) {
 								// train in batches to prevent memory issues
 								//train(trainingBatch);
@@ -506,15 +510,15 @@ public class TrainLSTM {
 					for (int wordIdx = 0; wordIdx < qa.length-seq_length; wordIdx++) {
 						String[] instanceArray = new String[seq_length];
 						String target = "";
+						// filling in seq_length-1 START tags to allow guessing of words at the beginning (aka where the word position < seq_length)
 						Arrays.fill(instanceArray, "START");
 						if (wordIdx < seq_length) {
 							System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
-							target = qa[wordIdx+1];
 						}
 						else {
 							System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
-							target = qa[wordIdx+1];
 						}
+						target = qa[wordIdx+1];
 						
 						// print out training example
 						//if (epoch%100 == 0 && wordIdx == 0) {
