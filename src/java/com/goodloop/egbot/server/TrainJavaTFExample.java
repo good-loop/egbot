@@ -14,13 +14,9 @@ import org.tensorflow.Tensors;
  */
 public class TrainJavaTFExample {
   public static void main(String[] args) throws Exception {
-    if (args.length != 2) {
-      System.err.println("Require two arguments: The GraphDef file and checkpoint directory");
-      System.exit(1);
-    }
-
-    final byte[] graphDef = Files.readAllBytes(Paths.get(args[0]));
-    final String checkpointDir = args[1];
+	String graphPath = System.getProperty("user.dir") + "/data/models/testing/graph.pb";
+    final byte[] graphDef = Files.readAllBytes(Paths.get(graphPath));
+	final String checkpointDir = System.getProperty("user.dir") + "/data/models/testing/checkpoint";
     final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
     try (Graph graph = new Graph();
