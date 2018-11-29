@@ -90,12 +90,12 @@ public class EvaluatePredictions {
 		double avgScore = 0;
 		
 		System.out.println("Loading LSTM Model ...");
-		int modelVersion = 318462;//epochs1, 318462, score-inf;// requires passing the ckpt version for a trained model to use
+		int modelVersion = 240066;//epochs50, 625926;// requires passing the ckpt version for a trained model to use
 		TrainLSTM lstm = new TrainLSTM(modelVersion); 	
 		
 		System.out.println("Loading Vocabulary ...");
 //		int vocabVersion = lstm.loadAndInitVocab();
-		int vocabVersion = 126778;// requires passing the ckpt version for a saved vocab to use
+		int vocabVersion = 135802;// requires passing the ckpt version for a saved vocab to use
 		lstm.loadVocab(vocabVersion);
 		
 		System.out.println("Scoring ...");

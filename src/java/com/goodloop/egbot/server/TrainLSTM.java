@@ -81,7 +81,7 @@ public class TrainLSTM {
 
 	// training parameters
 	int seq_length = 30; 	// sequence length
-	int num_epochs = 50; // training epochs TODO: change this to have proper training
+	int num_epochs = 1; // training epochs TODO: change this to have proper training
 	int num_hidden = 256; // number of hidden layers
 	int idealVocabSize = 100;
 	// checkpoint version to identify trained model
@@ -285,7 +285,7 @@ public class TrainLSTM {
 			jr.beginArray();
 						
 			int c=0;
-			while(jr.hasNext() && c < 1000) { // TODO: c is a temporary limitation to produce dummy trained lstm model
+			while(jr.hasNext() && c < 50) { // TODO: c is a temporary limitation to produce dummy trained lstm model
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
 				if (is_answered) {
@@ -316,9 +316,10 @@ public class TrainLSTM {
 						}
 					}
 				}	
-			} 
+			}			
 			// close file to save memory
 			jr.close();
+			System.out.printf("Saved trained model to file: %s%d\n", "/data/models/final/v3/checkpoint", ckptVersion);
 		}
 	}
 
