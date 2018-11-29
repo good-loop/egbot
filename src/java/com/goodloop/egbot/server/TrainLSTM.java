@@ -69,7 +69,7 @@ import com.winterwell.utils.web.SimpleJson;
  * @author daniel
  *
  */
-public class TrainLSTM {
+public class TrainLSTM implements IEgBotModel {
 	// input: training data and vocab
 	//List<List<String>> trainingDataArray;
 	HashMap<Integer, String> vocab;
@@ -84,8 +84,8 @@ public class TrainLSTM {
 	int num_epochs = 1; // training epochs TODO: change this to have proper training
 	int num_hidden = 256; // number of hidden layers
 	int idealVocabSize = 100;
-	// checkpoint version to identify trained model
-	int ckptVersion;
+	/** checkpoint version to identify trained model */
+	final int ckptVersion;
 
 	/**
 	 * default constructor (where the model version is randomly generated)
@@ -152,6 +152,7 @@ public class TrainLSTM {
 	
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
+	 * @return magic version number -- needed to load
 	 */
 	public int loadAndInitVocab() throws IOException {
 		// vocab has to be constructed and saved from all the text that will be used when training 
@@ -382,7 +383,7 @@ public class TrainLSTM {
 	
 	/**
 	 * load vocabulary from file
-	 * @param version
+	 * @param version see {@link #loadAndInitVocab()}
 	 * @throws IOException
 	 */
 	public void loadVocab(int version) throws IOException{	

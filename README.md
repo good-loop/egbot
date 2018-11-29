@@ -23,12 +23,18 @@ https://zenodo.org/communities/egbot?page=1&size=20
 ## Running Egbot Application Locally
 
 ### Requirements
-python 3.5 -- e.g. add this to .bashrc to avoid Python 2
-	alias python='python3.5'
-pip3 8.1
-java 1.8
 
-Install required python packages listed in requirements.txt using pip
+* python 3.5 -- e.g. add this to .bashrc to avoid Python 2
+	alias python='python3.5'
+* pip3 8.1
+* java 1.8
+
+Install required python packages using pip:
+
+* tensorflow 
+* keras 
+* numpy
+* OLD not needed anymore: jep
 
 Install required Java jars using bob
 

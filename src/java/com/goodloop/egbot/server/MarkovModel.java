@@ -42,7 +42,7 @@ import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
 
-public class MarkovModel {
+public class MarkovModel implements IEgBotModel {
 	
 	ITrainable.Supervised<Cntxt, Tkn> wmc;
 	/**
