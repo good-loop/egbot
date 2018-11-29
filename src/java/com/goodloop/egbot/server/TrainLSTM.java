@@ -85,7 +85,7 @@ public class TrainLSTM implements IEgBotModel {
 	int num_hidden = 256; // number of hidden layers
 	int idealVocabSize = 100;
 	/** checkpoint version to identify trained model */
-	final int ckptVersion;
+	int ckptVersion;
 
 	/**
 	 * default constructor (where the model version is randomly generated)
@@ -271,8 +271,9 @@ public class TrainLSTM implements IEgBotModel {
 	
 	/**
 	 * load egbot zenodo files, save content locally in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ] and then run train for each file 
+	 * @throws IOException 
 	 */
-	public void loadAndTrain() throws IOException {
+	public void train() throws IOException {
 		// load files, save content locally and train using local data and loaded vocab from file
 		// TODO: check to make sure that the vocab was indeed constructed and is not an empty map 
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
@@ -305,12 +306,12 @@ public class TrainLSTM implements IEgBotModel {
 							rate.plus(1);
 							if (c % 10 == 0) {
 								System.out.println(c+" "+rate+"...");
-								train(trainingBatch);
+								trainEach(trainingBatch);
 								trainingBatch = new ArrayList<List<String>>(); 
 							}
 							if (c % 1000 == 0) {
 								// train in batches to prevent memory issues
-								//train(trainingBatch);
+								//trainEach(trainingBatch);
 								//trainingBatch = new ArrayList<List<String>>(); 
 								//System.out.println(c+" "+rate+"...");
 							}
@@ -501,7 +502,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * @param trainingDataArray is the data that will be used for training, expected to be in the shape of a list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ] 
 	 * @throws IOException
 	 */
-	public void train(List<List<String>> trainingDataArray) throws IOException {	
+	public void trainEach(List<List<String>> trainingDataArray) throws IOException {	
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
@@ -590,8 +591,17 @@ public class TrainLSTM implements IEgBotModel {
 			}
 
 			// save model checkpoint
-			sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
+			save(sess,checkpointPrefix);
 	    }
+	}
+
+	/**
+	 * saves trained model in the standard tensorflow checkpoint format
+	 * @param sess
+	 * @param checkpointPrefix
+	 */
+	private void save(Session sess, Tensor<?> checkpointPrefix) {
+		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();		
 	}
 
 	/**
@@ -727,9 +737,9 @@ public class TrainLSTM implements IEgBotModel {
 	 * @param question
 	 * @param expectedAnswerLength
 	 * @return answer
-	 * @throws Exception
+	 * @throws IOException 
 	 */
-	public String sampleSeries(String question, int expectedAnswerLength) throws Exception {
+	public String sample(String question, int expectedAnswerLength) throws IOException {
 		String answer = "<ERROR>";
 		
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
@@ -980,6 +990,60 @@ public class TrainLSTM implements IEgBotModel {
 	    System.out.printf("W0 = %s\nb = %s\n\n", Arrays.toString(w[0]), Arrays.toString(b));
 	    for (Tensor<?> t : values) {
 	      t.close();
+	    }
+	}
+
+	@Override
+	public void train1(Map data) throws UnsupportedOperationException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finishTraining() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isReady() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void resetup() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	// TODO: finish up loading the saved model
+	public void load() throws IOException {
+		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
+		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		Path gp = Paths.get(graphPath);
+		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		final byte[] graphDef = Files.readAllBytes(gp);
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+
+	    // load graph
+	    try (Graph graph = new Graph();
+	        Session sess = new Session(graph);
+	        Tensor<String> checkpointPrefix =
+	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	    	
+	    	graph.importGraphDef(graphDef);
+	    	// initialise or restore.
+			// The names of the tensors and operations in the graph are printed out by the program that created the graph
+	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+			if (checkpointExists) {						
+				//System.out.println("Restoring model ...");
+				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+			} else {
+				System.out.println("Initialising model ...");
+				sess.runner().addTarget("init").run();
+			}
 	    }
 	}
 }

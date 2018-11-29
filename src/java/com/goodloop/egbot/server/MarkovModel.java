@@ -92,7 +92,7 @@ public class MarkovModel implements IEgBotModel {
 	 * TODO break this out into a common train-over-MSE-data class
 	 * @throws IOException
 	 */
-	public void train () throws IOException {
+	public void train() throws IOException {
 		assert wmc != null;
 		// load if we can
 		load();
@@ -183,10 +183,10 @@ public class MarkovModel implements IEgBotModel {
 	public static void main(String[] args) throws IOException {
 		MarkovModel mm = new MarkovModel();
 		mm.train();
-		mm.sample("what is a probability");
+		mm.sample("what is a probability", 30);
 	}
 
-	public  String sample(String q) {
+	public  String sample(String q, int expectedAnswerLength) throws IOException {
 		SitnStream ssq = ssFactory.factory(q);
 		List<Sitn<Tkn>> list = Containers.getList(ssq);
 
@@ -194,9 +194,8 @@ public class MarkovModel implements IEgBotModel {
 		
 		// hack test by sampling
 		Cntxt cntxt = last.context;
-		int max_length = 30;
 		String answer = "";
-		for(int i=0; i<max_length; i++) {
+		for(int i=0; i<expectedAnswerLength; i++) {
 			IFiniteDistribution<Tkn> marginal = (IFiniteDistribution<Tkn>) ((ICondDistribution<Tkn, Cntxt>)wmc).getMarginal(cntxt);
 			// this is the most likely rather than a random sample
 			Tkn sampled = marginal.getMostLikely();
@@ -238,6 +237,31 @@ public class MarkovModel implements IEgBotModel {
 		// avg the score and then return it
 		return score/alist.size();
 	}
+
+	@Override
+	public void finishTraining() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isReady() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void resetup() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void train1(Map data) throws UnsupportedOperationException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
 
 

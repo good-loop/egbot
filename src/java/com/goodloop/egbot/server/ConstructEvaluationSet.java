@@ -30,6 +30,8 @@ import com.winterwell.utils.web.SimpleJson;
 /**
  * generates evaluation set from egbot data 
  * the eval set represents 10% 
+ * 
+ * saves outputs in /data/eval.json
  *
  */
 public class ConstructEvaluationSet {
