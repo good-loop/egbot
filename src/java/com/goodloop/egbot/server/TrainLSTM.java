@@ -81,9 +81,9 @@ public class TrainLSTM {
 
 	// training parameters
 	int seq_length = 30; 	// sequence length
-	int num_epochs = 10; // training epochs
+	int num_epochs = 50; // training epochs TODO: change this to have proper training
 	int num_hidden = 256; // number of hidden layers
-	int idealVocabSize = 10000;
+	int idealVocabSize = 100;
 	// checkpoint version to identify trained model
 	int ckptVersion;
 
@@ -228,11 +228,44 @@ public class TrainLSTM {
 				
 		for (String s : keysSortedByValue) {
 			//ITokenStream a = null;
-			//System.out.println(s);
+			System.out.println(s);
 			topArray.add(s);
 			if (topArray.size() == size) break;
 		}
 		return topArray;
+	}
+	
+	/**
+	 * method to estimate how long training would take
+	 * @throws IOException
+	 */
+	public void checkTrainSize() throws IOException {
+		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
+		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
+	
+		int c = 0;
+		for(File file : files) {
+			System.out.println("File: "+file+"...");
+			Gson gson = new Gson();
+			JsonReader jr = new JsonReader(FileUtils.getReader(file));
+			jr.beginArray();
+						
+			while(jr.hasNext()) {
+				Map qa = gson.fromJson(jr, Map.class);			
+				Boolean is_answered = (Boolean) qa.get("is_answered");
+				if (is_answered) {
+					String question_body = (String) qa.get("body_markdown");
+					double answer_count = (double) qa.get("answer_count");
+					for (int j = 0; j < answer_count; j++) {					
+						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+						if (is_accepted) {
+							c++;
+						}
+					}
+				}
+			}
+		}
+		System.out.printf("No of training items: %d", c);
 	}
 	
 	/**
@@ -252,7 +285,7 @@ public class TrainLSTM {
 			jr.beginArray();
 						
 			int c=0;
-			while(jr.hasNext()) {
+			while(jr.hasNext() && c < 1000) { // TODO: c is a temporary limitation to produce dummy trained lstm model
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
 				if (is_answered) {
@@ -270,7 +303,7 @@ public class TrainLSTM {
 							c++;
 							rate.plus(1);
 							if (c % 10 == 0) {
-								System.out.println(trainingBatch.size());
+								System.out.println(c+" "+rate+"...");
 								train(trainingBatch);
 								trainingBatch = new ArrayList<List<String>>(); 
 							}
@@ -278,7 +311,7 @@ public class TrainLSTM {
 								// train in batches to prevent memory issues
 								//train(trainingBatch);
 								//trainingBatch = new ArrayList<List<String>>(); 
-								System.out.println(c+" "+rate+"...");
+								//System.out.println(c+" "+rate+"...");
 							}
 						}
 					}
@@ -363,17 +396,21 @@ public class TrainLSTM {
 		int vocabIdx = 4;
 		
 		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(version) + ".txt";
-		File vocabFile = new File(vocabPath);
-		
-        try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
-            for(String word; (word = br.readLine()) != null; ) {
-    			vocab.put(vocabIdx, word);
-    			vocabIdx += 1;
-            }
-        }
-		
-		vocab_size = vocab.size();
-		System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
+        // checks to see if it finds the vocab file
+	    final boolean checkpointExists = Files.exists(Paths.get(vocabPath));
+	    if(checkpointExists) {
+			File vocabFile = new File(vocabPath);
+	        try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
+	            for(String word; (word = br.readLine()) != null; ) {
+	    			vocab.put(vocabIdx, word);
+	    			vocabIdx += 1;
+	            }
+	        }
+			vocab_size = vocab.size();
+			System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
+	    } else {
+	    	loadAndInitVocab(); // TODO: test this, i suspect this fails unless you know the size of the vocab in advance and define the graph using it
+	    }	
 	}
 
 	/**
@@ -482,14 +519,14 @@ public class TrainLSTM {
 			// The names of the tensors and operations in the graph are printed out by the program that created the graph
 	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
+				//System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
 				System.out.println("Initialising model ...");
 				sess.runner().addTarget("init").run();
 			}
-			System.out.print("Starting from: \n");
 			
+			//System.out.print("Starting from: \n");
 			// print out weight and bias initialisation
 			//printVariables(sess);
 			
@@ -548,70 +585,6 @@ public class TrainLSTM {
 						}
 					}
 				}
-				
-				// do validation and record accuracies
-				String nextWord = "";
-				if (epoch%10 == 0) {	
-					String[] testInstance = new String[seq_length];
-					List<String> temp = trainingDataArray.get(0);
-					String[] tempArray = temp.toArray(new String[temp.size()]);
-					int startIdx = new Random().nextInt(temp.size()-seq_length);
-					System.arraycopy(tempArray, startIdx, testInstance, 0, seq_length);
-					
-					// inference
-					try (Tensor<?> input = Tensors.create(wordsIntoInputVector(testInstance));
-						Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tempArray[startIdx+seq_length]))) {
-						List<Tensor<?>> outputs = sess.runner()
-								.feed("input", input)
-								.feed("target", target)
-								.fetch("output") // prediction
-								.fetch("correct_pred") // validation accuracy
-								.run();
-						
-						// copy output tensors to array
-						float[][] outputArray = new float[1][vocab_size];
-						outputs.get(0).copyTo(outputArray);
-						nextWord = mostLikelyWord(outputArray);
-						
-						// save training and validation accuracies
-						boolean[] bArray = new boolean[1];
-	 					try(Tensor correct_pred = outputs.get(1)){
-							correct_pred.copyTo(bArray);
-	 					}
-						if(bArray[0]) {
-							validAccuracies.add((float)1);
-					 	}
-					 	else {
-					 		validAccuracies.add((float)0);
-					 	}
-										
-						// calculate average training and validation accuracies
-						float sum = 0;
-						for (float i : validAccuracies)
-						    sum = sum + i;		 				 	
-						validAccuracy = sum / validAccuracies.size() * 100;
-						
-						sum = 0;
-						for (float i : trainAccuracies)
-						    sum = sum + i;
-						trainAccuracy = sum / trainAccuracies.size() * 100;
-
-						// close tensors to save memory
-						closeTensors(outputs);
-					}    
-					
-					// update with information about training performance
-					if (epoch%10 == 0) {
-						//printVariables(sess);
-						System.out.printf("\nAfter %d examples: \n", epoch*trainingDataArray.size());
-						System.out.printf("Validation accuracy: %f \n", validAccuracy);
-						System.out.printf("Training accuracy: %f \n", trainAccuracy);
-						
-						System.out.printf(
-								" Instance: %s \n Prediction: %s \n Target: %s \n",
-								Arrays.deepToString(testInstance), nextWord, tempArray[startIdx+seq_length]);
-					}
-				}
 			}
 
 			// save model checkpoint
@@ -642,6 +615,7 @@ public class TrainLSTM {
 	private float[][] wordsIntoInputVector(String[] words) {
 		float[][] input = new float[seq_length][1];
 		for (int i = 0; i < words.length; i++) {
+			if (i == seq_length) break; // TODO: test that this is right
 			String word = words[i];
 			int wordIndex = 0; // index 0 represents <UNKNOWN>
 			if (vocab.containsValue(word)) wordIndex = getKeyByValue(vocab, word); 
@@ -717,7 +691,7 @@ public class TrainLSTM {
 	 * @param words
 	 * @return
 	 */
-	public String[] tokenise1(String words) {
+	public String[] tokenise(String words) {
 		WordAndPunctuationTokeniser t = new WordAndPunctuationTokeniser();
 		t.setSwallowPunctuation(true);
 		t.setLowerCase(true);
@@ -741,7 +715,7 @@ public class TrainLSTM {
 	 * @param words
 	 * @return
 	 */
-	private String[] tokenise(String words) {
+	private String[] tokenise1(String words) {
 		String[] splitted = words.split("\\s+");
 		return splitted;
 	}
@@ -771,11 +745,14 @@ public class TrainLSTM {
 	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
 	    	
 	    	graph.importGraphDef(graphDef);
+	    	// initialise or restore.
+			// The names of the tensors and operations in the graph are printed out by the program that created the graph
+	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 			if (checkpointExists) {						
 				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
-				System.out.print("Error: Couldn't restore model ...");
+				System.out.println("Couldn't find model ...\n");
 				return "";
 			}
 			
@@ -818,9 +795,9 @@ public class TrainLSTM {
 			answer = Arrays.deepToString(answerArray);
 	    }
 	    
-		System.out.printf(
-				"Instance: %s \n Prediction: %s \n",
-				question, answer);
+//		System.out.printf(
+//				"Instance: %s \n Prediction: %s \n",
+//				question, answer);
 	    return answer;
 	}
 	
@@ -839,7 +816,7 @@ public class TrainLSTM {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint";
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -853,7 +830,7 @@ public class TrainLSTM {
 				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
-				System.out.print("Error: Couldn't restore model ...");
+				System.out.print("Error: Couldn't restore model ...\n");
 				return "";
 			}
 			
@@ -894,7 +871,7 @@ public class TrainLSTM {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint";
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -905,10 +882,10 @@ public class TrainLSTM {
 	    	
 	    	graph.importGraphDef(graphDef);
 			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
+				//System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 			} else {
-				System.out.print("Error: Couldn't restore model ...");
+				System.out.print("Error: Couldn't restore model ...\n");
 				return 0;
 			}
 			
@@ -920,7 +897,7 @@ public class TrainLSTM {
 			String[] instanceArray = new String[seq_length];
 			Arrays.fill(instanceArray, "START");
 			if (qArray.length < seq_length) {
-				System.arraycopy(qArray, 0, instanceArray, seq_length-qArray.length, seq_length);
+				System.arraycopy(qArray, 0, instanceArray, seq_length-qArray.length, qArray.length);
 			}
 			else {
 				System.arraycopy(qArray, qArray.length-seq_length, instanceArray, 0, seq_length);

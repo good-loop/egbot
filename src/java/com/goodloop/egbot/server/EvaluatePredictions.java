@@ -20,14 +20,19 @@ import com.winterwell.utils.web.SimpleJson;
 
 public class EvaluatePredictions {
 	static ArrayList<Map<String, Object>> evalSet;
-	int expectedAnswerLength = 30;
+	static int expectedAnswerLength = 30;
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		loadEvalSet();
 		evaluateMarkov();
-		//evaluateLSTM();
+		System.out.println();
+		evaluateLSTM();
 	}
 
+	/**
+	 * load the evaluation set
+	 * @throws IOException
+	 */
 	public static void loadEvalSet() throws IOException {
 		evalSet = new ArrayList<Map<String, Object>>();
 		
@@ -42,34 +47,69 @@ public class EvaluatePredictions {
 		}
 	}
 
+	/**
+	 * evaluate existing markov model 
+	 * by scoring the avg accuracy of log probabilities 
+	 * and showing examples of generated output
+	 * @throws IOException
+	 */
 	public static void evaluateMarkov() throws IOException {
 		double avgScore = 0;
+		
+		System.out.println("Loading Markov Model ...");
 		MarkovModel mm = new MarkovModel();
-		System.out.println("Training Markov Model ...");
-		mm.train();
-		//mm.load();
-		System.out.println("Scoring Model ...");
+		mm.load();
+		if (!mm.isLoadSuccessFlag()) {
+			System.out.println("Couldn't find trained model, starting training ...");
+			mm.train();
+		}
+		
+		System.out.println("Scoring ...");
 		for (int i = 0; i < evalSet.size(); i++) {
 			String question = (String) evalSet.get(i).get("question");
 			String target = (String) evalSet.get(i).get("question");
 			avgScore += mm.scoreAnswer(question, target);
-			if(i%10000==0) {                                                                                                                                                                                                                                                           
-				System.out.printf("Avg score after %d examples: %f\n", i, avgScore/(i+1));
-			}
+			if(i%10000==0) {                             
+				// quantitative evaluation
+				System.out.printf("Avg score after %d evaluation examples: %f\n", i, avgScore/(i+1));
+				
+				// qualitative evaluation
+				String generated = mm.sample(question);
+				System.out.printf("Example of generated answer: %s\n\n", generated);
+			}			
 		}
 	} 
 	
-	public void evaluateLSTM() throws Exception {
+	/**
+	 * evaluate existing lstm model 
+	 * by scoring the avg accuracy of log probabilities 
+	 * and showing examples of generated output
+	 * @throws Exception
+	 */
+	public static void evaluateLSTM() throws Exception {
 		double avgScore = 0;
-		TrainLSTM lstm = new TrainLSTM(); // requires passing the ckpt version for a specific  model		
+		
+		System.out.println("Loading LSTM Model ...");
+		int modelVersion = 318462;//epochs1, 318462, score-inf;// requires passing the ckpt version for a trained model to use
+		TrainLSTM lstm = new TrainLSTM(modelVersion); 	
+		
+		System.out.println("Loading Vocabulary ...");
+//		int vocabVersion = lstm.loadAndInitVocab();
+		int vocabVersion = 126778;// requires passing the ckpt version for a saved vocab to use
+		lstm.loadVocab(vocabVersion);
+		
+		System.out.println("Scoring ...");
 		for (int i = 0; i < evalSet.size(); i++) {
 			String question = (String) evalSet.get(i).get("question");
-			//String prediction = lstm.sampleSeries((String) evalSet.get(i).get("question"), expectedAnswerLength);
 			String target = (String) evalSet.get(i).get("question");
-			lstm.scoreAnswer(question, target);
 			avgScore += lstm.scoreAnswer(question, target);
-			if(i%10000==0) {                                                                                                                                                                                                                                                           
-				System.out.printf("Avg score after %d examples: %f\n", i, avgScore/(i+1));
+			if(i%10==0) {          
+				// quantitative evaluation
+				System.out.printf("Avg score after %d evaluation examples: %f\n", i, avgScore/(i+1));
+				
+				// qualitative evaluation
+				String generated = lstm.sampleSeries((String) evalSet.get(i).get("question"), expectedAnswerLength);
+				System.out.printf("Example of generated answer: %s\n\n", generated);
 			}
 		}
 	} 	

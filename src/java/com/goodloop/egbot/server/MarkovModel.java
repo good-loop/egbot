@@ -52,7 +52,11 @@ public class MarkovModel {
 	private String[] sig;
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
-	private boolean loadSuccessFlag;
+	public boolean loadSuccessFlag;
+
+	public boolean isLoadSuccessFlag() {
+		return loadSuccessFlag;
+	}
 
 	public MarkovModel() {
 		sig = new String[] {"w-1", "w-2"};
@@ -197,10 +201,8 @@ public class MarkovModel {
 			//Tkn sampled = ((ICond Distribution<Tkn, Cntxt>)wmc).sample(cntxt);
 			if (Tkn.END_TOKEN.equals(sampled)) {
 				break;
-			}
-			
+			}			
 			answer = answer + " " + sampled.toString();
-			System.out.println(sampled);
 			cntxt = new Cntxt(sig, sampled, cntxt.getBits()[0]);
 		}
 		return answer;
