@@ -102,7 +102,9 @@ public class MarkovModel {
 		}
 		// no -- train!
 		assert wmc != null;
-				
+		
+		// TODO refactor -- merge with ConstructEvaluationSet
+		
 		EgbotConfig config = new EgbotConfig();
 		
 		List<File> files;

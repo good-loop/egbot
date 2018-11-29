@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
+import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
@@ -37,6 +39,7 @@ public class ConstructEvaluationSet {
 		probCounter = new Random();
 		probCounter.setSeed(42);
 		evalSet = constructEvalSet(loadData());
+		assert ! evalSet.isEmpty();
 		saveData(evalSet);
 	}
 
@@ -79,53 +82,66 @@ public class ConstructEvaluationSet {
 			// python script data-collection/slimming.py
 			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
 		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") && name.endsWith(".json");
-				}
-			}));
+			List<File> allfiles = Arrays.asList(config.srcDataDir.listFiles());
+			assert allfiles.size() != 0 : config.srcDataDir;
+			files = Containers.filter(allfiles, f -> {
+					return f.getName().startsWith("MathStackExchangeAPI_Part") 
+							&& (f.getName().endsWith(".json") || f.getName().endsWith(".json.zip"));
+			});
+			assert ! files.isEmpty() : allfiles;
 		}
 		// always have the same ordering
 		Collections.sort(files);
-		
+		assert ! files.isEmpty() : config.srcDataDir;
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		
 		ArrayList<Map<String, String>> initialSet = new ArrayList<Map<String, String>>();
 		for(File file : files) {
 			System.out.println("File: "+file+"...");
 			Gson gson = new Gson();
-			JsonReader jr = new JsonReader(FileUtils.getReader(file));
+			
+			// zip or plain json?
+			Reader r;
+			if (file.getName().endsWith(".zip")) {
+				r = FileUtils.getZIPReader(file);
+			} else {
+				r = FileUtils.getReader(file);
+			}
+			JsonReader jr = new JsonReader(r);
+			
 			jr.beginArray();
 						
 			int c=0;
 			while(jr.hasNext()) {//&& initialSet.size() < desiredEvalSetSize+4) {
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							Map<String, String> temp  = new HashMap<String, String>();
-							temp.put("question", question_body);
-							temp.put("answer", answer_body);
-							// probabilistic counter, adds data point to testing batch 1 out of 10 times   
-							if (probCounter.nextInt(10) == 0) {
-								initialSet.add(temp);
-							}
-							c++;
-							rate.plus(1);
-							if (c % 1000 == 0) {
-								System.out.println(c+" "+rate+"...");
-							}
-						}
+				if ( ! is_answered) {
+					continue;
+				}
+				String question_body = (String) qa.get("body_markdown");
+				double answer_count = (double) qa.get("answer_count");
+				for (int j = 0; j < answer_count; j++) {					
+					Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+					if ( ! is_accepted) {
+						continue;
 					}
+					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+					Map<String, String> temp  = new HashMap<String, String>();
+					temp.put("question", question_body);
+					temp.put("answer", answer_body);
+					// probabilistic counter, adds data point to testing batch 1 out of 10 times   
+					if (probCounter.nextInt(10) == 0) {
+						initialSet.add(temp);
+					}
+					c++;
+					rate.plus(1);
+					if (c % 1000 == 0) {
+						System.out.println(c+" "+rate+"...");
+					}					
 				}			
 			} 
 		}
+		assert ! initialSet.isEmpty();
 		return initialSet;
 	}	
 	
