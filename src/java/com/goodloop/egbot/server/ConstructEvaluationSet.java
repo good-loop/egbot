@@ -21,6 +21,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
+import com.winterwell.utils.containers.ArraySet;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.RateCounter;
@@ -82,11 +83,17 @@ public class ConstructEvaluationSet {
 			// python script data-collection/slimming.py
 			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
 		} else {
+			// Look for files of the name e.g. MathStackExchangeAPI_Part_3.json or .json.zip
+			// Avoid zip/unzip dupes
+			ArraySet<String> basefilenames = new ArraySet();
 			List<File> allfiles = Arrays.asList(config.srcDataDir.listFiles());
 			assert allfiles.size() != 0 : config.srcDataDir;
 			files = Containers.filter(allfiles, f -> {
-					return f.getName().startsWith("MathStackExchangeAPI_Part") 
-							&& (f.getName().endsWith(".json") || f.getName().endsWith(".json.zip"));
+				if ( ! f.getName().startsWith("MathStackExchangeAPI_Part")) return false; 
+				String bn = FileUtils.getBasename(FileUtils.getBasename(f));
+				if (basefilenames.contains(bn)) return false;
+				basefilenames.add(bn);
+				return f.getName().endsWith(".json") || f.getName().endsWith(".json.zip");
 			});
 			assert ! files.isEmpty() : allfiles;
 		}
