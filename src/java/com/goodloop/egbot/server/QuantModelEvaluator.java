@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.goodloop.egbot.EgbotConfig;
+import com.winterwell.datascience.Experiment;
+import com.winterwell.depot.Depot;
+import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
@@ -22,6 +25,7 @@ import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
 /**
+ * Quantitative Model Evaluator
  * 
  * takes in evaluation inputs and calculates score of outputs from trained models 
  *
@@ -29,64 +33,58 @@ import com.winterwell.utils.web.SimpleJson;
  *
  */
 public class QuantModelEvaluator {
+
+	static File quantSetFile = new File("data/build/quantEval.json");
+	
+	final EgBotExperiment experiment;
+	
 	/**
-	 * Suggested number of words in answer
+	 * Can be reused
 	 */
-	int expectedAnswerLength = 30;
-	/**
-	 * Model to evaluate
-	 */
-	IEgBotModel model;
+	public QuantModelEvaluator(EgBotExperiment experiment) {
+		this.experiment = experiment;
+	}
 
 	/**
 	 * evaluate model 
 	 * by scoring the avg accuracy of log probabilities 
 	 * and showing examples of generated output
+	 * @param model must be trained
+	 * @param testDataDesc 
+	 * @param trainDataDesc 
 	 * @throws Exception
 	 */
-	public void evaluateModel(ArrayList<Map<String, Object>> evalSet, IEgBotModel model) throws Exception {
+	public void evaluateModel()	throws Exception {
 		MeanVar1D avgScore = new MeanVar1D();			
-		// train?
-		if ( ! model.isReady()) {
-			evaluateModel2_train();
-		}
-		
+		IEgBotModel model = experiment.getModel();
+		assert model != null;
+		// train? no
+		assert model.isReady(); 
+
 		Log.d("Scoring ...");
-		for (int i = 0; i < evalSet.size(); i++) {
-			Map<String, Object> eg = evalSet.get(i);
-			String question = (String) eg.get("question");
-			String target = (String) eg.get("answer");
-						
-			double score = model.scoreAnswer(question, target);
-			avgScore.train1(score);
-			
-			if(i%100==0) {
-				System.out.printf("Avg score after %d evaluation examples: %f\n", i, avgScore);			
-			}			
-			
-			if (i == evalSet.size()-1) saveToFile(avgScore.getMean()); 
+		List<File> evalFiles = experiment.getTestData();
+		for (File evalFile : evalFiles) {
+			List<Map<String, Object>> evalSet = QualModelEvaluator.loadEvalSet(evalFile).first;
+			for (int i = 0; i < evalSet.size(); i++) {
+				Map<String, Object> eg = evalSet.get(i);
+				String question = (String) eg.get("question");
+				String target = (String) eg.get("answer");
+							
+				double score = model.scoreAnswer(question, target);
+				avgScore.train1(score);
+				
+				if(i%100==0) {
+					System.out.printf("Avg score after %d evaluation examples: %f\n", i, avgScore.getMean());			
+				}
+			}
 		}
+		saveToFile(avgScore);
 	}
-
-	private void evaluateModel2_train() {
-		Log.d("Training ...");
-
-//		model.resetup();
-//		//		train - load files, feed into model
-//		Map eg;
-//		model.train1(eg);
-//		model.finishTraining();
-	} 	
 	
-	private void saveToFile(double score) throws IOException {
-		String resultsFileName = "smallTestQuantitativeEval.txt";
-		String resultsPath = System.getProperty("user.dir") + "/data/models/final/v3/" + resultsFileName;
-		File resultsFile = new File(resultsPath);
-		resultsFile.createNewFile(); 
-		
-		try (PrintWriter out = new PrintWriter(resultsFile)) {
-			out.printf("Avg score after %d evaluation examples: %f", score);
-		}	
+	private void saveToFile(MeanVar1D avgScore) throws IOException {
+		Depot depot = Depot.getDefault();
+		depot.put(experiment.getDesc(), avgScore);
+		depot.flush();
 	}
 	
 }

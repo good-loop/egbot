@@ -38,6 +38,7 @@ import org.tensorflow.types.UInt8;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.json.JSONObject;
@@ -76,7 +77,7 @@ public class TrainLSTM implements IEgBotModel {
 	HalfLifeMap<String, Integer> hlVocab;
 	Random probCounter;
 	int vocab_size;
-	List<File> files;
+	//List<File> files;
 	//private SitnStream ssFactory;
 
 	// training parameters
@@ -93,25 +94,9 @@ public class TrainLSTM implements IEgBotModel {
 	 */
 	TrainLSTM() throws IOException{
 		// find out the names of the files to be loaded
-		EgbotConfig config = new EgbotConfig();
-		files = null;
-		if (false) {
-			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-			// Use this for extra speed if youve run the slimming script
-			// python script data-collection/slimming.py
-			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
-		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					//!TODO: change this to train on all files
-					return name.startsWith("MathStackExchangeAPI_Part_1") && name.endsWith(".json");
-				}
-			}));
-		}
-		// always have the same ordering
-		Collections.sort(files);
-		
+		// EgbotConfig config = new EgbotConfig(); TODO: what does this do?
+
+		// !TODO: fix prob counter, needs to be unique and shared across classes
 		// random number generator for probabilistic counter (so as to get 90/10 split for training/testing)
 		probCounter = new Random();
 		probCounter.setSeed(42);
@@ -127,18 +112,18 @@ public class TrainLSTM implements IEgBotModel {
 	TrainLSTM(int version) throws IOException{
 		this(); // call default constructor
 		
-		System.out.println(files.toString());
+		//System.out.println(files.toString());
 		// record unique identifier for model 
 		ckptVersion = version;
 		
 		// load toy data
 		//String trainingData = "long ago , the mice had a general council to consider what measures they could take to outwit their common enemy , the cat . some said this , and some said that but at last a young mouse got up and said he had a proposal to make , which he thought would meet the case . you will all agree , said he , that our chief danger consists in the sly and treacherous manner in which the enemy approaches us . now , if we could receive some signal of her approach , we could easily escape from her . i venture , therefore , to propose that a small bell be procured , and attached by a ribbon round the neck of the cat . by this means we should always know when she was about , and could easily retire while she was in the neighbourhood . this proposal met with general applause , until an old mouse got up and said  that is all very well , but who is to bell the cat ? the mice looked at one another and nobody spoke . then the old mouse said it is easy to propose impossible remedies .";
-		//List<String> temp = new ArrayList<String>(Arrays.asList(tokenise(trainingData)));			
+		//List<String> temp = new ArrayList<String>(Arrays.asList(EgBotDataLoader.tokenise(trainingData)));			
 		//trainingDataArray = new ArrayList<List<String>>();
 		//trainingDataArray.add(temp);
 		//int trainingDatasize = trainingDataArray.length-1;
 		
-		// load real data
+		// load real data (warning: likely memory error)
 		//trainingDataArray = loadTrainingData();
 		
 		// stream real data
@@ -154,7 +139,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
 	 * @return magic version number -- needed to load
 	 */
-	public int loadAndInitVocab() throws IOException {
+	public int loadAndInitVocab(List<File> files) throws IOException {
 		// vocab has to be constructed and saved from all the text that will be used when training 
 		// this is because vocab_size defines the shape of the feature vectors
 		System.out.println("Loading files and initialising vocabulary");
@@ -184,7 +169,7 @@ public class TrainLSTM implements IEgBotModel {
 					is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
 					if ( ! is_accepted) continue;
 					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-					String[] temp = tokenise(question_body + " " + answer_body);
+					String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
 					for (String word : temp) {
 						if (word.isEmpty()) continue;
 						Integer cnt = hlVocab.get(word);
@@ -240,7 +225,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * method to estimate how long training would take
 	 * @throws IOException
 	 */
-	public void checkTrainSize() throws IOException {
+	public void checkTrainSize(List<File> files) throws IOException {
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
 	
@@ -273,7 +258,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * load egbot zenodo files, save content locally in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ] and then run train for each file 
 	 * @throws IOException 
 	 */
-	public void train() throws IOException {
+	public void train(List<File> files) throws IOException {
 		// load files, save content locally and train using local data and loaded vocab from file
 		// TODO: check to make sure that the vocab was indeed constructed and is not an empty map 
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
@@ -300,7 +285,7 @@ public class TrainLSTM implements IEgBotModel {
 							// probabilistic counter, adds data point to training only if it's not been reserved for testing  
 							// will select it for training 9 out 10 times
 							if (probCounter.nextInt(10) != 0) {
-								trainingBatch.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
+								trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
 							}
 							c++;
 							rate.plus(1);
@@ -369,7 +354,7 @@ public class TrainLSTM implements IEgBotModel {
 						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
 						if (is_accepted) {
 							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							trainingData.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
+							trainingData.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
 							c++;
 							rate.plus(1);
 							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
@@ -387,7 +372,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * @param version see {@link #loadAndInitVocab()}
 	 * @throws IOException
 	 */
-	public void loadVocab(int version) throws IOException{	
+	public void loadVocab(int version, List<File> files) throws IOException{	
 		
 		// load the vocab to a map that allows for unique indexing of words
 		// vocab is a map where the key is the unique index of the word, and the value is the word itself
@@ -412,7 +397,7 @@ public class TrainLSTM implements IEgBotModel {
 			vocab_size = vocab.size();
 			System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
 	    } else {
-	    	loadAndInitVocab(); // TODO: test this, i suspect this fails unless you know the size of the vocab in advance and define the graph using it
+	    	loadAndInitVocab(files); // TODO: test this, i suspect this fails unless you know the size of the vocab in advance and define the graph using it
 	    }	
 	}
 
@@ -679,7 +664,7 @@ public class TrainLSTM implements IEgBotModel {
 	private float[][] wordsIntoFeatureVector(String words) {
 		// TODO there should be a more efficient way of doing this
 		
-		String[] splitted = tokenise(words);
+		String[] splitted = EgBotDataLoader.tokenise(words);
 		float[][] wordsOneHotEncoded = new float[1][vocab_size]; 
 		Arrays.fill(wordsOneHotEncoded[0], 0);
 		
@@ -696,40 +681,6 @@ public class TrainLSTM implements IEgBotModel {
 			}
 		}
 		return wordsOneHotEncoded;
-	}
-
-	/**
-	 * helper function to tokenise sentences
-	 * @param words
-	 * @return
-	 */
-	public String[] tokenise(String words) {
-		WordAndPunctuationTokeniser t = new WordAndPunctuationTokeniser();
-		t.setSwallowPunctuation(true);
-		t.setLowerCase(true);
-		
-		ITokenStream _tokeniser = t;
-		_tokeniser = _tokeniser.factory(words);
-		StopWordFilter s = new StopWordFilter(_tokeniser);
-		List<Tkn> tknised = s.toList();
-		
-		String[] array = new String[tknised.size()];
-		int index = 0;
-		for (Tkn tk : tknised) {
-		  array[index] = tk.getText();
-		  index++;
-		}
-		return array;
-	}
-	
-	/**
-	 * helper function to tokenise sentences
-	 * @param words
-	 * @return
-	 */
-	private String[] tokenise1(String words) {
-		String[] splitted = words.split("\\s+");
-		return splitted;
 	}
 	
 	/**
@@ -768,7 +719,7 @@ public class TrainLSTM implements IEgBotModel {
 				return "";
 			}
 			
-			String[] questionArray = tokenise(question);
+			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
 			// if the question is shorter than the set seq_length, we fill in the beginning slots with START (using a set seq_length is necessary for the lstm)
 			if(questionArray.length < seq_length) {
@@ -847,7 +798,7 @@ public class TrainLSTM implements IEgBotModel {
 			}
 			
 			// run graph with given input and fetch output
-			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(tokenise(question)));
+			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(EgBotDataLoader.tokenise(question)));
 					Tensor<?> output =
 							sess.runner()
 							.feed("input", input)
@@ -902,8 +853,8 @@ public class TrainLSTM implements IEgBotModel {
 			}
 			
 			// tokenise input
-			String[] qArray = tokenise(q);
-			String[] tArray = tokenise(t);
+			String[] qArray = EgBotDataLoader.tokenise(q);
+			String[] tArray = EgBotDataLoader.tokenise(t);
 			
 			// ensure we take the last 30 words of the question (or if it's < 30, then fill it with <START> tags at the beginning)
 			String[] instanceArray = new String[seq_length];
@@ -1045,5 +996,11 @@ public class TrainLSTM implements IEgBotModel {
 				sess.runner().addTarget("init").run();
 			}
 	    }
+	}
+
+	@Override
+	public Desc getDesc() {
+		// !TODO Auto-generated method stub
+		return null;
 	}
 }

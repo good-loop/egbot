@@ -1,11 +1,14 @@
 package com.goodloop.egbot.server;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
+import com.winterwell.depot.IHasDesc;
 import com.winterwell.maths.ITrainable;
 
-public interface IEgBotModel extends ITrainable.Unsupervised<Map> {
+public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 
 	/**
 	 * 
@@ -29,6 +32,6 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map> {
 	 * train the model
 	 * @throws IOException
 	 */
-	public void train() throws IOException;
-
+	void train(List<File> files) throws IOException;
+	
 }

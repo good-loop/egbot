@@ -37,6 +37,8 @@ import com.winterwell.utils.web.SimpleJson;
 public class ConstructEvaluationSet {
 	static ArrayList<Map<String, Object>> evalSet;
 	static Random probCounter;
+	// TODO: eval file name should be set?
+	static File evalSetFile;
 	
 	public static void main(String[] args) throws IOException {
 		probCounter = new Random();

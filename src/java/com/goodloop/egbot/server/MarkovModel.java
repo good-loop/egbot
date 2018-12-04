@@ -48,7 +48,7 @@ public class MarkovModel implements IEgBotModel {
 	/**
 	 * we need this early for load()
 	 */
-	private final Desc desc;
+	public final Desc desc;
 	private String[] sig;
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
@@ -92,7 +92,8 @@ public class MarkovModel implements IEgBotModel {
 	 * TODO break this out into a common train-over-MSE-data class
 	 * @throws IOException
 	 */
-	public void train() throws IOException {
+	@Override
+	public void train(List<File> files) throws IOException {
 		assert wmc != null;
 		// load if we can
 		load();
@@ -107,24 +108,6 @@ public class MarkovModel implements IEgBotModel {
 		
 		EgbotConfig config = new EgbotConfig();
 		
-		List<File> files;
-		assert config.srcDataDir.isDirectory() : config.srcDataDir;
-		if (false) {
-			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-			// Use this for extra speed if youve run the slimming script
-			// python script data-collection/slimming.py
-			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
-		} else {
-			File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") 
-							&& (name.endsWith(".json") || name.endsWith(".json.zip"));
-				}
-			});
-			assert fs != null && fs.length > 0 : config.srcDataDir;
-			files = Arrays.asList(fs);
-		}
 		// always have the same ordering
 		Collections.sort(files);
 		
@@ -260,6 +243,11 @@ public class MarkovModel implements IEgBotModel {
 	public void train1(Map data) throws UnsupportedOperationException {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public Desc getDesc() {
+		return desc;
 	}
 
 }
