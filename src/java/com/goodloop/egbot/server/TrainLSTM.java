@@ -75,7 +75,7 @@ public class TrainLSTM implements IEgBotModel {
 	//List<List<String>> trainingDataArray;
 	HashMap<Integer, String> vocab;
 	HalfLifeMap<String, Integer> hlVocab;
-	Random probCounter;
+	ProbCounter probCounter;
 	int vocab_size;
 	//List<File> files;
 	//private SitnStream ssFactory;
@@ -98,8 +98,7 @@ public class TrainLSTM implements IEgBotModel {
 
 		// !TODO: fix prob counter, needs to be unique and shared across classes
 		// random number generator for probabilistic counter (so as to get 90/10 split for training/testing)
-		probCounter = new Random();
-		probCounter.setSeed(42);
+		probCounter = new ProbCounter();
 		// record unique identifier for model 
 		ckptVersion = new Random().nextInt(1000000);
 	}

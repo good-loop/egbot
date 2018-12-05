@@ -7,6 +7,6 @@ import java.util.Map;
 import com.winterwell.datascience.Experiment;
 import com.winterwell.depot.Desc;
 
-public class EgBotExperiment extends Experiment<List<File>, IEgBotModel, List<Map<String,Object>>> {
+public class EgBotExperiment extends Experiment<EgBotData, IEgBotModel, List<Map<String,Object>>> {
 
 }

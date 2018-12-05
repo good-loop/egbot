@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import com.winterwell.nlp.corpus.SimpleDocument;
 import com.winterwell.nlp.io.SitnStream;
 import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
+import com.winterwell.utils.IFilter;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
@@ -53,6 +55,7 @@ public class MarkovModel implements IEgBotModel {
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
 	public boolean loadSuccessFlag;
+	public ProbCounter probCounter;
 
 	public boolean isLoadSuccessFlag() {
 		return loadSuccessFlag;
@@ -69,7 +72,7 @@ public class MarkovModel implements IEgBotModel {
 		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-all", wmc.getClass());
 		desc.setTag("egbot");
 	}
-	
+
 	public void load() {
 		// replace the newly made blank with a loaded copy if there is one
 		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(desc);
@@ -79,7 +82,7 @@ public class MarkovModel implements IEgBotModel {
 		}
 	}
 	
-	void save() {
+	public void save() {
 		// TODO: check with DW whether the code below makes sense
 		// had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
 		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
@@ -88,72 +91,29 @@ public class MarkovModel implements IEgBotModel {
 		assert d2.equals(desc);
 		Depot.getDefault().put(desc, wmc);
 	}
-	/**
-	 * TODO break this out into a common train-over-MSE-data class
-	 * @throws IOException
-	 */
+	
+
 	@Override
-	public void train(List<File> files) throws IOException {
-		assert wmc != null;
-		// load if we can
-		load();
-		// already done?
-		if (loadSuccessFlag) {
-			return;
-		}
-		// no -- train!
-		assert wmc != null;
-		
-		// TODO refactor -- merge with ConstructEvaluationSet
-		
-		EgbotConfig config = new EgbotConfig();
-		
-		// always have the same ordering
-		Collections.sort(files);
-		
-		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		
-		for(File file : files) {
-			System.out.println("File: "+file+"...");
-	
-			Gson gson = new Gson();
-			// zip or plain json?
-			Reader r;
-			if (file.getName().endsWith(".zip")) {
-				r = FileUtils.getZIPReader(file);
-			} else {
-				r = FileUtils.getReader(file);
+	public void train1(Map qa) throws UnsupportedOperationException {
+		String question_body = (String) qa.get("body_markdown");
+		double answer_count = (double) qa.get("answer_count");
+		boolean is_accepted = false;
+		for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
+			is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+			if ( ! is_accepted) continue;
+			String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+			String body = question_body + " " + answer_body;
+			// !TODO: decide how to do this part so as to be the same for lstm and mm
+			SimpleDocument doc = new SimpleDocument(body);
+			SitnStream ss2 = ssFactory.factory(doc);	
+			for (Sitn<Tkn> sitn : ss2) {
+				Cntxt prev = sitn.context;
+				Tkn word = sitn.outcome;						
+				wmc.train1(prev, word, 1);
 			}
-			JsonReader jr = new JsonReader(r);
-			jr.beginArray();
-						
-			int c=0;
-			while(jr.hasNext()) {
-				Map qa = gson.fromJson(jr, Map.class);			
-				Number answer_count = (Number) qa.get("answer_count");
-				if (answer_count.intValue() > 0) {
-					String body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-					SimpleDocument doc = new SimpleDocument(body);
-					SitnStream ss2 = ssFactory.factory(doc);		
-					
-					for (Sitn<Tkn> sitn : ss2) {
-						Cntxt prev = sitn.context;
-						Tkn word = sitn.outcome;						
-						wmc.train1(prev, word, 1);
-					}
-					c++;
-					rate.plus(1);
-					if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
-				}			
-			} 
-			jr.close();
-			
-//			if (false) break;
 		}
-		// save trained model
-		save();
 	}
-	
+		
 	private ITrainable.Supervised<Cntxt, Tkn> newModel() {
 		if (false) {
 			// a simple markov model -- will eat memory!
@@ -165,7 +125,10 @@ public class MarkovModel implements IEgBotModel {
 
 	public static void main(String[] args) throws IOException {
 		MarkovModel mm = new MarkovModel();
-		mm.train();
+		List<File> trainFiles = EgBotDataLoader.setup();
+		IFilter<Integer> trainFilter = n -> n % 100 != 1;
+		EgBotData trainData = new EgBotData(trainFiles, trainFilter);
+		EgBotDataLoader.train(trainData, mm);
 		mm.sample("what is a probability", 30);
 	}
 
@@ -239,15 +202,16 @@ public class MarkovModel implements IEgBotModel {
 		
 	}
 
-	@Override
-	public void train1(Map data) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public Desc getDesc() {
 		return desc;
+	}
+
+	public boolean getLoadSuccessFlag() {
+		return loadSuccessFlag;
+	}
+
+	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
+		return wmc;
 	}
 
 }

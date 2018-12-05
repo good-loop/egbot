@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,34 +60,48 @@ public class QualModelEvaluator {
 	 * @return 
 	 * @throws IOException
 	 */
-	public static Pair2<List<File>, Desc<List<File>>> loadFiles(List<File> evalFiles) throws IOException {	
-		// TODO: check with DW that it's okay to get just the name of the 1st eval file or should i switch it back to it expecting just one eval file
-		Desc testDesc = new Desc(evalFiles.get(0).getName(), List.class);
-		testDesc.put("f", evalFiles.get(0));
-		return new Pair2(evalFiles, testDesc);
-	}
-	
-	/**
-	 * load the evaluation set
-	 * @param setFile 
-	 * @return 
-	 * @throws IOException
-	 */
-	public static Pair2<List<Map<String, Object>>, Desc<List<Map<String,Object>>>> loadEvalSet(File setFile) throws IOException {		
-		Desc testDesc = new Desc(setFile.getName(), List.class);
-		testDesc.put("f", setFile);
-		
-		ArrayList<Map<String, Object>> set = new ArrayList<Map<String, Object>>();
+	public static List<Map<String, String>> DEPRECATEDloadEvalSet(Experiment experiment, File file, List<Map<String,String>> saved) throws IOException {		
+		Desc testDesc = new Desc(file.getName(), List.class);
+		testDesc.put("f", file);
 		
 		Gson gson = new Gson();
-		JsonReader jr = new JsonReader(FileUtils.getReader(setFile));
+		// zip or plain json?
+		Reader r;
+		if (file.getName().endsWith(".zip")) {
+			r = FileUtils.getZIPReader(file);
+		} else {
+			r = FileUtils.getReader(file);
+		}
+		JsonReader jr = new JsonReader(r);
 		jr.beginArray();
 					
+		int c=0;
+		EgBotData testData = (EgBotData) experiment.getTestData();
 		while(jr.hasNext()) {
-			Map<String, Object> qa = gson.fromJson(jr, Map.class);			
-			set.add(qa);
-		}
-		return new Pair2(set, testDesc);
+			if ( testData.filter.accept(c)) {
+				c++;
+				continue;
+			}
+			c++;
+			
+			Map eg = gson.fromJson(jr, Map.class);			
+			Boolean is_answered = (Boolean) eg.get("is_answered");
+			if (!is_answered) continue;	
+			String question = (String) eg.get("question");
+			String target = (String) eg.get("answer");
+			String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
+			
+			Map<String,String> temp = new ArrayMap<>(
+				"question", question,
+				"target", target,
+				"generated", generated
+			);			
+			System.out.printf("Example of generated answer: %s\n\n", generated);
+			saved.add(temp);			
+		} 
+		jr.close();			
+		
+		return saved;
 	}
 	
 	/**
@@ -102,16 +117,43 @@ public class QualModelEvaluator {
 		assert model.isReady(); 
 
 		Log.d("Evaluating ...");
-		List<File> evalFiles = experiment.getTestData();
+// 		DEPRECATED		
+//		List<File> evalFiles = experiment.getTestData().files;
+//		List<Map<String,String>> saved = new ArrayList();
+//		for (File evalFile : evalFiles) {
+//			saved = DEPRECATEDloadEvalSet(experiment, evalFile, saved);
+//		}			
+		EgBotData testData = (EgBotData) experiment.getTestData();
 		List<Map<String,String>> saved = new ArrayList();
-		for (File evalFile : evalFiles) {
-			List<Map<String, Object>> evalSet = loadEvalSet(evalFile).first;
-			for (int i = 0; i < evalSet.size(); i++) {
-				Map<String, Object> eg = evalSet.get(i);
+		for(File file : testData.files) {
+			Gson gson = new Gson();
+			// zip or plain json?
+			Reader r;
+			if (file.getName().endsWith(".zip")) {
+				r = FileUtils.getZIPReader(file);
+			} else {
+				r = FileUtils.getReader(file);
+			}
+			JsonReader jr = new JsonReader(r);
+			jr.beginArray();
+						
+			int c=0;
+			while(jr.hasNext()) {
+				// filter so as to evaluate only on test data
+				if ( testData.filter.accept(c)) {
+					c++;
+					continue;
+				}
+				c++;
+				// !TODO: do we still need ConstructEvalSet? 
+				// or do we need to adopt a simple MSE train/test format 
+				// (right now there is the default MSE one and the ConstructEvalSet)
+				Map eg = gson.fromJson(jr, Map.class);			
+				Boolean is_answered = (Boolean) eg.get("is_answered");
+				if (!is_answered) continue;	
 				String question = (String) eg.get("question");
 				String target = (String) eg.get("answer");
-							
-				String generated = model.sample(question, expectedAnswerLength);
+				String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
 				
 				Map<String,String> temp = new ArrayMap<>(
 					"question", question,
@@ -119,9 +161,10 @@ public class QualModelEvaluator {
 					"generated", generated
 				);			
 				System.out.printf("Example of generated answer: %s\n\n", generated);
-				saved.add(temp);
-			}
-		}
+				saved.add(temp);			
+			} 
+			jr.close();			
+		}	
 		saveToFile(saved);
 	}
 

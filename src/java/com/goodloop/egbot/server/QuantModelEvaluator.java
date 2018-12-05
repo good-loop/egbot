@@ -62,6 +62,7 @@ public class QuantModelEvaluator {
 		assert model.isReady(); 
 
 		Log.d("Scoring ...");
+		// !TODO: fix this in the same way as QualModelEvaluator
 		List<File> evalFiles = experiment.getTestData();
 		for (File evalFile : evalFiles) {
 			List<Map<String, Object>> evalSet = QualModelEvaluator.loadEvalSet(evalFile).first;

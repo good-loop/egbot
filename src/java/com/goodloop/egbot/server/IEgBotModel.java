@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.winterwell.depot.IHasDesc;
 import com.winterwell.maths.ITrainable;
+import com.winterwell.nlp.io.SitnStream;
 
 public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 
@@ -28,10 +29,12 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 */
 	String sample(String question, int expectedAnswerLength) throws IOException;
 
-	/**
-	 * train the model
-	 * @throws IOException
-	 */
-	void train(List<File> files) throws IOException;
+	void load();
+
+	boolean getLoadSuccessFlag();
+
+	Object getWmc();
+
+	void save();
 	
 }

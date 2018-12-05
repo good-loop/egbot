@@ -18,6 +18,7 @@ import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
+import com.winterwell.utils.IFilter;
 import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
@@ -43,32 +44,47 @@ public class EvaluatePredictions {
 		Desc<IEgBotModel> trainedModelDesc = mm.getDesc();
 		IEgBotModel trainedMarkov = Depot.getDefault().get(trainedModelDesc);
 		
+		// set up experiment
 		EgBotExperiment e1 = new EgBotExperiment();
+		// set the model the experiment uses
 		e1.setModel(mm, trainedModelDesc);
-		
+		// set up filters (that decide train/test split)
+		IFilter<Integer> trainFilter = n -> n % 100 != 1;
+		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+		// load the list of egbot files
+		List<File> files = EgBotDataLoader.setup();
+
 		// Train
+		// set the train filter		
+		EgBotData trainData = new EgBotData(files, trainFilter);
+		// set the train data the experiment uses
+		Desc<EgBotData> trainDataDesc = new Desc("MSE-data", EgBotData.class);
+		e1.setTrainData(trainData, trainDataDesc);
 		if (trainedMarkov==null) {
 			// do training
-			List<File> trainData = e1.getTrainData(); 
-			mm.resetup();
-			mm.train(trainData); 
-			mm.finishTraining();
+			EgBotDataLoader.train(trainData, mm);
 		}
 		
 		// Test
-		List<File> evalFilesMarkov = e1.getTestData();
-		Pair2<List<File>, Desc<List<File>>> testDataMarkov = QualModelEvaluator.loadFiles(evalFilesMarkov);
-		e1.setTestData(testDataMarkov.first, testDataMarkov.second);
+		// set the test filter		
+		EgBotData testData = new EgBotData(files, testFilter);
+		// set the test data the experiment uses
+		Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
+		e1.setTestData(testData, testDataDesc);
 		
+		// set up qualitative evaluator
 		QualModelEvaluator qualMarkov = new QualModelEvaluator(e1);
+		// conduct evaluation
 		qualMarkov.evaluateModel();
-		
+
+		// set up quantitative evaluator
 		QuantModelEvaluator quantMarkov = new QuantModelEvaluator(e1);
+		// conduct evaluation
 		quantMarkov.evaluateModel();
 
 		
 		
-		// LSTM
+		// LSTM !TODO: fix this in the same way as MM
 		TrainLSTM lstm = new TrainLSTM();				
 		Desc<IEgBotModel> trainedLSTMDesc = lstm.getDesc();
 		IEgBotModel trainedLSTM = Depot.getDefault().get(trainedLSTMDesc);
@@ -76,13 +92,10 @@ public class EvaluatePredictions {
 		EgBotExperiment e2 = new EgBotExperiment();
 		e2.setModel(lstm, trainedLSTMDesc);
 		
-		// Train TODO: fix this (implement empty methods, question is are they needed?)
+		// Train
 		if (trainedLSTM==null) {
 			// do training
-			List<File> trainData = e1.getTrainData();
-			trainedLSTM.resetup();
-			trainedLSTM.train(trainData); 
-			trainedLSTM.finishTraining();
+			EgBotDataLoader.train(trainData, lstm);
 		}
 		
 		// Test
