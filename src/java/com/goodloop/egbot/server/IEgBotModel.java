@@ -29,7 +29,7 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 */
 	String sample(String question, int expectedAnswerLength) throws IOException;
 
-	void load();
+	void load() throws IOException;
 
 	boolean getLoadSuccessFlag();
 

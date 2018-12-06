@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.goodloop.egbot.EgbotConfig;
+import com.winterwell.datascience.Experiment;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.datastorage.HalfLifeMap;
@@ -199,7 +200,9 @@ public class EgBotDataLoader {
 	 * a common train-over-MSE-data class
 	 * @throws IOException
 	 */
-	public static void train(EgBotData trainData, IEgBotModel model) throws IOException {
+	public static void train(Experiment e) throws IOException {
+		EgBotData trainData = (EgBotData) e.getTrainData();
+		IEgBotModel model = (IEgBotModel) e.getModel();
 		
 		assert model.getWmc() != null;
 		// load if we can

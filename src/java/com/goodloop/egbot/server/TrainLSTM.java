@@ -271,37 +271,34 @@ public class TrainLSTM implements IEgBotModel {
 			jr.beginArray();
 						
 			int c=0;
-			while(jr.hasNext() && c < 50) { // TODO: c is a temporary limitation to produce dummy trained lstm model
+			while(jr.hasNext() && c < 50) { // TODO: remove 2nd condition; it's a temporary limitation to produce dummy trained lstm model;
 				Map qa = gson.fromJson(jr, Map.class);			
 				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							// probabilistic counter, adds data point to training only if it's not been reserved for testing  
-							// will select it for training 9 out 10 times
-							if (probCounter.nextInt(10) != 0) {
-								trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
-							}
-							c++;
-							rate.plus(1);
-							if (c % 10 == 0) {
-								System.out.println(c+" "+rate+"...");
-								trainEach(trainingBatch);
-								trainingBatch = new ArrayList<List<String>>(); 
-							}
-							if (c % 1000 == 0) {
-								// train in batches to prevent memory issues
-								//trainEach(trainingBatch);
-								//trainingBatch = new ArrayList<List<String>>(); 
-								//System.out.println(c+" "+rate+"...");
-							}
-						}
+				if (is_answered) continue;
+				String question_body = (String) qa.get("body_markdown");
+				double answer_count = (double) qa.get("answer_count");
+				for (int j = 0; j < answer_count; j++) {					
+					Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+					if (is_accepted) continue;
+					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+					// probabilistic counter, adds data point to training only if it's not been reserved for testing  
+					// will select it for training 9 out 10 times
+					trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
+					c++;
+					rate.plus(1);
+					if (c % 10 == 0) {
+						System.out.println(c+" "+rate+"...");
+						trainEach(trainingBatch);
+						trainingBatch = new ArrayList<List<String>>(); 
 					}
-				}	
+					if (c % 1000 == 0) {
+						// train in batches to prevent memory issues
+						//trainEach(trainingBatch);
+						//trainingBatch = new ArrayList<List<String>>(); 
+						//System.out.println(c+" "+rate+"...");
+					}
+				}
+					
 			}			
 			// close file to save memory
 			jr.close();
@@ -944,9 +941,25 @@ public class TrainLSTM implements IEgBotModel {
 	}
 
 	@Override
-	public void train1(Map data) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		
+	public void train1(Map qa) {
+		String question_body = (String) qa.get("body_markdown");
+		double answer_count = (double) qa.get("answer_count");
+		boolean is_accepted = false;
+		for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
+			is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
+			if ( ! is_accepted) continue;
+			String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
+			String body = question_body + " " + answer_body;
+			// !TODO: decide how to do this part so as to be the same for lstm and mm
+			List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
+			trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(body)));
+			try {
+				trainEach(trainingBatch);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+		}		
 	}
 
 	@Override
@@ -1001,5 +1014,23 @@ public class TrainLSTM implements IEgBotModel {
 	public Desc getDesc() {
 		// !TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean getLoadSuccessFlag() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Object getWmc() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void save() {
+		// TODO Auto-generated method stub
+		
 	}
 }

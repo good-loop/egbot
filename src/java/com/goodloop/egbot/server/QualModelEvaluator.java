@@ -167,7 +167,31 @@ public class QualModelEvaluator {
 		}	
 		saveToFile(saved);
 	}
+	
+	public Object DEPRECATEDevaluateDataPoint(Map eg, List<Map<String,String>> saved) throws IOException {
+		
+		Boolean is_answered = (Boolean) eg.get("is_answered");
+		if (!is_answered) return saved;	
+		String question = (String) eg.get("question");
+		String target = (String) eg.get("answer");
+		String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
+		
+		Map<String,String> temp = new ArrayMap<>(
+			"question", question,
+			"target", target,
+			"generated", generated
+		);			
+		if(saved.size()%100==0) {
+			System.out.printf("Example of generated answer: %s\n\n", generated);
+		}
+		saved.add(temp);	
+		return saved;
+	}
 
+	/**
+	 * save experiment evaluation results
+	 * @param saved
+	 */
 	private void saveToFile(List<Map<String, String>> saved) {
 		Depot depot = Depot.getDefault();
 		depot.put(experiment.getDesc(), saved);

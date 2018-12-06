@@ -124,11 +124,30 @@ public class MarkovModel implements IEgBotModel {
 	}
 
 	public static void main(String[] args) throws IOException {
-		MarkovModel mm = new MarkovModel();
-		List<File> trainFiles = EgBotDataLoader.setup();
+		MarkovModel mm = new MarkovModel();		
+		Desc<IEgBotModel> trainedModelDesc = mm.getDesc();
+		IEgBotModel trainedMarkov = Depot.getDefault().get(trainedModelDesc);
+		
+		// set up experiment
+		EgBotExperiment e1 = new EgBotExperiment();
+		// set the model the experiment uses
+		e1.setModel(mm, trainedModelDesc);
+		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 100 != 1;
-		EgBotData trainData = new EgBotData(trainFiles, trainFilter);
-		EgBotDataLoader.train(trainData, mm);
+		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+		// load the list of egbot files
+		List<File> files = EgBotDataLoader.setup();
+
+		// Train
+		// set the train filter		
+		EgBotData trainData = new EgBotData(files, trainFilter);
+		// set the train data the experiment uses
+		Desc<EgBotData> trainDataDesc = new Desc("MSE-data", EgBotData.class);
+		e1.setTrainData(trainData, trainDataDesc);
+		if (trainedMarkov==null) {
+			// do training
+			EgBotDataLoader.train(e1);
+		}
 		mm.sample("what is a probability", 30);
 	}
 

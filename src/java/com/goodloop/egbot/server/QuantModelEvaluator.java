@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,26 +63,66 @@ public class QuantModelEvaluator {
 		assert model.isReady(); 
 
 		Log.d("Scoring ...");
-		// !TODO: fix this in the same way as QualModelEvaluator
-		List<File> evalFiles = experiment.getTestData();
-		for (File evalFile : evalFiles) {
-			List<Map<String, Object>> evalSet = QualModelEvaluator.loadEvalSet(evalFile).first;
-			for (int i = 0; i < evalSet.size(); i++) {
-				Map<String, Object> eg = evalSet.get(i);
+		EgBotData testData = (EgBotData) experiment.getTestData();
+		List<Map<String,String>> saved = new ArrayList();
+		for(File file : testData.files) {
+			Gson gson = new Gson();
+			// zip or plain json?
+			Reader r;
+			if (file.getName().endsWith(".zip")) {
+				r = FileUtils.getZIPReader(file);
+			} else {
+				r = FileUtils.getReader(file);
+			}
+			JsonReader jr = new JsonReader(r);
+			jr.beginArray();
+						
+			int c=0;
+			while(jr.hasNext()) {
+				// filter so as to evaluate only on test data
+				if ( testData.filter.accept(c)) {
+					c++;
+					continue;
+				}
+				c++;
+				// !TODO: do we still need ConstructEvalSet? 
+				// or do we need to adopt a simple MSE train/test format 
+				// (right now there is the default MSE one and the ConstructEvalSet)
+				Map eg = gson.fromJson(jr, Map.class);			
+				Boolean is_answered = (Boolean) eg.get("is_answered");
+				if (!is_answered) continue;	
 				String question = (String) eg.get("question");
 				String target = (String) eg.get("answer");
-							
 				double score = model.scoreAnswer(question, target);
 				avgScore.train1(score);
 				
-				if(i%100==0) {
-					System.out.printf("Avg score after %d evaluation examples: %f\n", i, avgScore.getMean());			
-				}
-			}
-		}
+				if(c%100==0) {
+					System.out.printf("Avg score after %d evaluation examples: %f\n", c, avgScore.getMean());			
+				}		
+			} 
+			jr.close();			
+		}	
 		saveToFile(avgScore);
 	}
 	
+	public Object DEPRECATEDevaluateDataPoint(Map eg, MeanVar1D avgScore) throws IOException {
+		Boolean is_answered = (Boolean) eg.get("is_answered");
+		if (!is_answered) return avgScore;	
+		String question = (String) eg.get("question");
+		String target = (String) eg.get("answer");
+		double score = experiment.getModel().scoreAnswer(question, target);
+		avgScore.train1(score);
+		
+		if(avgScore.getCount()%100==0) {
+			System.out.printf("Avg score after %d evaluation examples: %f\n", avgScore.getCount(), avgScore.getMean());			
+		}
+		return avgScore;
+	}
+	
+	/**
+	 * save experiment evaluation results
+	 * @param saved
+	 */
 	private void saveToFile(MeanVar1D avgScore) throws IOException {
 		Depot depot = Depot.getDefault();
 		depot.put(experiment.getDesc(), avgScore);
