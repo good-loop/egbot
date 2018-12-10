@@ -23,6 +23,6 @@ public class EgbotConfig implements IESRouter, ISiteConfig {
 		return port;
 	}
 
-	public File srcDataDir = new File("data/build"); 
-	
+	public File srcDataDir = new File("data/build/slim"); 
+
 }
