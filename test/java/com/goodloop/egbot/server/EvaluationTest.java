@@ -8,12 +8,9 @@ public class EvaluationTest {
 
 	@Test
 	public void testLTSM() throws Exception {
-		TrainLSTM lstm = new TrainLSTM();				
-		
+		TrainLSTM lstm = new TrainLSTM();						
 		new EvaluatePredictions().runModel(lstm);
-	}
-
-	
+	}	
 
 	@Test
 	public void testMarkov() throws Exception {
