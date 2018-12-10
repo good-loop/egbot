@@ -7,8 +7,18 @@ import org.junit.Test;
 public class EvaluationTest {
 
 	@Test
-	public void test() throws Exception {	
-		EvaluatePredictions.run();
+	public void testLTSM() throws Exception {
+		TrainLSTM lstm = new TrainLSTM();				
+		
+		new EvaluatePredictions().runModel(lstm);
+	}
+
+	
+
+	@Test
+	public void testMarkov() throws Exception {
+		MarkovModel lstm = new MarkovModel();						
+		new EvaluatePredictions().runModel(lstm);
 	}
 
 }

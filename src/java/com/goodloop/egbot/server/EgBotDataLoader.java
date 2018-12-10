@@ -35,7 +35,7 @@ public class EgBotDataLoader {
 	public static List<File> setup() {
 		List<File> files;
 		EgbotConfig config = new EgbotConfig();
-		assert config.srcDataDir.isDirectory() : config.srcDataDir;
+		assert config.srcDataDir.isDirectory() : config.srcDataDir+" -- maybe run python slimAndTrim.py";
 		if (false) {
 			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
 			// Use this for extra speed if youve run the slimming script
@@ -167,6 +167,7 @@ public class EgBotDataLoader {
 	
 	/**
 	 * a common train-over-MSE-data class
+	 * Does NOT save the model
 	 * @throws IOException
 	 */
 	public static void train(Experiment e) throws IOException {

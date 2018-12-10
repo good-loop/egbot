@@ -18,15 +18,15 @@ public class TrainLSTMTest {
 //		lstm.loadAndInitVocab();
 //	}
 	
-	@Test
-	public void testTrain() throws IOException {
-		int ckptVersion = new Random().nextInt(1000000);
-		TrainLSTM lstm = new TrainLSTM(ckptVersion);
-		int vocabVersion = 135802;
-		lstm.loadVocab(vocabVersion);
-		//lstm.checkTrainSize();
-		lstm.loadAndTrain();
-	}
+//	@Test
+//	public void testTrain() throws IOException {
+//		int ckptVersion = new Random().nextInt(1000000);
+//		TrainLSTM lstm = new TrainLSTM(ckptVersion);
+//		int vocabVersion = 135802;
+//		lstm.loadVocab(vocabVersion);
+//		//lstm.checkTrainSize();
+//		lstm.loadAndTrain();
+//	}
 	
 //	@Test
 //	public void testSampleSingleWord() throws Exception {

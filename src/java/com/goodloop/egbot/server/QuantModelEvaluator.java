@@ -20,6 +20,7 @@ import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
@@ -65,7 +66,6 @@ public class QuantModelEvaluator {
 
 		Log.d("Scoring ...");
 		EgBotData testData = (EgBotData) experiment.getTestData();
-		List<Map<String,String>> saved = new ArrayList();
 		for(File file : testData.files) {
 			Gson gson = new Gson();
 			// zip or plain json?
@@ -81,7 +81,7 @@ public class QuantModelEvaluator {
 			int c=0;
 			while(jr.hasNext()) {
 				// filter so as to evaluate only on test data
-				if ( testData.filter.accept(c)) {
+				if ( ! testData.filter.accept(c)) {
 					c++;
 					continue;
 				}
@@ -91,6 +91,7 @@ public class QuantModelEvaluator {
 				String question = (String) eg.get("question");
 				String target = (String) eg.get("answer");				
 				double score = model.scoreAnswer(question, target);
+				assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
 				avgScore.train1(score);
 					
 				if(c%100==0) {
@@ -102,28 +103,17 @@ public class QuantModelEvaluator {
 		saveToFile(avgScore);
 	}
 	
-	@Deprecated
-	public Object evaluateDataPoint(Map eg, MeanVar1D avgScore) throws IOException {
-		Boolean is_answered = (Boolean) eg.get("is_answered");
-		if (!is_answered) return avgScore;	
-		String question = (String) eg.get("question");
-		String target = (String) eg.get("answer");
-		double score = experiment.getModel().scoreAnswer(question, target);
-		avgScore.train1(score);
-		
-		if(avgScore.getCount()%100==0) {
-			System.out.printf("Avg score after %d evaluation examples: %f\n", avgScore.getCount(), avgScore.getMean());			
-		}
-		return avgScore;
-	}
-	
 	/**
 	 * save experiment evaluation results
 	 * @param saved
 	 */
 	private void saveToFile(MeanVar1D avgScore) throws IOException {
 		Depot depot = Depot.getDefault();
-		depot.put(experiment.getDesc(), avgScore);
+		
+		EgBotResults results = experiment.getResults();
+		results.avgScore = avgScore;
+		
+		depot.put(experiment.getDesc(), experiment);
 		depot.flush();
 	}
 	

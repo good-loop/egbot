@@ -23,6 +23,10 @@ public class EgbotConfig implements IESRouter, ISiteConfig {
 		return port;
 	}
 
+	/**
+	 * Slimmed data files -- generated from data/build/MathStackExchangeAPI_Part_X
+	 * by Python script data-collection/json_analysis/slimAndTrim.py
+	 */
 	public File srcDataDir = new File("data/build/slim"); 
 
 }

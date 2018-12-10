@@ -17,7 +17,7 @@ seq_length = 30
 
 # check now that we're in the right place
 egbotdir = os.path.abspath('../..')
-assert egbotdir.endswith("egbot")
+assert egbotdir.endswith("egbot"), egbotdir+" Try running from the build_graph dir"
 
 # tf Graph input
 X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')

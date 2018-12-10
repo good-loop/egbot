@@ -19,6 +19,7 @@ import com.winterwell.datalog.Rate;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.depot.IHasDesc;
+import com.winterwell.depot.ModularXML;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
@@ -38,17 +39,21 @@ import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.utils.IFilter;
 import com.winterwell.utils.Printer;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
 
-public class MarkovModel implements IEgBotModel {
+public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	ITrainable.Supervised<Cntxt, Tkn> wmc;
 	/**
 	 * we need this early for load()
+	 * 
+	 * This is a desc of the guts ie wmc
 	 */
 	public final Desc desc;
 	private String[] sig;
@@ -70,6 +75,7 @@ public class MarkovModel implements IEgBotModel {
 	}
 
 	public void load() {
+		Log.d("load MarkovModel guts from "+desc+"...");
 		// replace the newly made blank with a loaded copy if there is one
 		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(desc);
 		if (_wmc != null) {
@@ -165,20 +171,25 @@ public class MarkovModel implements IEgBotModel {
 	}
 	
 	/**
+	 * FIXME this is buggy
+	 * 
 	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
 	 * @param q question
 	 * @param t target answer
 	 * @return 
-	 * @return
 	 */
 	public double scoreAnswer(String q, String t) {
+		if (true) throw new TodoException();
+		
+		// this should match how train1 behaves
+		
 		SitnStream ssq = ssFactory.factory(q);
 		List<Sitn<Tkn>> qlist = Containers.getList(ssq);
 		Sitn<Tkn> last = qlist.get(qlist.size()-1);
 		Cntxt cntxt = last.context;
 		
 		SitnStream ssa = ssFactory.factory(t);		
-		List<Sitn<Tkn>> alist = Containers.getList(ssq);
+		List<Sitn<Tkn>> alist = Containers.getList(ssa);
 		
 		double score = 0; 
 		ICondDistribution<Tkn, Cntxt> cm = (ICondDistribution<Tkn, Cntxt>)wmc;
@@ -200,8 +211,10 @@ public class MarkovModel implements IEgBotModel {
 	}
 	
 	public Desc getDesc() {
-		return desc;
-	}	
+		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
+		mmDesc.addDependency("guts", desc);
+		return mmDesc;
+	}
 
 	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
 		return wmc;
@@ -220,6 +233,16 @@ public class MarkovModel implements IEgBotModel {
 	public void resetup() {
 	}
 
+	@Override
+	public IHasDesc[] getModules() {
+		if (wmc instanceof IHasDesc) {
+			return new IHasDesc[] {
+					(IHasDesc) wmc
+			};
+		}
+		return null;
+	}
+	
 }
 
 

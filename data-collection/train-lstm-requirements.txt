@@ -1,3 +1,8 @@
+
+sudo apt install python3-pip
+pip3 install these:
+
+setuptools
 tensorflow 1.11.0                   
 tensorflow-gpu 1.4.0               
 scikit-learn 0.19.2                 

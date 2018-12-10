@@ -59,6 +59,7 @@ import com.winterwell.nlp.io.StopWordFilter;
 import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.nlp.io.FilteredTokenStream.KInOut;
+import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.KErrorPolicy;
@@ -82,8 +83,8 @@ public class TrainLSTM implements IEgBotModel {
 
 	// input: training data and vocab
 	HashMap<Integer, String> vocab;
-	HalfLifeMap<String, Integer> hlVocab; 
-	// TODO: remove redundancy of keeping both vocab var, this is prob left over from figuring out how to do top1000
+	
+	
 	int idealVocabSize;
 	int vocab_size;
 	
@@ -112,21 +113,24 @@ public class TrainLSTM implements IEgBotModel {
 		num_hidden = 256; // number of hidden layers
 		idealVocabSize = 10000;
 		
-		loadVocab(desc.getName(), files);
+		loadVocab(files);
 	}
 	
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
+	 * 
+	 * This does NOT init the vocab field. Use {@link #loadVocab(List)} to load
+	 * 
 	 * @return magic version number -- needed to load
 	 */
-	public void loadAndInitVocab(List<File> files) throws IOException {
+	public void loadVocab2_trainVocabAndSave(List<File> files) throws IOException {
 		// vocab has to be constructed and saved from all the text that will be used when training 
 		// this is because vocab_size defines the shape of the feature vectors
 		System.out.println("Loading files and initialising vocabulary");
 		 	
 		// construct vocab that auto-prunes and discards words that appear rarely
 		// hlVocab is a map where the key to be the word and the value to be the word counts
-		hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
+		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
 		
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		
@@ -160,36 +164,36 @@ public class TrainLSTM implements IEgBotModel {
 		}
 		
 		// save to file
-		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + desc.getName() + ".txt";
-		File vocabFile = new File(vocabPath);
-		vocabFile.createNewFile(); 
+		Set<String> vocabWords = hlVocab.keySet();
 		
-		try (PrintWriter out = new PrintWriter(vocabFile)) {
-			for (String word : hlVocab.keySet()) {
+		File vocabFile = vocabPath();
+		vocabFile.createNewFile();		
+		try (PrintWriter out = new PrintWriter(vocabFile)) {			
+			for (String word : vocabWords) {
 			    out.println(word);
 			}
 		}		
-		System.out.printf("Saved vocab to file: %s\n", vocabPath);
+		System.out.printf("Saved vocab to file: %s\n", vocabFile);
 		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
 	}
 	
-	/**
-	 * top SIZE words in the vocabulary (where size could be 1000 for the 1000th most common words)
-	 */
-	public ArrayList<String> vocabTop(int size) throws IOException {
-		ArrayList<String> topArray = new ArrayList<String>(size);
-
-		List<String> keysSortedByValue = Containers.getSortedKeys(hlVocab);
-		Collections.reverse(keysSortedByValue); // largest first
-				
-		for (String s : keysSortedByValue) {
-			//ITokenStream a = null;
-			System.out.println(s);
-			topArray.add(s);
-			if (topArray.size() == size) break;
-		}
-		return topArray;
-	}
+//	/**
+//	 * top SIZE words in the vocabulary (where size could be 1000 for the 1000th most common words)
+//	 */
+//	public ArrayList<String> vocabTop(int size) throws IOException {
+//		ArrayList<String> topArray = new ArrayList<String>(size);
+//
+//		List<String> keysSortedByValue = Containers.getSortedKeys(hlVocab);
+//		Collections.reverse(keysSortedByValue); // largest first
+//				
+//		for (String s : keysSortedByValue) {
+//			//ITokenStream a = null;
+//			System.out.println(s);
+//			topArray.add(s);
+//			if (topArray.size() == size) break;
+//		}
+//		return topArray;
+//	}
 	
 	/**
 	 * method to estimate how long training would take
@@ -259,60 +263,11 @@ public class TrainLSTM implements IEgBotModel {
 	}
 
 	/**
-	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
-	 * @return trainingDataArray
-	 * @throws IOException
-	 */
-	private List<List<String>> loadTrainingData() throws IOException {
-		EgbotConfig config = new EgbotConfig();
-		List<File> files = null;
-		if (false) {
-			// zenodo data slimmed down to filter only q&a body_markdown using python script data-collection/slimming.py
-			// Use this for extra speed if youve run the slimming script
-			// python script data-collection/slimming.py
-			files = Arrays.asList(new File(config.srcDataDir, "slim").listFiles());
-		} else {
-			files = Arrays.asList(config.srcDataDir.listFiles(new FilenameFilter() {				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part_1") && name.endsWith(".json");
-				}
-			}));
-		}
-		// always have the same ordering
-		Collections.sort(files);
-		
-		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		
-		List<List<String>> trainingData = new ArrayList<List<String>>(); 
-		for(File file : files) {
-			System.out.println("File: "+file+"...");
-			Gson gson = new Gson();
-			JsonReader jr = new JsonReader(FileUtils.getReader(file));
-			jr.beginArray();
-						
-			int c=0;
-			while(jr.hasNext()) {
-				Map qa = gson.fromJson(jr, Map.class);			
-				String question_body = (String) qa.get("question");
-				String answer_body = (String) qa.get("answer");
-				String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
-				trainingData.add(Arrays.asList(temp));
-				c++;
-				rate.plus(1);
-				if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
-			} 
-			jr.close();
-		}
-		return trainingData;
-	}
-	
-	/**
-	 * load vocabulary from file
+	 * load vocabulary from file, adding 4 special tokens at the start
 	 * @param string see {@link #loadAndInitVocab()}
 	 * @throws IOException
 	 */
-	public void loadVocab(String string, List<File> files) throws IOException{	
+	public void loadVocab(List<File> files) throws IOException{	
 		
 		// load the vocab to a map that allows for unique indexing of words
 		// vocab is a map where the key is the unique index of the word, and the value is the word itself
@@ -323,14 +278,15 @@ public class TrainLSTM implements IEgBotModel {
 		vocab.put(3,"ERROR");
 		int vocabIdx = 4;
 		
-		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + String.valueOf(string) + ".txt";
+		File vocabFile = vocabPath();
         // checks to see if it finds the vocab file
-	    final boolean checkpointExists = Files.exists(Paths.get(vocabPath));
-	    if(!checkpointExists) {
+	    final boolean checkpointExists = vocabFile.exists();
+	    if( ! checkpointExists) {
 	    	Log.d("Warning: Couldn't find vocab file");
-	    	loadAndInitVocab(files); 
+	    	// train and save to file
+	    	// NB: we then promptly load from file below, which is a tiny bit inefficient, but tiny. 
+	    	loadVocab2_trainVocabAndSave(files); 
 	    }
-		File vocabFile = new File(vocabPath);
         try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
             for(String word; (word = br.readLine()) != null; ) {
     			vocab.put(vocabIdx, word);
@@ -341,49 +297,54 @@ public class TrainLSTM implements IEgBotModel {
 		System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
 	}
 
-	/**
-	 * initialise vocabulary using HalfLifeMap
-	 * status: replaced by loadAndInitVocab (because it's inefficient to load the content from the files into memory and then init vocab separately)
-	 * @throws IOException 
-	 */
-	@Deprecated
-	public void initVocabHalfLifeMap(List<List<String>> trainingDataArray, int version) throws IOException{	
-		// vocab has to be constructed and saved from all the text that will be used when training 
-		// this is because vocab_size defines the shape of the feature vectors
-		System.out.println("Initialising vocabulary");
-		 		
-		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
-		// construct vocab that auto-prunes and discards words that appear rarely
-		// hlVocab is a map where the key to be the word and the value to be the word counts
-		for (int i = 0; i < trainingDataArray.size(); i++) {
-			if (i%100 == 0)	System.out.printf("In loop: %d out of %d\n Vocab size: %d\n\n", i, trainingDataArray.size(), hlVocab.size());
-			List<String> qa = trainingDataArray.get(i);
-			for (int j = 0; j < qa.size(); j++) {
-				//System.out.printf(" In loop: %d out of %d\n", j, qa.size());
-				String word = qa.get(j);
-				//System.out.println(word);
-				if (!word.equals("") && hlVocab.containsKey(word)) {
-					int count = hlVocab.get(word) + 1;
-					hlVocab.put(word, count);
-				}
-				else {
-					hlVocab.put(word, 1);
-				}
-			}
-		}		
-
-		// save to file
-		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(version) + ".txt";
-		File vocabFile = new File(vocabPath);
-		vocabFile.createNewFile(); 
-		
-		try (PrintWriter out = new PrintWriter(vocabFile)) {
-			for (String word : hlVocab.keySet()) {
-			    out.println(word);
-			}
-		}		
-		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
+	private File vocabPath() {							
+		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + desc.getName()  + ".txt";
+		return new File(vocabPath);
 	}
+
+//	/**
+//	 * initialise vocabulary using HalfLifeMap
+//	 * status: replaced by loadAndInitVocab (because it's inefficient to load the content from the files into memory and then init vocab separately)
+//	 * @throws IOException 
+//	 */
+//	@Deprecated
+//	public void initVocabHalfLifeMap(List<List<String>> trainingDataArray, int version) throws IOException{	
+//		// vocab has to be constructed and saved from all the text that will be used when training 
+//		// this is because vocab_size defines the shape of the feature vectors
+//		System.out.println("Initialising vocabulary");
+//		 		
+//		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
+//		// construct vocab that auto-prunes and discards words that appear rarely
+//		// hlVocab is a map where the key to be the word and the value to be the word counts
+//		for (int i = 0; i < trainingDataArray.size(); i++) {
+//			if (i%100 == 0)	System.out.printf("In loop: %d out of %d\n Vocab size: %d\n\n", i, trainingDataArray.size(), hlVocab.size());
+//			List<String> qa = trainingDataArray.get(i);
+//			for (int j = 0; j < qa.size(); j++) {
+//				//System.out.printf(" In loop: %d out of %d\n", j, qa.size());
+//				String word = qa.get(j);
+//				//System.out.println(word);
+//				if (!word.equals("") && hlVocab.containsKey(word)) {
+//					int count = hlVocab.get(word) + 1;
+//					hlVocab.put(word, count);
+//				}
+//				else {
+//					hlVocab.put(word, 1);
+//				}
+//			}
+//		}		
+//
+//		// save to file
+//		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(version) + ".txt";
+//		File vocabFile = new File(vocabPath);
+//		vocabFile.createNewFile(); 
+//		
+//		try (PrintWriter out = new PrintWriter(vocabFile)) {
+//			for (String word : hlVocab.keySet()) {
+//			    out.println(word);
+//			}
+//		}		
+//		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
+//	}
 	
 	/**
 	 * initialise vocabulary using HashMap
@@ -466,59 +427,64 @@ public class TrainLSTM implements IEgBotModel {
 			
 			// train a bunch of times
 			// TODO: will it be more efficient if we sent batches instead of individual values?
-			for (int epoch = 1; epoch <= num_epochs; epoch++) {
-				
-				// for each qa segment
-				for (int qaIdx = 0; qaIdx < trainingDataArray.size(); qaIdx++) {
-					List<String> temp = trainingDataArray.get(qaIdx);
-					String[] qa = temp.toArray(new String[temp.size()]);
-					
-					// for each word in the qa segment (not including the last seq_length ones)
-					// TODO: cover the case where the instance stream reached the end of the training data (aka filling in END tags)?
-					for (int wordIdx = 0; wordIdx < qa.length-seq_length; wordIdx++) {
-						String[] instanceArray = new String[seq_length];
-						String target = "";
-						// filling in seq_length-1 START tags to allow guessing of words at the beginning (aka where the word position < seq_length)
-						Arrays.fill(instanceArray, "START");
-						if (wordIdx < seq_length) {
-							System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
-						}
-						else {
-							System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
-						}
-						target = qa[wordIdx+1];
-						
-						// print out training example
-						if (epoch%100 == 1 && wordIdx == 30) {
-							System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-									epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
-						}
-
-						// create input and output tensors and run training operation
-						// NB: try-with to ensure C level resources are released
-						try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(instanceArray));
-								Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(target))) {
-							// The names of the tensors and operations in the graph are printed out by the program that created the graph
-					    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-							List<Tensor<?>> runner = sess.runner()
-									.feed("input", instanceTensor)
-									.feed("target", targetTensor)
-									.addTarget("train_op")
-									.fetch("accuracy") // training accuracy
-									.run();
-							
-							trainAccuracies.add(runner.get(0).floatValue());							
-			
-							// close tensors to save memory
-							closeTensors(runner);
-						}
-					}
-				}
+			for (int epoch = 1; epoch <= num_epochs; epoch++) {				
+				trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch);
 			}
 
 			// save model checkpoint
 			save(sess,checkpointPrefix);
 	    }
+	}
+
+	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch) 
+	{
+		// for each qa segment
+		for (int qaIdx = 0; qaIdx < trainingDataArray.size(); qaIdx++) {
+			// A Q+A training string
+			List<String> temp = trainingDataArray.get(qaIdx);
+			String[] qa = temp.toArray(new String[temp.size()]);
+			
+			// for each word in the qa segment (not including the last seq_length ones)
+			// TODO: cover the case where the instance stream reached the end of the training data (aka filling in END tags)?
+			for (int wordIdx = 0; wordIdx < qa.length-seq_length; wordIdx++) {
+				String[] instanceArray = new String[seq_length];
+				String target = "";
+				// filling in seq_length-1 START tags to allow guessing of words at the beginning (aka where the word position < seq_length)
+				Arrays.fill(instanceArray, "START");
+				if (wordIdx < seq_length) {
+					System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
+				}
+				else {
+					System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
+				}
+				target = qa[wordIdx+1];
+				
+				// print out training example
+				if (epoch%100 == 1 && wordIdx == 30) {
+					System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+							epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
+				}
+
+				// create input and output tensors and run training operation
+				// NB: try-with to ensure C level resources are released
+				try (Tensor<?> instanceTensor = Tensors.create(wordsIntoInputVector(instanceArray));
+						Tensor<?> targetTensor = Tensors.create(wordsIntoFeatureVector(target))) {
+					// The names of the tensors and operations in the graph are printed out by the program that created the graph
+			    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+					List<Tensor<?>> runner = sess.runner()
+							.feed("input", instanceTensor)
+							.feed("target", targetTensor)
+							.addTarget("train_op")
+							.fetch("accuracy") // training accuracy
+							.run();
+					
+					trainAccuracies.add(runner.get(0).floatValue());							
+
+					// close tensors to save memory
+					closeTensors(runner);
+				}
+			}
+		}
 	}
 
 	/**
@@ -893,14 +859,18 @@ public class TrainLSTM implements IEgBotModel {
 	public void train1(Map qa) {
 		String question_body = (String) qa.get("question");
 		String answer_body = (String) qa.get("answer");
-		String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
-		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
+		// Simple combine of Q+A
+		String q_a = question_body + " " + answer_body;
+		// tokenise
+		String[] temp = EgBotDataLoader.tokenise(q_a);
+		
+		// only uses a batch of one for now
+		List<List<String>> trainingBatch = new ArrayList(); 
 		trainingBatch.add(Arrays.asList(temp));
-		// have to do a try block, because adding a throw declaration would mean i can't use the interface method train1() or i have to alter it
 		try {
 			trainEach(trainingBatch);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw Utils.runtime(e);
 		} 				
 	}
 
