@@ -5,6 +5,7 @@ print("EgBot Descriptive Statistics \n")
 noOfQs = 0
 noOfAs = 0
 noOfAPerQ = 0
+noOfAPerQExclNoA = 0
 noOfQsWithA = 0
 noOfQsWithAccA = 0
 
@@ -58,7 +59,6 @@ for no in range(1,9):
                 elif "opinion" in reason:  noOfClosedOpinion += 1;
                 elif "unclear" in reason:  noOfClosedUnclear += 1;
 
-            hasPosA = False
             hasGoodA = False
             hasAccA = False
 
@@ -98,6 +98,7 @@ print("Total no of answers: ", noOfAs)
 
 print()            
 print("No of answers per question: ", noOfAs/noOfQs)
+print("No of answers per question (excl. non-answered questions): ", noOfAs/noOfQsWithA)
 print("No of questions with at least one answer: ", noOfQsWithA)
 print("No of questions with an accepted answer: ", noOfQsWithAccA)
 
