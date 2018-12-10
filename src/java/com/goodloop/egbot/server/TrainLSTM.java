@@ -437,7 +437,8 @@ public class TrainLSTM implements IEgBotModel {
 	}
 
 	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch) 
-	{
+	{		
+		int sessRunCount=0;
 		// for each qa segment
 		for (int qaIdx = 0; qaIdx < trainingDataArray.size(); qaIdx++) {
 			// A Q+A training string
@@ -461,8 +462,8 @@ public class TrainLSTM implements IEgBotModel {
 				
 				// print out training example
 				if (epoch%100 == 1 && wordIdx == 30) {
-					System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-							epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
+					System.out.printf("epoch = %d sessRunCount = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+							epoch, sessRunCount, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
 				}
 
 				// create input and output tensors and run training operation
@@ -477,14 +478,15 @@ public class TrainLSTM implements IEgBotModel {
 							.addTarget("train_op")
 							.fetch("accuracy") // training accuracy
 							.run();
+					sessRunCount++;
 					
 					trainAccuracies.add(runner.get(0).floatValue());							
 
 					// close tensors to save memory
 					closeTensors(runner);
 				}
-			}
-		}
+			} // ./ each word
+		} // ./ each q-a example
 	}
 
 	/**
