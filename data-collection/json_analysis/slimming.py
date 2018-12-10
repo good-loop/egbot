@@ -1,8 +1,12 @@
+# slim egbot data by saving only { "body_markdown": ..., "is_answered": ..., "answer_count": ..., "answers": { "body_markdown" : ..., "is_accepted": ... } } 
+
 import json, os
+
+buildPath = "../../data/build/"
 
 for no in range(1,9):
     filename = "MathStackExchangeAPI_Part_" + str(no) + ".json"
-    filepath = os.path.abspath("../data/build/"+filename)
+    filepath = os.path.abspath(buildPath+filename)
     print("Opening " + filename)
     with open(filepath) as f:
         data = json.load(f)
@@ -25,7 +29,7 @@ for no in range(1,9):
             slim.append(temp)
         
         print("Saving ...")
-        with open(os.path.abspath("../data/build/slim/"+filename), 'w') as outfile:  
+        with open(os.path.abspath(buildPath + "slim/" + filename), 'w') as outfile:  
             json.dump(slim, outfile)
 
 print("Done :)")
