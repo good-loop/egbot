@@ -28,6 +28,8 @@ import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
 /**
+ * DEPRECATED 
+ * 
  * generates evaluation set from egbot data 
  * the eval set represents 10% 
  * 
