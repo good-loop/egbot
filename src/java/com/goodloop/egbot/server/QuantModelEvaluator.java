@@ -20,6 +20,7 @@ import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
+import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.RateCounter;
@@ -85,27 +86,24 @@ public class QuantModelEvaluator {
 					continue;
 				}
 				c++;
-				// !TODO: do we still need ConstructEvalSet? 
-				// or do we need to adopt a simple MSE train/test format 
-				// (right now there is the default MSE one and the ConstructEvalSet)
-				Map eg = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) eg.get("is_answered");
-				if (!is_answered) continue;	
+				
+				Map eg = gson.fromJson(jr, Map.class);		
 				String question = (String) eg.get("question");
-				String target = (String) eg.get("answer");
+				String target = (String) eg.get("answer");				
 				double score = model.scoreAnswer(question, target);
 				avgScore.train1(score);
-				
+					
 				if(c%100==0) {
 					System.out.printf("Avg score after %d evaluation examples: %f\n", c, avgScore.getMean());			
-				}		
+				}						
 			} 
 			jr.close();			
 		}	
 		saveToFile(avgScore);
 	}
 	
-	public Object DEPRECATEDevaluateDataPoint(Map eg, MeanVar1D avgScore) throws IOException {
+	@Deprecated
+	public Object evaluateDataPoint(Map eg, MeanVar1D avgScore) throws IOException {
 		Boolean is_answered = (Boolean) eg.get("is_answered");
 		if (!is_answered) return avgScore;	
 		String question = (String) eg.get("question");

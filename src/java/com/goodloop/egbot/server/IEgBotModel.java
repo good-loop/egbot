@@ -28,13 +28,20 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 * @throws Exception
 	 */
 	String sample(String question, int expectedAnswerLength) throws IOException;
-
+	
+	/**
+	 * model loading if it exists
+	 */
 	void load() throws IOException;
 
-	boolean getLoadSuccessFlag();
-
+	/**
+	 * get model object
+	 * @return
+	 */
 	Object getWmc();
-
-	void save();
 	
+	/**
+	 * initialise any model parameters to prepare for training
+	 */
+	void init(List<File> files) throws IOException;	
 }

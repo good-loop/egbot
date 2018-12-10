@@ -74,7 +74,7 @@ public class AskServlet implements IServlet {
 	private Object generateAnswerMM(String q) throws Exception {
 		MarkovModel mm = new MarkovModel();
 		mm.load(); // TODO: check that I can actually load a specific trained model
-		String answer = mm.sample(q);	//TODO: check that it can return a gen answer based on a string?
+		String answer = mm.sample(q, 30);	//TODO: check that it can return a gen answer based on a string?
 		return answer;
 	}
 

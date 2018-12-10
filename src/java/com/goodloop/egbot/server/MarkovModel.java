@@ -57,10 +57,6 @@ public class MarkovModel implements IEgBotModel {
 	public boolean loadSuccessFlag;
 	public ProbCounter probCounter;
 
-	public boolean isLoadSuccessFlag() {
-		return loadSuccessFlag;
-	}
-
 	public MarkovModel() {
 		sig = new String[] {"w-1", "w-2"};
 		tokeniserFactory = new WordAndPunctuationTokeniser();
@@ -92,26 +88,20 @@ public class MarkovModel implements IEgBotModel {
 		Depot.getDefault().put(desc, wmc);
 	}
 	
-
 	@Override
 	public void train1(Map qa) throws UnsupportedOperationException {
-		String question_body = (String) qa.get("body_markdown");
-		double answer_count = (double) qa.get("answer_count");
-		boolean is_accepted = false;
-		for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
-			is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-			if ( ! is_accepted) continue;
-			String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-			String body = question_body + " " + answer_body;
-			// !TODO: decide how to do this part so as to be the same for lstm and mm
-			SimpleDocument doc = new SimpleDocument(body);
-			SitnStream ss2 = ssFactory.factory(doc);	
-			for (Sitn<Tkn> sitn : ss2) {
-				Cntxt prev = sitn.context;
-				Tkn word = sitn.outcome;						
-				wmc.train1(prev, word, 1);
-			}
+		String question_body = (String) qa.get("question");
+		String answer_body = (String) qa.get("answer");
+		String body = question_body + " " + answer_body;
+		SimpleDocument doc = new SimpleDocument(body);
+		SitnStream ss2 = ssFactory.factory(doc);	
+		for (Sitn<Tkn> sitn : ss2) {
+			Cntxt prev = sitn.context;
+			Tkn word = sitn.outcome;						
+			wmc.train1(prev, word, 1);				
 		}
+		// save model
+		save();
 	}
 		
 	private ITrainable.Supervised<Cntxt, Tkn> newModel() {
@@ -202,35 +192,32 @@ public class MarkovModel implements IEgBotModel {
 		// avg the score and then return it
 		return score/alist.size();
 	}
+	
+	/**
+	 * initialise any model parameters to prepare for training
+	 */
+	public void init(List<File> files) throws IOException {
+	}
+	
+	public Desc getDesc() {
+		return desc;
+	}	
 
-	@Override
-	public void finishTraining() {
-		// TODO Auto-generated method stub
-		
+	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
+		return wmc;
 	}
 
 	@Override
 	public boolean isReady() {
-		// TODO Auto-generated method stub
-		return false;
+		return loadSuccessFlag;
+	}
+
+	@Override
+	public void finishTraining() {
 	}
 
 	@Override
 	public void resetup() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public Desc getDesc() {
-		return desc;
-	}
-
-	public boolean getLoadSuccessFlag() {
-		return loadSuccessFlag;
-	}
-
-	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
-		return wmc;
 	}
 
 }

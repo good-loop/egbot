@@ -38,6 +38,7 @@ import org.tensorflow.types.UInt8;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
@@ -61,6 +62,7 @@ import com.winterwell.nlp.io.FilteredTokenStream.KInOut;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.KErrorPolicy;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.SimpleJson;
@@ -71,74 +73,53 @@ import com.winterwell.utils.web.SimpleJson;
  *
  */
 public class TrainLSTM implements IEgBotModel {
-	// input: training data and vocab
-	//List<List<String>> trainingDataArray;
-	HashMap<Integer, String> vocab;
-	HalfLifeMap<String, Integer> hlVocab;
-	ProbCounter probCounter;
-	int vocab_size;
-	//List<File> files;
-	//private SitnStream ssFactory;
+	// model 
+	List<Tensor<?>> model;
+	public Desc desc;
+	public boolean loadSuccessFlag;
+	// TODO: when should trainSuccessFlag be true? 
+	public boolean trainSuccessFlag;
 
+	// input: training data and vocab
+	HashMap<Integer, String> vocab;
+	HalfLifeMap<String, Integer> hlVocab; 
+	// TODO: remove redundancy of keeping both vocab var, this is prob left over from figuring out how to do top1000
+	int idealVocabSize;
+	int vocab_size;
+	
 	// training parameters
-	int seq_length = 30; 	// sequence length
-	int num_epochs = 1; // training epochs TODO: change this to have proper training
-	int num_hidden = 256; // number of hidden layers
-	int idealVocabSize = 100;
-	/** checkpoint version to identify trained model */
-	int ckptVersion;
+	int seq_length; // sequence length
+	int num_epochs; // training epochs 
+	int num_hidden; // number of hidden layers
 
 	/**
-	 * default constructor (where the model version is randomly generated)
+	 * default constructor
 	 * @throws IOException
 	 */
 	TrainLSTM() throws IOException{
-		// find out the names of the files to be loaded
-		// EgbotConfig config = new EgbotConfig(); TODO: what does this do?
-
-		// !TODO: fix prob counter, needs to be unique and shared across classes
-		// random number generator for probabilistic counter (so as to get 90/10 split for training/testing)
-		probCounter = new ProbCounter();
-		// record unique identifier for model 
-		ckptVersion = new Random().nextInt(1000000);
+		// TODO: is this the right way to identify model?
+		model = new ArrayList<Tensor<?>>();
+		desc = new Desc<>("MSE-slim", model.getClass());
 	}
 	
 	/**
-	 * constructor (where the model version is specified and used to load the model later on)
-	 * @param version
-	 * @throws IOException
-	 */	
-	TrainLSTM(int version) throws IOException{
-		this(); // call default constructor
+	 * initialise any model parameters to prepare for training
+	 */
+	public void init(List<File> files) throws IOException {
+		// training parameters
+		seq_length = 30; 	// sequence length
+		num_epochs = 10; // training epochs 
+		num_hidden = 256; // number of hidden layers
+		idealVocabSize = 10000;
 		
-		//System.out.println(files.toString());
-		// record unique identifier for model 
-		ckptVersion = version;
-		
-		// load toy data
-		//String trainingData = "long ago , the mice had a general council to consider what measures they could take to outwit their common enemy , the cat . some said this , and some said that but at last a young mouse got up and said he had a proposal to make , which he thought would meet the case . you will all agree , said he , that our chief danger consists in the sly and treacherous manner in which the enemy approaches us . now , if we could receive some signal of her approach , we could easily escape from her . i venture , therefore , to propose that a small bell be procured , and attached by a ribbon round the neck of the cat . by this means we should always know when she was about , and could easily retire while she was in the neighbourhood . this proposal met with general applause , until an old mouse got up and said  that is all very well , but who is to bell the cat ? the mice looked at one another and nobody spoke . then the old mouse said it is easy to propose impossible remedies .";
-		//List<String> temp = new ArrayList<String>(Arrays.asList(EgBotDataLoader.tokenise(trainingData)));			
-		//trainingDataArray = new ArrayList<List<String>>();
-		//trainingDataArray.add(temp);
-		//int trainingDatasize = trainingDataArray.length-1;
-		
-		// load real data (warning: likely memory error)
-		//trainingDataArray = loadTrainingData();
-		
-		// stream real data
-		//loadAndInitVocab();
-		
-		System.out.printf("Ckeckpoint no: %s\n", ckptVersion);
-		//System.out.printf("Training Data size: %s\n", trainingDataArray.size());
-		//System.out.printf("Vocabulary size: %s\n", vocab_size);
-		System.out.println();
+		loadVocab(desc.getName(), files);
 	}
 	
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
 	 * @return magic version number -- needed to load
 	 */
-	public int loadAndInitVocab(List<File> files) throws IOException {
+	public void loadAndInitVocab(List<File> files) throws IOException {
 		// vocab has to be constructed and saved from all the text that will be used when training 
 		// this is because vocab_size defines the shape of the feature vectors
 		System.out.println("Loading files and initialising vocabulary");
@@ -146,7 +127,6 @@ public class TrainLSTM implements IEgBotModel {
 		// construct vocab that auto-prunes and discards words that appear rarely
 		// hlVocab is a map where the key to be the word and the value to be the word counts
 		hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
-		// TODO: figure out why the vocab is meant to have 1mil entries, but ends up with 1,375,589
 		
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		
@@ -159,36 +139,28 @@ public class TrainLSTM implements IEgBotModel {
 			int c=0;
 			while(jr.hasNext()) {
 				Map qa = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if ( ! is_answered) continue;
-				String question_body = (String) qa.get("body_markdown");
-				double answer_count = (double) qa.get("answer_count");
-				boolean is_accepted = false;
-				for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
-					is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-					if ( ! is_accepted) continue;
-					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-					String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
-					for (String word : temp) {
-						if (word.isEmpty()) continue;
-						Integer cnt = hlVocab.get(word);
-						if (cnt!=null) {
-							int count = cnt + 1;
-							hlVocab.put(word, count);
-						} else {
-							hlVocab.put(word, 1);
-						}		
-					}			
-					c++;
-					rate.plus(1);
-					if (c % 1000 == 0) System.out.println("Count: "+c+"\t Rate: "+rate+"\t Vocab size: "+hlVocab.size());
-				}		
-			} 
+				String question_body = (String) qa.get("question");
+				String answer_body = (String) qa.get("answer");
+				String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
+				for (String word : temp) {
+					if (word.isEmpty()) continue;
+					Integer cnt = hlVocab.get(word);
+					if (cnt!=null) {
+						int count = cnt + 1;
+						hlVocab.put(word, count);
+					} else {
+						hlVocab.put(word, 1);
+					}		
+				}				
+				c++;
+				rate.plus(1);
+				if (c % 1000 == 0) System.out.println("Count: "+c+"\t Rate: "+rate+"\t Vocab size: "+hlVocab.size());
+			}
 			jr.close();
 		}
 		
 		// save to file
-		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(ckptVersion) + ".txt";
+		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + desc.getName() + ".txt";
 		File vocabFile = new File(vocabPath);
 		vocabFile.createNewFile(); 
 		
@@ -197,9 +169,8 @@ public class TrainLSTM implements IEgBotModel {
 			    out.println(word);
 			}
 		}		
+		System.out.printf("Saved vocab to file: %s\n", vocabPath);
 		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
-		System.out.printf("Ckeckpoint no: %s\n", String.valueOf(ckptVersion));
-		return ckptVersion;
 	}
 	
 	/**
@@ -235,20 +206,7 @@ public class TrainLSTM implements IEgBotModel {
 			JsonReader jr = new JsonReader(FileUtils.getReader(file));
 			jr.beginArray();
 						
-			while(jr.hasNext()) {
-				Map qa = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							c++;
-						}
-					}
-				}
-			}
+			while(jr.hasNext()) c++;
 		}
 		System.out.printf("No of training items: %d", c);
 	}
@@ -257,9 +215,9 @@ public class TrainLSTM implements IEgBotModel {
 	 * load egbot zenodo files, save content locally in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ] and then run train for each file 
 	 * @throws IOException 
 	 */
+	@Deprecated
 	public void train(List<File> files) throws IOException {
 		// load files, save content locally and train using local data and loaded vocab from file
-		// TODO: check to make sure that the vocab was indeed constructed and is not an empty map 
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
 
@@ -273,36 +231,30 @@ public class TrainLSTM implements IEgBotModel {
 			int c=0;
 			while(jr.hasNext() && c < 50) { // TODO: remove 2nd condition; it's a temporary limitation to produce dummy trained lstm model;
 				Map qa = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) continue;
-				String question_body = (String) qa.get("body_markdown");
-				double answer_count = (double) qa.get("answer_count");
-				for (int j = 0; j < answer_count; j++) {					
-					Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-					if (is_accepted) continue;
-					String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-					// probabilistic counter, adds data point to training only if it's not been reserved for testing  
-					// will select it for training 9 out 10 times
-					trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
-					c++;
-					rate.plus(1);
-					if (c % 10 == 0) {
-						System.out.println(c+" "+rate+"...");
-						trainEach(trainingBatch);
-						trainingBatch = new ArrayList<List<String>>(); 
-					}
-					if (c % 1000 == 0) {
-						// train in batches to prevent memory issues
-						//trainEach(trainingBatch);
-						//trainingBatch = new ArrayList<List<String>>(); 
-						//System.out.println(c+" "+rate+"...");
-					}
-				}
-					
+				String question_body = (String) qa.get("question");
+				String answer_body = (String) qa.get("answer");
+				String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
+				trainingBatch.add(Arrays.asList(temp));
+				trainEach(trainingBatch);
+				c++;
+				rate.plus(1);
+				// TODO: mini-batch training?
+//				if (c % 10 == 0) {
+//					System.out.println(c+" "+rate+"...");
+//					trainEach(trainingBatch);
+//					trainingBatch = new ArrayList<List<String>>(); 
+//				}
+//				if (c % 1000 == 0) {
+//					//train in batches to prevent memory issues
+//					trainEach(trainingBatch);
+//					trainingBatch = new ArrayList<List<String>>(); 
+//					System.out.println(c+" "+rate+"...");
+//				}	
 			}			
 			// close file to save memory
 			jr.close();
-			System.out.printf("Saved trained model to file: %s%d\n", "/data/models/final/v3/checkpoint", ckptVersion);
+
+			System.out.printf("Saved trained model to file: %s%s\n", "/data/models/final/v3/checkpoint", desc.getName());
 		}
 	}
 
@@ -342,21 +294,13 @@ public class TrainLSTM implements IEgBotModel {
 			int c=0;
 			while(jr.hasNext()) {
 				Map qa = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							trainingData.add(Arrays.asList(EgBotDataLoader.tokenise(question_body + " " + answer_body)));
-							c++;
-							rate.plus(1);
-							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
-						}
-					}
-				}	
+				String question_body = (String) qa.get("question");
+				String answer_body = (String) qa.get("answer");
+				String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
+				trainingData.add(Arrays.asList(temp));
+				c++;
+				rate.plus(1);
+				if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
 			} 
 			jr.close();
 		}
@@ -365,10 +309,10 @@ public class TrainLSTM implements IEgBotModel {
 	
 	/**
 	 * load vocabulary from file
-	 * @param version see {@link #loadAndInitVocab()}
+	 * @param string see {@link #loadAndInitVocab()}
 	 * @throws IOException
 	 */
-	public void loadVocab(int version, List<File> files) throws IOException{	
+	public void loadVocab(String string, List<File> files) throws IOException{	
 		
 		// load the vocab to a map that allows for unique indexing of words
 		// vocab is a map where the key is the unique index of the word, and the value is the word itself
@@ -379,22 +323,22 @@ public class TrainLSTM implements IEgBotModel {
 		vocab.put(3,"ERROR");
 		int vocabIdx = 4;
 		
-		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(version) + ".txt";
+		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + String.valueOf(string) + ".txt";
         // checks to see if it finds the vocab file
 	    final boolean checkpointExists = Files.exists(Paths.get(vocabPath));
-	    if(checkpointExists) {
-			File vocabFile = new File(vocabPath);
-	        try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
-	            for(String word; (word = br.readLine()) != null; ) {
-	    			vocab.put(vocabIdx, word);
-	    			vocabIdx += 1;
-	            }
-	        }
-			vocab_size = vocab.size();
-			System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
-	    } else {
-	    	loadAndInitVocab(files); // TODO: test this, i suspect this fails unless you know the size of the vocab in advance and define the graph using it
-	    }	
+	    if(!checkpointExists) {
+	    	Log.d("Warning: Couldn't find vocab file");
+	    	loadAndInitVocab(files); 
+	    }
+		File vocabFile = new File(vocabPath);
+        try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
+            for(String word; (word = br.readLine()) != null; ) {
+    			vocab.put(vocabIdx, word);
+    			vocabIdx += 1;
+            }
+        }
+		vocab_size = vocab.size();
+		System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
 	}
 
 	/**
@@ -446,8 +390,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * status: replaced by loadAndInitVocab (because it's inefficient to load the content from the files into memory and then init vocab separately)
 	 */
 	@Deprecated
-	private void initVocabHashMap(List<List<String>> trainingDataArray){	
-		// TODO: write up vocab saving and loading (vocab_size has to be the same size in the script that constructs the graph) but how should i save it? 
+	private void initVocabHashMap(List<List<String>> trainingDataArray){	 
 		// should I use a TreeSet instead of a HashMap, log(n) for basic operations and unique https://stackoverflow.com/questions/13259535/how-to-maintain-a-unique-list-in-java
 		
 		//HalfLifeMap<K, V>
@@ -489,7 +432,7 @@ public class TrainLSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -503,15 +446,17 @@ public class TrainLSTM implements IEgBotModel {
 			// The names of the tensors and operations in the graph are printed out by the program that created the graph
 	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 			if (checkpointExists) {						
-				//System.out.println("Restoring model ...");
+				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+				//TODO: should we restore the model for every training step
+				// an alternative would be to pass the sess var or define it as global and init it
 			} else {
 				System.out.println("Initialising model ...");
 				sess.runner().addTarget("init").run();
 			}
 			
-			//System.out.print("Starting from: \n");
 			// print out weight and bias initialisation
+			//System.out.print("Starting from: \n");
 			//printVariables(sess);
 			
 			ArrayList<Float> trainAccuracies = new ArrayList<Float>();
@@ -520,7 +465,7 @@ public class TrainLSTM implements IEgBotModel {
 			float validAccuracy = 0;
 			
 			// train a bunch of times
-			// TODO: will be much more efficient if we sent batches instead of individual values
+			// TODO: will it be more efficient if we sent batches instead of individual values?
 			for (int epoch = 1; epoch <= num_epochs; epoch++) {
 				
 				// for each qa segment
@@ -544,10 +489,10 @@ public class TrainLSTM implements IEgBotModel {
 						target = qa[wordIdx+1];
 						
 						// print out training example
-						//if (epoch%100 == 0 && wordIdx == 0) {
-						//	System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-						//			epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
-						//}
+						if (epoch%100 == 1 && wordIdx == 30) {
+							System.out.printf("epoch = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+									epoch, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
+						}
 
 						// create input and output tensors and run training operation
 						// NB: try-with to ensure C level resources are released
@@ -582,7 +527,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * @param checkpointPrefix
 	 */
 	private void save(Session sess, Tensor<?> checkpointPrefix) {
-		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();		
+		model = sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
 	}
 
 	/**
@@ -608,7 +553,7 @@ public class TrainLSTM implements IEgBotModel {
 	private float[][] wordsIntoInputVector(String[] words) {
 		float[][] input = new float[seq_length][1];
 		for (int i = 0; i < words.length; i++) {
-			if (i == seq_length) break; // TODO: test that this is right
+			if (i == seq_length) break; 
 			String word = words[i];
 			int wordIndex = 0; // index 0 represents <UNKNOWN>
 			if (vocab.containsValue(word)) wordIndex = getKeyByValue(vocab, word); 
@@ -694,7 +639,7 @@ public class TrainLSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -775,7 +720,7 @@ public class TrainLSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -830,7 +775,7 @@ public class TrainLSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -940,54 +885,35 @@ public class TrainLSTM implements IEgBotModel {
 	    }
 	}
 
+	/**
+	 * method called by EgBotDataLoader to train on new data point
+	 * this method is separate from trainEach, in case we want to do mini-batch training 
+	 */
 	@Override
 	public void train1(Map qa) {
-		String question_body = (String) qa.get("body_markdown");
-		double answer_count = (double) qa.get("answer_count");
-		boolean is_accepted = false;
-		for (int j = 0; j < answer_count && !is_accepted; j++) { // NB once an accepted answer is found, the loop ends after saving it				
-			is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-			if ( ! is_accepted) continue;
-			String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-			String body = question_body + " " + answer_body;
-			// !TODO: decide how to do this part so as to be the same for lstm and mm
-			List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
-			trainingBatch.add(Arrays.asList(EgBotDataLoader.tokenise(body)));
-			try {
-				trainEach(trainingBatch);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-		}		
+		String question_body = (String) qa.get("question");
+		String answer_body = (String) qa.get("answer");
+		String[] temp = EgBotDataLoader.tokenise(question_body + " " + answer_body);
+		List<List<String>> trainingBatch = new ArrayList<List<String>>(); 
+		trainingBatch.add(Arrays.asList(temp));
+		// have to do a try block, because adding a throw declaration would mean i can't use the interface method train1() or i have to alter it
+		try {
+			trainEach(trainingBatch);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 				
 	}
 
-	@Override
-	public void finishTraining() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isReady() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void resetup() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	// TODO: finish up loading the saved model
+	/**
+	 * load saved model
+	 */
 	public void load() throws IOException {
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + ckptVersion;
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -1003,6 +929,7 @@ public class TrainLSTM implements IEgBotModel {
 			if (checkpointExists) {						
 				//System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+				loadSuccessFlag = true;
 			} else {
 				System.out.println("Initialising model ...");
 				sess.runner().addTarget("init").run();
@@ -1012,25 +939,34 @@ public class TrainLSTM implements IEgBotModel {
 
 	@Override
 	public Desc getDesc() {
-		// !TODO Auto-generated method stub
-		return null;
+		return desc;
 	}
-
-	@Override
-	public boolean getLoadSuccessFlag() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
+	
 	@Override
 	public Object getWmc() {
-		// TODO Auto-generated method stub
-		return null;
+		return model;
+	}
+	
+	@Override
+	public boolean isReady() {
+		if(loadSuccessFlag && trainSuccessFlag) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * reset cache
+	 */
+	public void reset() {
+		Depot.getDefault().remove(desc);
 	}
 
 	@Override
-	public void save() {
-		// TODO Auto-generated method stub
-		
+	public void finishTraining() {
 	}
+
+	@Override
+	public void resetup() {
+	}	
 }

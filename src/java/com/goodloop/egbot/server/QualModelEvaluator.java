@@ -20,7 +20,12 @@ import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
+import com.winterwell.maths.stats.distributions.cond.Cntxt;
+import com.winterwell.maths.stats.distributions.cond.Sitn;
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
+import com.winterwell.nlp.corpus.SimpleDocument;
+import com.winterwell.nlp.io.SitnStream;
+import com.winterwell.nlp.io.Tkn;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
@@ -60,7 +65,8 @@ public class QualModelEvaluator {
 	 * @return 
 	 * @throws IOException
 	 */
-	public static List<Map<String, String>> DEPRECATEDloadEvalSet(Experiment experiment, File file, List<Map<String,String>> saved) throws IOException {		
+	@Deprecated
+	public static List<Map<String, String>> loadEvalSet(Experiment experiment, File file, List<Map<String,String>> saved) throws IOException {		
 		Desc testDesc = new Desc(file.getName(), List.class);
 		testDesc.put("f", file);
 		
@@ -117,12 +123,6 @@ public class QualModelEvaluator {
 		assert model.isReady(); 
 
 		Log.d("Evaluating ...");
-// 		DEPRECATED		
-//		List<File> evalFiles = experiment.getTestData().files;
-//		List<Map<String,String>> saved = new ArrayList();
-//		for (File evalFile : evalFiles) {
-//			saved = DEPRECATEDloadEvalSet(experiment, evalFile, saved);
-//		}			
 		EgBotData testData = (EgBotData) experiment.getTestData();
 		List<Map<String,String>> saved = new ArrayList();
 		for(File file : testData.files) {
@@ -145,14 +145,9 @@ public class QualModelEvaluator {
 					continue;
 				}
 				c++;
-				// !TODO: do we still need ConstructEvalSet? 
-				// or do we need to adopt a simple MSE train/test format 
-				// (right now there is the default MSE one and the ConstructEvalSet)
-				Map eg = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) eg.get("is_answered");
-				if (!is_answered) continue;	
+				Map eg = gson.fromJson(jr, Map.class);		
 				String question = (String) eg.get("question");
-				String target = (String) eg.get("answer");
+				String target = (String) eg.get("answer");					
 				String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
 				
 				Map<String,String> temp = new ArrayMap<>(
@@ -161,14 +156,16 @@ public class QualModelEvaluator {
 					"generated", generated
 				);			
 				System.out.printf("Example of generated answer: %s\n\n", generated);
-				saved.add(temp);			
+				saved.add(temp);
+				
 			} 
 			jr.close();			
 		}	
 		saveToFile(saved);
 	}
 	
-	public Object DEPRECATEDevaluateDataPoint(Map eg, List<Map<String,String>> saved) throws IOException {
+	@Deprecated
+	public Object evaluateDataPoint(Map eg, List<Map<String,String>> saved) throws IOException {
 		
 		Boolean is_answered = (Boolean) eg.get("is_answered");
 		if (!is_answered) return saved;	
