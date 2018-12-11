@@ -45,15 +45,15 @@ public class EvaluatePredictions {
 		runModel(mm);		
 				
 		// LSTM 
-		TrainLSTM lstm = new TrainLSTM();				
+		LSTM lstm = new LSTM();				
 		runModel(lstm);				
 	}
 	
 	void runModel(IEgBotModel model) throws Exception {
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 
-//		lstm.reset(); // TODO: check that this is a valid way to refresh cache		
-//		Depot.getDefault().remove(trainedLSTMDesc);
+		// refresh cache?
+		// Depot.getDefault().remove(modelDesc);
 		
 		// set up experiment
 		EgBotExperiment experiment = new EgBotExperiment();
@@ -61,18 +61,18 @@ public class EvaluatePredictions {
 		experiment.setModel(model, modelDesc);
 		
 		// set up filters (that decide train/test split)
-		IFilter<Integer> trainFilterLSTM = n -> n % 100 != 1;
-		IFilter<Integer> testFilterLSTM = n -> ! trainFilterLSTM.accept(n);
+		IFilter<Integer> trainFilter = n -> n % 100 != 1;
+		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
 		// load the list of egbot files
-		List<File> filesLSTM = EgBotDataLoader.setup();
+		List<File> files = EgBotDataLoader.setup();
 
 		// Train
 		// set the train filter		
-		EgBotData trainDataLSTM = new EgBotData(filesLSTM, trainFilterLSTM);
+		EgBotData trainData = new EgBotData(files, trainFilter);
 		// set the train data the experiment uses
-		Desc<EgBotData> trainingDataDesc = new Desc("MSE-data", EgBotData.class);
-		trainingDataDesc.put("use", "train");		
-		experiment.setTrainData(trainDataLSTM, trainingDataDesc);
+		Desc<EgBotData> trainDataDesc = new Desc("MSE-data", EgBotData.class);
+		trainDataDesc.put("use", "train");		
+		experiment.setTrainData(trainData, trainDataDesc);
 		// already trained?
 		IEgBotModel trainedModel = Depot.getDefault().get(modelDesc);
 		if (trainedModel==null) {
@@ -81,33 +81,32 @@ public class EvaluatePredictions {
 			EgBotDataLoader.train(experiment);
 			Depot.getDefault().put(modelDesc, experiment.getModel());
 		} else {
-			// replace the untrained wuth the trained
+			// replace the untrained with the trained
 			Log.d("Using pre-trained model");
 			experiment.setModel(trainedModel, modelDesc);
 		}		
 		
 		// Test
 		// set the test filter		
-		EgBotData testDataLSTM = new EgBotData(filesLSTM, testFilterLSTM);
+		EgBotData testData = new EgBotData(files, testFilter);
 		// set the test data the experiment uses
 		Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
 		testDataDesc.put("use", "test");
-		experiment.setTestData(testDataLSTM, testDataDesc);
+		experiment.setTestData(testData, testDataDesc);
 		
 		// set up qualitative evaluator
-		QualModelEvaluator qualLSTM = new QualModelEvaluator(experiment);
+		QualModelEvaluator qual = new QualModelEvaluator(experiment);
 		// conduct evaluation
 		if (true) {
-			qualLSTM.evaluateModel();
+			qual.evaluateModel();
 		}
 		
 		// set up quantitative evaluator
-		QuantModelEvaluator quantLSTM = new QuantModelEvaluator(experiment);
+		QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
 		// conduct evaluation
-		quantLSTM.evaluateModel();
+		quant.evaluateModel();
 		
-		// NB: the evaluator classes both save results
-		
+		// NB: the evaluator classes both save results		
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));
 	}
 	

@@ -54,5 +54,10 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	/**
 	 * initialise any model parameters to prepare for training
 	 */
-	void init(List<File> files) throws IOException;	
+	void init(List<File> files) throws IOException;
+
+	/** 
+	 * used once training finished on all egbot files
+	 */
+	void setTrainSuccessFlag(boolean b);	
 }

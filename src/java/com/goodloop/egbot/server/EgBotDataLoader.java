@@ -90,51 +90,11 @@ public class EgBotDataLoader {
 	}
 	
 	/**
-	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
-	 * @return trainingDataArray
-	 * @throws IOException
-	 */
-	@Deprecated
-	public static List<List<String>> DEPRECATEDload(List<File> files) throws IOException {
-	
-		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		
-		List<List<String>> trainingData = new ArrayList<List<String>>(); 
-		for(File file : files) {
-			System.out.println("File: "+file+"...");
-			Gson gson = new Gson();
-			JsonReader jr = new JsonReader(FileUtils.getReader(file));
-			jr.beginArray();
-						
-			int c=0;
-			while(jr.hasNext()) {
-				Map qa = gson.fromJson(jr, Map.class);			
-				Boolean is_answered = (Boolean) qa.get("is_answered");
-				if (is_answered) {
-					String question_body = (String) qa.get("body_markdown");
-					double answer_count = (double) qa.get("answer_count");
-					for (int j = 0; j < answer_count; j++) {					
-						Boolean is_accepted = (Boolean) SimpleJson.get(qa, "answers", j, "is_accepted");
-						if (is_accepted) {
-							String answer_body = SimpleJson.get(qa, "answers", 0, "body_markdown");
-							trainingData.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
-							c++;
-							rate.plus(1);
-							if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
-						}
-					}
-				}	
-			} 
-			jr.close();
-		}
-		return trainingData;
-	}
-	
-	/**
 	 * helper function to tokenise sentences (deprecated because StopWordFilter removes too many words)
 	 * @param words
 	 * @return
 	 */
+	@Deprecated
 	public String[] DEPRECATEDtokenise(String words) {
 		WordAndPunctuationTokeniser t = new WordAndPunctuationTokeniser();
 		t.setSwallowPunctuation(true);
@@ -160,7 +120,6 @@ public class EgBotDataLoader {
 	 * @return
 	 */
 	public static String[] tokenise(String words) {
-		// TODO: fix this to remove stop words?
 		String[] splitted = words.split("\\s+");
 		return splitted;
 	}
@@ -222,6 +181,7 @@ public class EgBotDataLoader {
 			
 //			if (false) break;
 		}
+		model.setTrainSuccessFlag(true);
 	}
 	
 }

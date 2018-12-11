@@ -59,57 +59,6 @@ public class QualModelEvaluator {
 		this.experiment = experiment;
 	}
 	
-//	/**
-//	 * load the evaluation set
-//	 * @param setFile 
-//	 * @return 
-//	 * @throws IOException
-//	 */
-//	@Deprecated
-//	public static List<Map<String, String>> loadEvalSet(Experiment experiment, File file, List<Map<String,String>> saved) throws IOException {		
-//		Desc testDesc = new Desc(file.getName(), List.class);
-//		testDesc.put("f", file);
-//		
-//		Gson gson = new Gson();
-//		// zip or plain json?
-//		Reader r;
-//		if (file.getName().endsWith(".zip")) {
-//			r = FileUtils.getZIPReader(file);
-//		} else {
-//			r = FileUtils.getReader(file);
-//		}
-//		JsonReader jr = new JsonReader(r);
-//		jr.beginArray();
-//					
-//		int c=0;
-//		EgBotData testData = (EgBotData) experiment.getTestData();
-//		while(jr.hasNext()) {
-//			if ( testData.filter.accept(c)) {
-//				c++;
-//				continue;
-//			}
-//			c++;
-//			
-//			Map eg = gson.fromJson(jr, Map.class);			
-//			Boolean is_answered = (Boolean) eg.get("is_answered");
-//			if (!is_answered) continue;	
-//			String question = (String) eg.get("question");
-//			String target = (String) eg.get("answer");
-//			String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
-//			
-//			Map<String,String> temp = new ArrayMap<>(
-//				"question", question,
-//				"target", target,
-//				"generated", generated
-//			);			
-//			System.out.printf("Example of generated answer: %s\n\n", generated);
-//			saved.add(temp);			
-//		} 
-//		jr.close();			
-//		
-//		return saved;
-//	}
-	
 	/**
 	 * evaluate model 
 	 * by scoring the avg accuracy of log probabilities 
@@ -163,27 +112,6 @@ public class QualModelEvaluator {
 		}	
 		saveToFile(saved);
 	}
-	
-//	@Deprecated
-//	public Object evaluateDataPoint(Map eg, List<Map<String,String>> saved) throws IOException {
-//		
-//		Boolean is_answered = (Boolean) eg.get("is_answered");
-//		if (!is_answered) return saved;	
-//		String question = (String) eg.get("question");
-//		String target = (String) eg.get("answer");
-//		String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
-//		
-//		Map<String,String> temp = new ArrayMap<>(
-//			"question", question,
-//			"target", target,
-//			"generated", generated
-//		);			
-//		if(saved.size()%100==0) {
-//			System.out.printf("Example of generated answer: %s\n\n", generated);
-//		}
-//		saved.add(temp);	
-//		return saved;
-//	}
 
 	/**
 	 * save experiment evaluation results

@@ -73,18 +73,19 @@ import com.winterwell.utils.web.SimpleJson;
  * @author daniel
  *
  */
-public class TrainLSTM implements IEgBotModel {
+public class LSTM implements IEgBotModel {
 	// model 
 	List<Tensor<?>> model;
 	public Desc desc;
+	
+	// true when model was succesfully loaded
 	public boolean loadSuccessFlag;
-	// TODO: when should trainSuccessFlag be true? 
-	public boolean trainSuccessFlag;
 
-	// input: training data and vocab
-	HashMap<Integer, String> vocab;
-	
-	
+	// true once training finished on all egbot files
+	public boolean trainSuccessFlag; 
+
+	// vocab
+	HashMap<Integer, String> vocab;	
 	int idealVocabSize;
 	int vocab_size;
 	
@@ -97,7 +98,7 @@ public class TrainLSTM implements IEgBotModel {
 	 * default constructor
 	 * @throws IOException
 	 */
-	TrainLSTM() throws IOException{
+	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
 		desc = new Desc<>("MSE-slim", model.getClass());
 	}
@@ -334,8 +335,6 @@ public class TrainLSTM implements IEgBotModel {
 			if (checkpointExists) {						
 				System.out.println("Restoring model ...");
 				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-				//TODO: should we restore the model for every training step
-				// an alternative would be to pass the sess var or define it as global and init it
 			} else {
 				System.out.println("Initialising model ...");
 				sess.runner().addTarget("init").run();
@@ -511,7 +510,7 @@ public class TrainLSTM implements IEgBotModel {
 				rem = vocabIdx;
 			}
 			else {
-				//System.out.printf("Couldn't find word in vocab: %s\n", words);
+				System.out.printf("Couldn't find word in vocab: %s\n", words);
 			}
 		}
 		return wordsOneHotEncoded;
@@ -833,39 +832,6 @@ public class TrainLSTM implements IEgBotModel {
 			}
 	    }
 	}
-
-	@Override
-	public Desc getDesc() {
-		return desc;
-	}
-	
-	@Override
-	public Object getWmc() {
-		return model;
-	}
-	
-	@Override
-	public boolean isReady() {
-		if(loadSuccessFlag && trainSuccessFlag) {
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * reset cache
-	 */
-	public void reset() {
-		Depot.getDefault().remove(desc);
-	}
-
-	@Override
-	public void finishTraining() {
-	}
-
-	@Override
-	public void resetup() {
-	}
 	
 	/**
 	 * Get the most likely series of words from the model.
@@ -944,5 +910,44 @@ public class TrainLSTM implements IEgBotModel {
 	    }
 	    
 	    return answer;
+	}
+	
+	public boolean isLoadSuccessFlag() {
+		return loadSuccessFlag;
+	}
+
+	public void setLoadSuccessFlag(boolean loadSuccessFlag) {
+		this.loadSuccessFlag = loadSuccessFlag;
+	}
+	
+	public boolean isTrainSuccessFlag() {
+		return trainSuccessFlag;
+	}
+	
+	public void setTrainSuccessFlag(boolean trainSuccessFlag) {
+		this.trainSuccessFlag = trainSuccessFlag;
+	}
+
+	@Override
+	public Desc getDesc() {
+		return desc;
+	}
+	
+	@Override
+	public Object getWmc() {
+		return model;
+	}
+	
+	@Override
+	public boolean isReady() {
+		return trainSuccessFlag;
+	}
+
+	@Override
+	public void finishTraining() {
+	}
+
+	@Override
+	public void resetup() {
 	}
 }

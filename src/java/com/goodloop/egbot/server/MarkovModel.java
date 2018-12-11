@@ -59,8 +59,12 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	private String[] sig;
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
+	
+	// true when model was succesfully loaded
 	public boolean loadSuccessFlag;
-	public ProbCounter probCounter;
+	
+	// true once training finished on all egbot files
+	public boolean trainSuccessFlag;
 
 	public MarkovModel() {
 		sig = new String[] {"w-1", "w-2"};
@@ -85,8 +89,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 	
 	public void save() {
-		// TODO: check with DW whether the code below makes sense
-		// had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
+		// NB: had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
 		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
 		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
 		Desc d2 = ((IHasDesc) wmc).getDesc();
@@ -177,79 +180,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 	
 	/**
-	 * FIXME this is buggy
-	 * 
-	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
-	 * @param q question
-	 * @param t target answer
-	 * @return 
-	 */
-	public double scoreAnswer(String q, String t) {
-		if (true) throw new TodoException();
-		
-		// this should match how train1 behaves
-		
-		SitnStream ssq = ssFactory.factory(q);
-		List<Sitn<Tkn>> qlist = Containers.getList(ssq);
-		Sitn<Tkn> last = qlist.get(qlist.size()-1);
-		Cntxt cntxt = last.context;
-		
-		SitnStream ssa = ssFactory.factory(t);		
-		List<Sitn<Tkn>> alist = Containers.getList(ssa);
-		
-		double score = 0; 
-		ICondDistribution<Tkn, Cntxt> cm = (ICondDistribution<Tkn, Cntxt>)wmc;
-		// for each target word
-		for (Sitn<Tkn> sitn : alist) {
-			double p = cm.logProb(sitn.outcome, sitn.context); 
-			//System.out.println(p);
-			// add the log prob to the score
-			score += p;
-		}
-		// avg the score and then return it
-		return score/alist.size();
-	}
-	
-	/**
-	 * initialise any model parameters to prepare for training
-	 */
-	public void init(List<File> files) throws IOException {
-	}
-	
-	public Desc getDesc() {
-		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
-		mmDesc.addDependency("guts", desc);
-		return mmDesc;
-	}
-
-	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
-		return wmc;
-	}
-
-	@Override
-	public boolean isReady() {
-		return loadSuccessFlag;
-	}
-
-	@Override
-	public void finishTraining() {
-	}
-
-	@Override
-	public void resetup() {
-	}
-
-	@Override
-	public IHasDesc[] getModules() {
-		if (wmc instanceof IHasDesc) {
-			return new IHasDesc[] {
-					(IHasDesc) wmc
-			};
-		}
-		return null;
-	}
-	
-	/**
 	 * Get the most likely series of words from the model.
 	 *  
 	 * @param question
@@ -276,6 +206,84 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 			cntxt = new Cntxt(sig, sampled, cntxt.getBits()[0]);
 		}
 		return answer;
+	}
+	
+	/**
+	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
+	 * @param q question
+	 * @param t target answer
+	 * @return 
+	 */
+	public double scoreAnswer(String q, String t) {
+		double score = 0; 
+		String body = q + " " + t;
+		SimpleDocument doc = new SimpleDocument(body);
+		SitnStream ss2 = ssFactory.factory(doc);
+		int count = 0;
+		for (Sitn<Tkn> sitn : ss2) {					
+			// add the log prob to the score
+			double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); 
+			//System.out.println("Example log prob: " + p);
+			score += p;
+			count++;
+		}
+		// avg the score
+		return score/count;
+	}
+	
+	/**
+	 * initialise any model parameters to prepare for training
+	 */
+	public void init(List<File> files) throws IOException {
+	}
+	
+	public Desc getDesc() {
+		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
+		mmDesc.addDependency("guts", desc);
+		return mmDesc;
+	}
+
+	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
+		return wmc;
+	}
+
+	@Override
+	public boolean isReady() {
+		return trainSuccessFlag;
+	}
+
+	@Override
+	public void finishTraining() {
+	}
+
+	@Override
+	public void resetup() {
+	}
+
+	@Override
+	public IHasDesc[] getModules() {
+		if (wmc instanceof IHasDesc) {
+			return new IHasDesc[] {
+					(IHasDesc) wmc
+			};
+		}
+		return null;
+	}
+	
+	public boolean isLoadSuccessFlag() {
+		return loadSuccessFlag;
+	}
+
+	public void setLoadSuccessFlag(boolean loadSuccessFlag) {
+		this.loadSuccessFlag = loadSuccessFlag;
+	}
+	
+	public boolean isTrainSuccessFlag() {
+		return trainSuccessFlag;
+	}
+	
+	public void setTrainSuccessFlag(boolean trainSuccessFlag) {
+		this.trainSuccessFlag = trainSuccessFlag;
 	}
 }
 
