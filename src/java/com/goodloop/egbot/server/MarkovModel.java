@@ -146,7 +146,15 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		}
 		mm.sample("what is a probability", 30);
 	}
-
+	
+	/**
+	 * Get a sample of words from the model.
+	 * 
+	 * @param question
+	 * @param expectedAnswerLength
+	 * @return answer
+	 * @throws Exception
+	 */
 	public  String sample(String q, int expectedAnswerLength) throws IOException {
 		SitnStream ssq = ssFactory.factory(q);
 		List<Sitn<Tkn>> list = Containers.getList(ssq);
@@ -158,9 +166,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		String answer = "";
 		for(int i=0; i<expectedAnswerLength; i++) {
 			IFiniteDistribution<Tkn> marginal = (IFiniteDistribution<Tkn>) ((ICondDistribution<Tkn, Cntxt>)wmc).getMarginal(cntxt);
-			// this is the most likely rather than a random sample
-			Tkn sampled = marginal.getMostLikely();
-			//Tkn sampled = ((ICond Distribution<Tkn, Cntxt>)wmc).sample(cntxt);
+			Tkn sampled = marginal.sample();
 			if (Tkn.END_TOKEN.equals(sampled)) {
 				break;
 			}			
@@ -243,6 +249,34 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		return null;
 	}
 	
+	/**
+	 * Get the most likely series of words from the model.
+	 *  
+	 * @param question
+	 * @param expectedAnswerLength
+	 * @return answer
+	 * @throws Exception
+	 */
+	public String generateMostLikely(String q, int expectedAnswerLength) throws IOException {
+		SitnStream ssq = ssFactory.factory(q);
+		List<Sitn<Tkn>> list = Containers.getList(ssq);
+
+		Sitn<Tkn> last = list.get(list.size()-1);
+		
+		Cntxt cntxt = last.context;
+		String answer = "";
+		for(int i=0; i<expectedAnswerLength; i++) {
+			IFiniteDistribution<Tkn> marginal = (IFiniteDistribution<Tkn>) ((ICondDistribution<Tkn, Cntxt>)wmc).getMarginal(cntxt);
+			// this is the most likely rather than a random sample
+			Tkn sampled = marginal.getMostLikely();
+			if (Tkn.END_TOKEN.equals(sampled)) {
+				break;
+			}			
+			answer = answer + " " + sampled.toString();
+			cntxt = new Cntxt(sig, sampled, cntxt.getBits()[0]);
+		}
+		return answer;
+	}
 }
 
 

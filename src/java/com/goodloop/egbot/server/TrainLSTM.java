@@ -940,5 +940,84 @@ public class TrainLSTM implements IEgBotModel {
 
 	@Override
 	public void resetup() {
-	}	
+	}
+	
+	/**
+	 * Get the most likely series of words from the model.
+	 *  
+	 * @param question
+	 * @param expectedAnswerLength
+	 * @return answer
+	 * @throws Exception
+	 */
+	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
+		String answer = "<ERROR>";
+		
+		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
+		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		Path gp = Paths.get(graphPath);
+		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		final byte[] graphDef = Files.readAllBytes(gp);
+		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+
+	    // load graph
+	    try (Graph graph = new Graph();
+	        Session sess = new Session(graph);
+	        Tensor<String> checkpointPrefix =
+	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	    	
+	    	graph.importGraphDef(graphDef);
+	    	// initialise or restore.
+			// The names of the tensors and operations in the graph are printed out by the program that created the graph
+	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+			if (checkpointExists) {						
+				System.out.println("Restoring model ...");
+				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+			} else {
+				System.out.println("Couldn't find model ...\n");
+				return "";
+			}
+			
+			String[] questionArray = EgBotDataLoader.tokenise(question);
+			
+			// if the question is shorter than the set seq_length, we fill in the beginning slots with START (using a set seq_length is necessary for the lstm)
+			if(questionArray.length < seq_length) {
+				String[] temp = new String[seq_length];
+				Arrays.fill(temp, "START");
+				System.arraycopy(questionArray, 0, temp, seq_length-questionArray.length , questionArray.length);
+				questionArray = temp;
+			}
+			
+			String[] answerArray = new String[expectedAnswerLength];
+			
+			// we generate as many words as we decided to expect the answer to have
+			for (int i = 0; i < expectedAnswerLength; i++) {			
+				String nextWord = "<ERROR>";
+				
+				// run graph with given input and fetch output
+				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(questionArray))) {
+					List<Tensor<?>> outputs = sess.runner()
+							.feed("input", input)
+							.fetch("output")
+							.run();
+					
+					// copy tensor to array
+					float[][] outputArray = new float[1][vocab_size];
+					outputs.get(0).copyTo(outputArray);
+					nextWord = mostLikelyWord(outputArray);
+					
+					// add generated word to answer 
+					answerArray[i] = nextWord;
+					
+					//shift questionArray to include the generated word at the end so as to allow us to generate the next word after that
+					System.arraycopy(questionArray, 1, questionArray, 0, questionArray.length-1);
+					questionArray[seq_length-1] = nextWord;
+				}
+			}
+			answer = Arrays.deepToString(answerArray);
+	    }
+	    
+	    return answer;
+	}
 }

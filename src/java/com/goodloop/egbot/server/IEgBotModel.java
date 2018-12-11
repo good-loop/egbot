@@ -21,9 +21,7 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	double scoreAnswer(String question, String possibleAnswer) throws IOException;
 
 	/**
-	 * Get the most likely series of words from the model.
-	 * 
-	 * TODO rename from `sample`
+	 * Get a sample of words from the model.
 	 * 
 	 * @param question
 	 * @param expectedAnswerLength
@@ -31,6 +29,16 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 * @throws Exception
 	 */
 	String sample(String question, int expectedAnswerLength) throws IOException;
+	
+	/**
+	 * Get the most likely series of words from the model.
+	 *  
+	 * @param question
+	 * @param expectedAnswerLength
+	 * @return answer
+	 * @throws Exception
+	 */
+	String generateMostLikely(String question, int expectedAnswerLength) throws IOException;
 	
 	/**
 	 * model loading if it exists

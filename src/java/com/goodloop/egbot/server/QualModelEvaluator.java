@@ -95,7 +95,7 @@ public class QualModelEvaluator {
 //			if (!is_answered) continue;	
 //			String question = (String) eg.get("question");
 //			String target = (String) eg.get("answer");
-//			String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
+//			String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
 //			
 //			Map<String,String> temp = new ArrayMap<>(
 //				"question", question,
@@ -148,7 +148,7 @@ public class QualModelEvaluator {
 				Map eg = gson.fromJson(jr, Map.class);		
 				String question = (String) eg.get("question");
 				String target = (String) eg.get("answer");					
-				String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
+				String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
 				
 				Map<String,String> temp = new ArrayMap<>(
 					"question", question,
@@ -171,7 +171,7 @@ public class QualModelEvaluator {
 //		if (!is_answered) return saved;	
 //		String question = (String) eg.get("question");
 //		String target = (String) eg.get("answer");
-//		String generated = ((IEgBotModel) experiment.getModel()).sample(question, expectedAnswerLength);
+//		String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
 //		
 //		Map<String,String> temp = new ArrayMap<>(
 //			"question", question,
