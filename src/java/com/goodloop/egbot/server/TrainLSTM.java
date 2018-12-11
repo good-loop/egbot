@@ -98,7 +98,6 @@ public class TrainLSTM implements IEgBotModel {
 	 * @throws IOException
 	 */
 	TrainLSTM() throws IOException{
-		// TODO: is this the right way to identify model?
 		model = new ArrayList<Tensor<?>>();
 		desc = new Desc<>("MSE-slim", model.getClass());
 	}
@@ -175,25 +174,31 @@ public class TrainLSTM implements IEgBotModel {
 		}		
 		System.out.printf("Saved vocab to file: %s\n", vocabFile);
 		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
+		
+		// find out top X vocab words
+		//vocabTop(100,hlVocab);
 	}
 	
-//	/**
-//	 * top SIZE words in the vocabulary (where size could be 1000 for the 1000th most common words)
-//	 */
-//	public ArrayList<String> vocabTop(int size) throws IOException {
-//		ArrayList<String> topArray = new ArrayList<String>(size);
-//
-//		List<String> keysSortedByValue = Containers.getSortedKeys(hlVocab);
-//		Collections.reverse(keysSortedByValue); // largest first
-//				
-//		for (String s : keysSortedByValue) {
-//			//ITokenStream a = null;
-//			System.out.println(s);
-//			topArray.add(s);
-//			if (topArray.size() == size) break;
-//		}
-//		return topArray;
-//	}
+	/**
+	 * top SIZE words in the vocabulary (where size could be 1000 for the 1000th most common words)
+	 * can only be called from {@link #loadVocab2_trainVocabAndSave} 
+	 * because we don't keep the vocab counts once we're done building the vocab
+	 * 
+	 */
+	public ArrayList<String> vocabTop(int size, HalfLifeMap<String, Integer> hlVocab) throws IOException {
+		ArrayList<String> topArray = new ArrayList<String>(size);
+		
+		List<String> keysSortedByValue = Containers.getSortedKeys(hlVocab);
+		Collections.reverse(keysSortedByValue); // largest first
+				
+		for (String s : keysSortedByValue) {
+			//ITokenStream a = null;
+			System.out.println(s);
+			topArray.add(s);
+			if (topArray.size() == size) break;
+		}
+		return topArray;
+	}
 	
 	/**
 	 * method to estimate how long training would take
@@ -300,86 +305,6 @@ public class TrainLSTM implements IEgBotModel {
 	private File vocabPath() {							
 		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + desc.getName()  + ".txt";
 		return new File(vocabPath);
-	}
-
-//	/**
-//	 * initialise vocabulary using HalfLifeMap
-//	 * status: replaced by loadAndInitVocab (because it's inefficient to load the content from the files into memory and then init vocab separately)
-//	 * @throws IOException 
-//	 */
-//	@Deprecated
-//	public void initVocabHalfLifeMap(List<List<String>> trainingDataArray, int version) throws IOException{	
-//		// vocab has to be constructed and saved from all the text that will be used when training 
-//		// this is because vocab_size defines the shape of the feature vectors
-//		System.out.println("Initialising vocabulary");
-//		 		
-//		HalfLifeMap<String, Integer> hlVocab = new HalfLifeMap<String, Integer>(idealVocabSize);
-//		// construct vocab that auto-prunes and discards words that appear rarely
-//		// hlVocab is a map where the key to be the word and the value to be the word counts
-//		for (int i = 0; i < trainingDataArray.size(); i++) {
-//			if (i%100 == 0)	System.out.printf("In loop: %d out of %d\n Vocab size: %d\n\n", i, trainingDataArray.size(), hlVocab.size());
-//			List<String> qa = trainingDataArray.get(i);
-//			for (int j = 0; j < qa.size(); j++) {
-//				//System.out.printf(" In loop: %d out of %d\n", j, qa.size());
-//				String word = qa.get(j);
-//				//System.out.println(word);
-//				if (!word.equals("") && hlVocab.containsKey(word)) {
-//					int count = hlVocab.get(word) + 1;
-//					hlVocab.put(word, count);
-//				}
-//				else {
-//					hlVocab.put(word, 1);
-//				}
-//			}
-//		}		
-//
-//		// save to file
-//		String vocabPath = System.getProperty("user.dir") + "/data/models/final/v3/vocab_v" + String.valueOf(version) + ".txt";
-//		File vocabFile = new File(vocabPath);
-//		vocabFile.createNewFile(); 
-//		
-//		try (PrintWriter out = new PrintWriter(vocabFile)) {
-//			for (String word : hlVocab.keySet()) {
-//			    out.println(word);
-//			}
-//		}		
-//		System.out.printf("Initialised vocabulary size: %s\n", hlVocab.size());
-//	}
-	
-	/**
-	 * initialise vocabulary using HashMap
-	 * status: replaced by loadAndInitVocab (because it's inefficient to load the content from the files into memory and then init vocab separately)
-	 */
-	@Deprecated
-	private void initVocabHashMap(List<List<String>> trainingDataArray){	 
-		// should I use a TreeSet instead of a HashMap, log(n) for basic operations and unique https://stackoverflow.com/questions/13259535/how-to-maintain-a-unique-list-in-java
-		
-		//HalfLifeMap<K, V>
-		
-		//Containers.getSortedKeys(map)
-		
-		System.out.println("Initialising vocabulary");
-		
-	    vocab = new HashMap<Integer, String>();		
-	    vocab.put(0,"UNKNOWN");
-		vocab.put(1,"START");
-		vocab.put(2,"END");
-		vocab.put(3,"ERROR");
-		
-		// construct vocab
-		int vocabIdx = 4;
-		for (int i = 0; i < trainingDataArray.size(); i++) {
-			if (i%100 == 0)	System.out.printf("In loop: %d out of %d\n", i, trainingDataArray.size());
-			List<String> qa = trainingDataArray.get(i);
-			for (int j = 0; j < qa.size(); j++) {
-				//System.out.printf(" In loop: %d out of %d\n", j, qa.size());
-				if (!vocab.containsValue(qa.get(j))) {
-					vocab.put(vocabIdx, qa.get(j));				
-					vocabIdx += 1;
-				}
-			}
-		}		
-		vocab_size = vocab.size(); 
 	}
 	
 	/**
