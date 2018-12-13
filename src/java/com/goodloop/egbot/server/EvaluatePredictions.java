@@ -37,6 +37,10 @@ import com.winterwell.utils.web.SimpleJson;
  */
 public class EvaluatePredictions {
 	
+	public static void main(String[] args) throws Exception {
+		new EvaluatePredictions().run();
+	}
+	
 	public void run() throws Exception {
 			
 		// Markov 

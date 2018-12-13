@@ -8,7 +8,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testLTSM() throws Exception {
-		TrainLSTM lstm = new TrainLSTM();						
+		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm);
 	}	
 
