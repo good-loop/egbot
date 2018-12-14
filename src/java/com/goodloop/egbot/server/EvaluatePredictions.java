@@ -88,11 +88,11 @@ public class EvaluatePredictions {
 		
 		// Test
 		// set the test filter		
-		//EgBotData testData = new EgBotData(files, testFilter);
+		EgBotData testData = new EgBotData(files, testFilter);
 		
 		// test using Paulius' 20 questions set
-		List<File> evalFiles = Arrays.asList(new File("/data/eval/paulius20.json"));
-		EgBotData testData = new EgBotData(evalFiles, testFilter);
+//		List<File> evalFiles = Arrays.asList(new File("/data/eval/paulius20.json"));
+//		EgBotData testData = new EgBotData(evalFiles, testFilter);
 		
 		// set the test data the experiment uses
 		Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
@@ -106,10 +106,10 @@ public class EvaluatePredictions {
 			qual.evaluateModel();
 		}
 		
-//		// set up quantitative evaluator
-//		QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
-//		// conduct evaluation
-//		quant.evaluateModel();
+		// set up quantitative evaluator
+		QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
+		// conduct evaluation
+		quant.evaluateModel();
 		
 		// NB: the evaluator classes both save results		
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));
