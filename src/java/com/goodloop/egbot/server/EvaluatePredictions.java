@@ -40,9 +40,9 @@ public class EvaluatePredictions {
 	public void run() throws Exception {
 			
 		// Markov 
-		MarkovModel mm = new MarkovModel();		
-		mm.load();
-		runModel(mm);		
+//		MarkovModel mm = new MarkovModel();		
+//		mm.load();
+//		runModel(mm);		
 				
 		// LSTM 
 		LSTM lstm = new LSTM();				
@@ -53,7 +53,7 @@ public class EvaluatePredictions {
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 
 		// refresh cache?
-		// Depot.getDefault().remove(modelDesc);
+		Depot.getDefault().remove(modelDesc);
 		
 		// set up experiment
 		EgBotExperiment experiment = new EgBotExperiment();

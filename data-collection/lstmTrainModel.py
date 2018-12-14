@@ -31,7 +31,7 @@ nlp = spacy.load('en')
 #     device_name = "/cpu:0"
 
 file_list = []
-for i in [1,2,3,4,6]:#,6,7,8,9]:
+for i in [0]:#1,2,3,4,6]:#,6,7,8,9]:
     file_list.append("egbot_" + str(i))
 print("List of files to extract: ", file_list)
 

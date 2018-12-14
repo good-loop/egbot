@@ -57,7 +57,7 @@ for train_index, test_index in kf.split(X):
     score_train = np.zeros(len(list_alpha))
     score_test = np.zeros(len(list_alpha))
     recall_test = np.zeros(len(list_alpha))
-    precision_test= np.zeros(len(list_alpha))
+    precision_test = np.zeros(len(list_alpha))
     count = 0
     for alpha in list_alpha:
         bayes = naive_bayes.MultinomialNB(alpha=alpha)

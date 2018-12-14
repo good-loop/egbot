@@ -60,7 +60,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
 	
-	// true when model was succesfully loaded
+	// true when model was successfully loaded
 	public boolean loadSuccessFlag;
 	
 	// true once training finished on all egbot files

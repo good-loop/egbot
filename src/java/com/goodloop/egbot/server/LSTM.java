@@ -31,6 +31,10 @@ import org.tensorflow.Session;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
+import org.tensorflow.TensorFlow;
+import org.tensorflow.framework.ConfigProto;
+import org.tensorflow.framework.GPUOptions;
+import org.tensorflow.framework.GraphDef;
 import org.tensorflow.framework.MetaGraphDef;
 import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
@@ -74,7 +78,7 @@ import com.winterwell.utils.web.SimpleJson;
  *
  */
 public class LSTM implements IEgBotModel {
-	// model 
+	// model guts
 	List<Tensor<?>> model;
 	public Desc desc;
 	
@@ -314,6 +318,8 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException
 	 */
 	public void trainEach(List<List<String>> trainingDataArray) throws IOException {	
+    	long lStartTime = System.nanoTime();	
+		
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
@@ -322,13 +328,41 @@ public class LSTM implements IEgBotModel {
 		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
+	    // setting session config to use the GPU
+        GPUOptions gpuOptions = GPUOptions.newBuilder()
+        		.setPerProcessGpuMemoryFraction(1)
+                .setForceGpuCompatible(true)
+                .setAllowGrowth(true)
+                .build();
+        
+        //System.out.println("visible: " + gpuOptions.getVisibleDeviceList());
+
+        ConfigProto config = ConfigProto.newBuilder()
+        		//.setLogDevicePlacement(true)
+                .setGpuOptions(gpuOptions)
+                .build();
+
+//    	ConfigProto.Builder configBuilder = ConfigProto.parseFrom(config.toByteString()).toBuilder();
+//    	configBuilder = configBuilder.putDeviceCount("GPU", 1);
+//        
 	    // load graph
 	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
 	        Tensor<String> checkpointPrefix =
 	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
 	    	
-	    	graph.importGraphDef(graphDef);
+	    	
+	    	//GraphDef.Builder builder = GraphDef.parseFrom(graphDef).toBuilder();
+	        //System.out.println("Here: " + builder.getNodeCount());
+	    	//for (int i = 0; i < builder.getNodeCount(); ++i) {
+	    	    //builder.getNodeBuilder(i).setDevice("/job:localhost/replica:0/task:0/device:XLA_GPU:0");
+//	    		if (!builder.getNodeBuilder(i).getDevice().isEmpty()) { // setDevice("/gpu:0");
+//	    			System.out.println(builder.getNodeBuilder(i).getDevice());
+//	    		}
+	    	//}
+	    		    	
+	    	graph.importGraphDef(graphDef); //builder.build().toByteArray());
+	        Session sess = new Session(graph, config.toByteArray());
+
 	    	// initialise or restore.
 			// The names of the tensors and operations in the graph are printed out by the program that created the graph
 	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
@@ -358,6 +392,10 @@ public class LSTM implements IEgBotModel {
 			// save model checkpoint
 			save(sess,checkpointPrefix);
 	    }
+	    
+        long lEndTime = System.nanoTime();
+        long output = lEndTime - lStartTime;
+        System.out.println("Elapsed time in seconds: " + output / 1000000000);
 	}
 
 	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch) 
@@ -385,7 +423,7 @@ public class LSTM implements IEgBotModel {
 				target = qa[wordIdx+1];
 				
 				// print out training example
-				if (epoch%100 == 1 && wordIdx == 30) {
+				if (epoch%100 == 1) {
 					System.out.printf("epoch = %d sessRunCount = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
 							epoch, sessRunCount, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
 				}
@@ -510,7 +548,7 @@ public class LSTM implements IEgBotModel {
 				rem = vocabIdx;
 			}
 			else {
-				System.out.printf("Couldn't find word in vocab: %s\n", words);
+				//System.out.printf("Couldn't find word in vocab: %s\n", words);
 			}
 		}
 		return wordsOneHotEncoded;
@@ -551,7 +589,7 @@ public class LSTM implements IEgBotModel {
 				System.out.println("Couldn't find model ...\n");
 				return "";
 			}
-			
+				        
 			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
 			// if the question is shorter than the set seq_length, we fill in the beginning slots with START (using a set seq_length is necessary for the lstm)
