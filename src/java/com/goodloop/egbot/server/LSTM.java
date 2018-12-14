@@ -97,6 +97,9 @@ public class LSTM implements IEgBotModel {
 	int seq_length; // sequence length
 	int num_epochs; // training epochs 
 	int num_hidden; // number of hidden layers
+	int sessRunCount;
+	int questionCount;
+	long lStartTime;
 
 	/**
 	 * default constructor
@@ -116,7 +119,10 @@ public class LSTM implements IEgBotModel {
 		num_epochs = 10; // training epochs 
 		num_hidden = 256; // number of hidden layers
 		idealVocabSize = 10000;
-		
+		sessRunCount = 0;
+		questionCount = 0;
+		lStartTime = System.nanoTime();	
+
 		loadVocab(files);
 	}
 	
@@ -318,7 +324,6 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException
 	 */
 	public void trainEach(List<List<String>> trainingDataArray) throws IOException {	
-    	long lStartTime = System.nanoTime();	
 		
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
@@ -361,50 +366,52 @@ public class LSTM implements IEgBotModel {
 	    	//}
 	    		    	
 	    	graph.importGraphDef(graphDef); //builder.build().toByteArray());
-	        Session sess = new Session(graph, config.toByteArray());
-
-	    	// initialise or restore.
-			// The names of the tensors and operations in the graph are printed out by the program that created the graph
-	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-			} else {
-				System.out.println("Initialising model ...");
-				sess.runner().addTarget("init").run();
-			}
-			
-			// print out weight and bias initialisation
-			//System.out.print("Starting from: \n");
-			//printVariables(sess);
-			
-			ArrayList<Float> trainAccuracies = new ArrayList<Float>();
-			ArrayList<Float> validAccuracies = new ArrayList<Float>();
-			float trainAccuracy = 0;
-			float validAccuracy = 0;
-			
-			// train a bunch of times
-			// TODO: will it be more efficient if we sent batches instead of individual values?
-			for (int epoch = 1; epoch <= num_epochs; epoch++) {				
-				trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch);
-			}
-
-			// save model checkpoint
-			save(sess,checkpointPrefix);
+	    	try(Session sess = new Session(graph, config.toByteArray())){
+		    	// initialise or restore.
+				// The names of the tensors and operations in the graph are printed out by the program that created the graph
+		    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
+				if (checkpointExists) {						
+					System.out.println("Restoring model ...");
+					sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+				} else {
+					System.out.println("Initialising model ...");
+					sess.runner().addTarget("init").run();
+				}
+				
+				// print out weight and bias initialisation
+				//System.out.print("Starting from: \n");
+				//printVariables(sess);
+				
+				ArrayList<Float> trainAccuracies = new ArrayList<Float>();
+				ArrayList<Float> validAccuracies = new ArrayList<Float>();
+				float trainAccuracy = 0;
+				float validAccuracy = 0;
+				questionCount ++;
+				
+				// train a bunch of times
+				// TODO: will it be more efficient if we sent batches instead of individual values?
+				for (int epoch = 1; epoch <= num_epochs; epoch++) {				
+					trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch, questionCount);
+				}
+	
+				// save model checkpoint
+				save(sess,checkpointPrefix);
+	    	}
 	    }
 	    
         long lEndTime = System.nanoTime();
         long output = lEndTime - lStartTime;
         System.out.println("Elapsed time in seconds: " + output / 1000000000);
+        System.out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
+
 	}
 
-	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch) 
+	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch, int questionCount) 
 	{		
-		int sessRunCount=0;
 		// for each qa segment
-		for (int qaIdx = 0; qaIdx < trainingDataArray.size(); qaIdx++) {
+		for (int batchIdx = 0; batchIdx < trainingDataArray.size(); batchIdx++) {
 			// A Q+A training string
-			List<String> temp = trainingDataArray.get(qaIdx);
+			List<String> temp = trainingDataArray.get(batchIdx);
 			String[] qa = temp.toArray(new String[temp.size()]);
 			
 			// for each word in the qa segment (not including the last seq_length ones)
@@ -423,9 +430,9 @@ public class LSTM implements IEgBotModel {
 				target = qa[wordIdx+1];
 				
 				// print out training example
-				if (epoch%100 == 1) {
-					System.out.printf("epoch = %d sessRunCount = %d qaIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-							epoch, sessRunCount, qaIdx, wordIdx, Arrays.deepToString(instanceArray), target);							
+				if (sessRunCount%1000 == 1) {
+					System.out.printf("epoch = %d sessRunCount = %d batchIdx = %d qIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+							epoch, sessRunCount, batchIdx, questionCount, wordIdx, Arrays.deepToString(instanceArray), target);							
 				}
 
 				// create input and output tensors and run training operation
