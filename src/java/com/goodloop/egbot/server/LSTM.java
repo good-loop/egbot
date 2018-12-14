@@ -1,9 +1,11 @@
 package com.goodloop.egbot.server;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -97,9 +99,18 @@ public class LSTM implements IEgBotModel {
 	int seq_length; // sequence length
 	int num_epochs; // training epochs 
 	int num_hidden; // number of hidden layers
+	
+	// output location
+	String saveLocation;
+	String backupLocation;
+	String logLocation;
+	
+	// stats tracker
+	ArrayList<Float> trainAccuracies;
 	int sessRunCount;
 	int questionCount;
 	long lStartTime;
+	
 
 	/**
 	 * default constructor
@@ -107,7 +118,12 @@ public class LSTM implements IEgBotModel {
 	 */
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
-		desc = new Desc<>("MSE-slim", model.getClass());
+		desc = new Desc<>("MSE-slim2", model.getClass());
+		//String saveLocation = "/data/models/final/v3/checkpoint" + desc.getName();
+		logLocation = "/home/irina/egbot-learning-depot/results/log.txt";
+		saveLocation = "/home/irina/egbot-learning-depot/results/" + desc.getName();
+		backupLocation = "/home/irina/egbot-learning-depot/backups";
+		trainAccuracies = new ArrayList<Float>();
 	}
 	
 	/**
@@ -274,7 +290,7 @@ public class LSTM implements IEgBotModel {
 			// close file to save memory
 			jr.close();
 
-			System.out.printf("Saved trained model to file: %s%s\n", "/data/models/final/v3/checkpoint", desc.getName());
+			System.out.printf("Saved trained model to file: %s\n", saveLocation);
 		}
 	}
 
@@ -330,7 +346,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation; //System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // setting session config to use the GPU
@@ -340,38 +356,23 @@ public class LSTM implements IEgBotModel {
                 .setAllowGrowth(true)
                 .build();
         
-        //System.out.println("visible: " + gpuOptions.getVisibleDeviceList());
-
         ConfigProto config = ConfigProto.newBuilder()
         		//.setLogDevicePlacement(true)
                 .setGpuOptions(gpuOptions)
                 .build();
 
-//    	ConfigProto.Builder configBuilder = ConfigProto.parseFrom(config.toByteString()).toBuilder();
-//    	configBuilder = configBuilder.putDeviceCount("GPU", 1);
-//        
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Tensor<String> checkpointPrefix =
 	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
-	    	
-	    	
-	    	//GraphDef.Builder builder = GraphDef.parseFrom(graphDef).toBuilder();
-	        //System.out.println("Here: " + builder.getNodeCount());
-	    	//for (int i = 0; i < builder.getNodeCount(); ++i) {
-	    	    //builder.getNodeBuilder(i).setDevice("/job:localhost/replica:0/task:0/device:XLA_GPU:0");
-//	    		if (!builder.getNodeBuilder(i).getDevice().isEmpty()) { // setDevice("/gpu:0");
-//	    			System.out.println(builder.getNodeBuilder(i).getDevice());
-//	    		}
-	    	//}
-	    		    	
+	    		    		    	
 	    	graph.importGraphDef(graphDef); //builder.build().toByteArray());
 	    	try(Session sess = new Session(graph, config.toByteArray())){
 		    	// initialise or restore.
 				// The names of the tensors and operations in the graph are printed out by the program that created the graph
 		    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
 				if (checkpointExists) {						
-					System.out.println("Restoring model ...");
+					//System.out.println("Restoring model ...");
 					sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
 				} else {
 					System.out.println("Initialising model ...");
@@ -382,10 +383,6 @@ public class LSTM implements IEgBotModel {
 				//System.out.print("Starting from: \n");
 				//printVariables(sess);
 				
-				ArrayList<Float> trainAccuracies = new ArrayList<Float>();
-				ArrayList<Float> validAccuracies = new ArrayList<Float>();
-				float trainAccuracy = 0;
-				float validAccuracy = 0;
 				questionCount ++;
 				
 				// train a bunch of times
@@ -398,12 +395,6 @@ public class LSTM implements IEgBotModel {
 				save(sess,checkpointPrefix);
 	    	}
 	    }
-	    
-        long lEndTime = System.nanoTime();
-        long output = lEndTime - lStartTime;
-        System.out.println("Elapsed time in seconds: " + output / 1000000000);
-        System.out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
-
 	}
 
 	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch, int questionCount) 
@@ -429,10 +420,16 @@ public class LSTM implements IEgBotModel {
 				}
 				target = qa[wordIdx+1];
 				
-				// print out training example
-				if (sessRunCount%1000 == 1) {
-					System.out.printf("epoch = %d sessRunCount = %d batchIdx = %d qIdx = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
-							epoch, sessRunCount, batchIdx, questionCount, wordIdx, Arrays.deepToString(instanceArray), target);							
+				// print out training example and some stats occasionally
+				if (sessRunCount%10000 == 1) {
+					System.out.printf("sessRunCount = %d batchIdx = %d qIdx = %d epoch = %d wordIdx = %d \nInstance: %s\n Target: %s \n\n", 
+							sessRunCount, batchIdx, questionCount, epoch, wordIdx, Arrays.deepToString(instanceArray), target);
+					
+			        long lEndTime = System.nanoTime();
+			        long output = lEndTime - lStartTime;
+			        System.out.println("No of questions processed: " + questionCount);
+			        System.out.println("Elapsed time in seconds: " + output / 1000000000);
+			        System.out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
 				}
 
 				// create input and output tensors and run training operation
@@ -462,9 +459,38 @@ public class LSTM implements IEgBotModel {
 	 * saves trained model in the standard tensorflow checkpoint format
 	 * @param sess
 	 * @param checkpointPrefix
+	 * @throws IOException 
 	 */
-	private void save(Session sess, Tensor<?> checkpointPrefix) {
+	private void save(Session sess, Tensor<?> checkpointPrefix) throws IOException {
+		// save latest model 
 		model = sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
+		// do backup every so often (for the full 500,000 questions, there should then be 50 backups)
+		if(questionCount%10000==0) {
+			backupLocation = backupLocation + "/backup" + questionCount/10000;
+			new File(backupLocation).mkdir();
+			try(Tensor<String> backupPrefix =
+			        Tensors.create(Paths.get(backupLocation, "ckpt").toString())){
+			model = sess.runner().feed("save/Const", backupPrefix).addTarget("save/control_dependency").run();
+			}
+		}
+		// save stats log
+        long lEndTime = System.nanoTime();
+        long output = lEndTime - lStartTime;
+        long sumAcc = 0;
+        for(Float acc : trainAccuracies)
+        	sumAcc += acc;
+        	
+		try(FileWriter fw = new FileWriter(logLocation, true);
+			    BufferedWriter bw = new BufferedWriter(fw);
+			    PrintWriter out = new PrintWriter(bw)) {
+			out.println(desc);
+			out.println("No of questions processed: " + questionCount);
+			out.println("Elapsed time in seconds: " + output / 1000000000);
+	        out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
+	        out.println("Avg train accuracy: " + (float)sumAcc/sessRunCount);
+	        out.println();
+			out.close();
+		}
 	}
 
 	/**
@@ -576,7 +602,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -657,7 +683,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -712,7 +738,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -854,7 +880,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
@@ -894,7 +920,7 @@ public class LSTM implements IEgBotModel {
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
+		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
 	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
