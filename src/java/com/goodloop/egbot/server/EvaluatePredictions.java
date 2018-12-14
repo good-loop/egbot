@@ -40,13 +40,13 @@ public class EvaluatePredictions {
 	public void run() throws Exception {
 			
 		// Markov 
-//		MarkovModel mm = new MarkovModel();		
-//		mm.load();
-//		runModel(mm);		
+		MarkovModel mm = new MarkovModel();		
+		mm.load();
+		runModel(mm);		
 				
 		// LSTM 
-		LSTM lstm = new LSTM();				
-		runModel(lstm);				
+//		LSTM lstm = new LSTM();				
+//		runModel(lstm);				
 	}
 	
 	void runModel(IEgBotModel model) throws Exception {
@@ -88,7 +88,12 @@ public class EvaluatePredictions {
 		
 		// Test
 		// set the test filter		
-		EgBotData testData = new EgBotData(files, testFilter);
+		//EgBotData testData = new EgBotData(files, testFilter);
+		
+		// test using Paulius' 20 questions set
+		List<File> evalFiles = Arrays.asList(new File("/data/eval/paulius20.json"));
+		EgBotData testData = new EgBotData(evalFiles, testFilter);
+		
 		// set the test data the experiment uses
 		Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
 		testDataDesc.put("use", "test");
@@ -101,10 +106,10 @@ public class EvaluatePredictions {
 			qual.evaluateModel();
 		}
 		
-		// set up quantitative evaluator
-		QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
-		// conduct evaluation
-		quant.evaluateModel();
+//		// set up quantitative evaluator
+//		QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
+//		// conduct evaluation
+//		quant.evaluateModel();
 		
 		// NB: the evaluator classes both save results		
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));

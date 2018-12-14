@@ -118,7 +118,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
-		desc = new Desc<>("MSE-slim2", model.getClass());
+		desc = new Desc<>("MSE-lstm-slim", model.getClass());
 		//String saveLocation = "/data/models/final/v3/checkpoint" + desc.getName();
 		logLocation = "/home/irina/egbot-learning-depot/results/log.txt";
 		saveLocation = "/home/irina/egbot-learning-depot/results/" + desc.getName();

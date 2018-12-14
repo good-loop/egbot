@@ -74,7 +74,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// save load needs depot to be initialised
 		Depot.getDefault().init();
 		wmc = newModel();		
-		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-all", wmc.getClass());
+		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm-slim", wmc.getClass());
 		desc.setTag("egbot");
 	}
 

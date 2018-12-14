@@ -14,7 +14,7 @@ def findFile(prefix):
     return null
 
 # make the output directory
-os.mkdir(buildPath+"slim")
+os.mkdir(buildPath+"slim.1")
 
 for no in range(1,9):
     # find e.g. MathStackExchangeAPI_Part_1_TimeStamps_1512760268_1535031491.json (e.g. what the Zenodo fils are called)
