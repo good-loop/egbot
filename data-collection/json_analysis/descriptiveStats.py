@@ -22,8 +22,10 @@ noOfQsWithGoodScoreANoAccA = 0
 noOfAsWithPosScoreNotAcc = 0
 noOfAsWithGoodScoreNotAcc = 0
 
-lenOfQs = 0
-lenOfAs = 0
+lenOfQChars = 0
+lenOfAChars = 0
+lenOfQWords = 0
+lenOfAWords = 0
 
 noOfClosed = 0
 noOfClosedDuplicates = 0
@@ -42,7 +44,9 @@ for no in range(1,9):
         slim = []
         for i in range(0, len(data)):
             noOfQs += 1
-            lenOfQs += len(data[i]["body_markdown"])
+            lenOfQChars += len(data[i]["body_markdown"])
+            splitQs = data[i]["body_markdown"].split()
+            lenOfQWords += len(splitQs)
             score = data[i]["score"]
             avgScorePerQ += score
 
@@ -68,7 +72,9 @@ for no in range(1,9):
                     noOfAs += 1
                     ans = dict()
                     ans["body_markdown"] = data[i]["answers"][j]["body_markdown"]
-                    lenOfAs += len(ans["body_markdown"])
+                    splitAns = ans["body_markdown"].split()
+                    lenOfAChars += len(ans["body_markdown"])
+                    lenOfAWords += len(splitAns)
 
                     ans["score"] = data[i]["answers"][j]["score"]
                     avgScorePerA += ans["score"]
@@ -119,8 +125,12 @@ print("No of answers with a positive score but not accepted: ", noOfAsWithPosSco
 print("No of answers with a good score but not accepted: ", noOfAsWithGoodScoreNotAcc)
 
 print()            
-print("Average question length: ", lenOfQs/noOfQs)
-print("Average answer length: ", lenOfAs/noOfAs)
+print("Average question length (chars): ", lenOfQChars/noOfQs)
+print("Average answer length (chars): ", lenOfAChars/noOfAs)
+
+print()            
+print("Average question length (words): ", lenOfQWords/noOfQs)
+print("Average answer length (words): ", lenOfAWords/noOfAs)
 
 print()            
 print("Number of closed questions: ", noOfClosed)
