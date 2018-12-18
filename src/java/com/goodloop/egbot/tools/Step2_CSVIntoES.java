@@ -2,9 +2,6 @@ package com.goodloop.egbot.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.goodloop.egbot.EgbotConfig;
@@ -18,8 +15,6 @@ import com.winterwell.es.client.ESConfig;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.ESHttpRequest;
 import com.winterwell.es.client.ESJC;
-import com.winterwell.es.client.IESResponse;
-import com.winterwell.gson.FlexiGson;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.GsonBuilder;
 import com.winterwell.gson.KLoopPolicy;

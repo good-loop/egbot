@@ -1,38 +1,17 @@
 package com.goodloop.egbot.server;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.goodloop.egbot.EgbotConfig;
-import com.winterwell.datascience.Experiment;
 import com.winterwell.depot.Depot;
-import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
-import com.winterwell.maths.ITrainable;
-import com.winterwell.maths.stats.distributions.cond.Cntxt;
-import com.winterwell.maths.stats.distributions.cond.Sitn;
-import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
-import com.winterwell.nlp.corpus.SimpleDocument;
-import com.winterwell.nlp.io.SitnStream;
-import com.winterwell.nlp.io.Tkn;
 import com.winterwell.utils.containers.ArrayMap;
-import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
-import com.winterwell.utils.time.RateCounter;
-import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.web.SimpleJson;
 /**
  * Qualitative Model Evaluator
  * 

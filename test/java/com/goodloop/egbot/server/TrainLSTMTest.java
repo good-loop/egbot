@@ -1,14 +1,5 @@
 package com.goodloop.egbot.server;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.util.Random;
-
-import org.junit.Test;
-
-import com.winterwell.depot.Depot;
-
 public class TrainLSTMTest {
 		
 //	@Test

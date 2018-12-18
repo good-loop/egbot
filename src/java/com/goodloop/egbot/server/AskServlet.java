@@ -1,10 +1,6 @@
 package com.goodloop.egbot.server;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,25 +9,19 @@ import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 import org.tensorflow.TensorFlow;
 
-import jep.Jep;
-import jep.JepConfig;
-import jep.JepException;
-
-import com.winterwell.es.fail.ESException;
-import com.winterwell.maths.ITrainable;
-import com.winterwell.maths.stats.distributions.cond.Cntxt;
-import com.winterwell.nlp.io.Tkn;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
-import com.winterwell.utils.log.Log;
 import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.web.ajax.JSend;
-import com.winterwell.web.ajax.JThing;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.WebRequest;
+
+import jep.Jep;
+import jep.JepConfig;
+import jep.JepException;
 
 public class AskServlet implements IServlet {
 

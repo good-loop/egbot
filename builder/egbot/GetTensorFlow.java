@@ -1,13 +1,13 @@
 package egbot;
 
 import org.junit.Test;
-
-import com.winterwell.bob.BuildTask;
-import com.winterwell.bob.tasks.MavenDependencyTask;
 import org.tensorflow.Graph;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 import org.tensorflow.TensorFlow;
+
+import com.winterwell.bob.BuildTask;
+import com.winterwell.bob.tasks.MavenDependencyTask;
 
 public class GetTensorFlow extends BuildTask {
 

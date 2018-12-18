@@ -2,7 +2,6 @@ package com.goodloop.egbot.server;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -10,13 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.TreeSet;
-
-import org.eclipse.jetty.util.ajax.JSON;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.gson.Gson;
