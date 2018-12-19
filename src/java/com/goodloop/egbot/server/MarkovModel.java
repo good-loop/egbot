@@ -219,6 +219,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	public Desc getDesc() {
 		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
+		mmDesc.setTag("egbot");
 		mmDesc.addDependency("guts", desc);
 		return mmDesc;
 	}

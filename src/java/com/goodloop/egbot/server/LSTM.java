@@ -72,6 +72,7 @@ public class LSTM implements IEgBotModel {
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
 		desc = new Desc<>("MSE-slim", model.getClass());
+		desc.setTag("egbot");
 	}
 	
 	/**
@@ -497,6 +498,7 @@ public class LSTM implements IEgBotModel {
 	public String sample(String question, int expectedAnswerLength) throws IOException {
 		String answer = "<ERROR>";
 		
+		// TODO refactor (overlap with load) so graph loading is done in one place
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
@@ -577,6 +579,7 @@ public class LSTM implements IEgBotModel {
 	public String sampleWord(String question) throws Exception {
 		String nextWord = "<ERROR>";
 		
+		// TODO refactor (overlap with load) so graph loading is done in one place
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		
@@ -632,6 +635,7 @@ public class LSTM implements IEgBotModel {
 	public double scoreAnswer(String q, String t) throws IOException {
 		double score = 0; 
 
+		// TODO refactor (overlap with load) so graph loading is done in one place
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
 		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
 		
@@ -776,7 +780,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	public void load() throws IOException {
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		final String graphPath = FileUtils.getWorkingDirectory() + "/data/models/final/v3/lstmGraphTF.pb";
 		Path gp = Paths.get(graphPath);
 		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
 		final byte[] graphDef = Files.readAllBytes(gp);
