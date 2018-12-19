@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import com.winterwell.depot.Depot;
+import com.winterwell.depot.DepotConfig;
 import com.winterwell.depot.Desc;
 import com.winterwell.utils.IFilter;
 import com.winterwell.utils.log.Log;
@@ -21,6 +22,9 @@ public class EvaluatePredictions {
 	
 	public static void main(String[] args) throws Exception {
 		new EvaluatePredictions().run();
+	}
+	
+	public EvaluatePredictions() {
 	}
 	
 	public void run() throws Exception {
