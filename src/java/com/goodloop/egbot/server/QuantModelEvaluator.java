@@ -102,7 +102,7 @@ public class QuantModelEvaluator {
 		}	
 		saveToFile(avgScore);
 	}
-	
+
 	/**
 	 * save experiment evaluation results
 	 * @param saved
@@ -114,6 +114,8 @@ public class QuantModelEvaluator {
 		results.avgScore = avgScore;
 		
 		depot.put(experiment.getDesc(), experiment);
+		
+		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(experiment.getDesc()));
 		depot.flush();
 	}
 	

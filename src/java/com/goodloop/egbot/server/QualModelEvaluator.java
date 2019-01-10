@@ -96,7 +96,7 @@ public class QualModelEvaluator {
 				c++;
 				Map eg = gson.fromJson(jr, Map.class);		
 				String question = (String) eg.get("question");
-				String target = (String) eg.get("answer");					
+				String target = (String) eg.get("answer");
 				String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
 				
 				Map<String,String> temp = new ArrayMap<>(
@@ -124,6 +124,8 @@ public class QualModelEvaluator {
 		results.generatedAnswers = (List) saved;
 
 		depot.put(experiment.getDesc(), experiment);
+		
+		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(experiment.getDesc()));
 		depot.flush();		
 	}
 	
