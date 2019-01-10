@@ -50,6 +50,7 @@ import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.json.JSONObject;
 import com.winterwell.maths.datastorage.HalfLifeMap;
+import com.winterwell.maths.stats.distributions.cond.ACondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
 import com.winterwell.maths.stats.distributions.cond.ICondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Sitn;
@@ -67,6 +68,7 @@ import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.nlp.io.FilteredTokenStream.KInOut;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.KErrorPolicy;
 import com.winterwell.utils.log.Log;
@@ -118,11 +120,11 @@ public class LSTM implements IEgBotModel {
 	 */
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
-		desc = new Desc<>("MSE-lstm-slim", model.getClass());
-		//String saveLocation = "/data/models/final/v3/checkpoint" + desc.getName();
-		logLocation = "/home/irina/egbot-learning-depot/results/log.txt";
-		saveLocation = "/home/irina/egbot-learning-depot/results/" + desc.getName();
-		backupLocation = "/home/irina/egbot-learning-depot/backups";
+		desc = new Desc<>("Dummy-lstm", model.getClass());
+		String depotLocation = "/home/irina/egbot-learning-depot";	
+		logLocation = depotLocation + "/results/log.txt";
+		saveLocation = depotLocation + "/results/" + desc.getName();
+		backupLocation = depotLocation + "/backups";
 		trainAccuracies = new ArrayList<Float>();
 	}
 	
@@ -340,14 +342,8 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException
 	 */
 	public void trainEach(List<List<String>> trainingDataArray) throws IOException {	
-		
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation; //System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // setting session config to use the GPU
         GPUOptions gpuOptions = GPUOptions.newBuilder()
@@ -364,7 +360,7 @@ public class LSTM implements IEgBotModel {
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
 	    		    		    	
 	    	graph.importGraphDef(graphDef); //builder.build().toByteArray());
 	    	try(Session sess = new Session(graph, config.toByteArray())){
@@ -479,7 +475,7 @@ public class LSTM implements IEgBotModel {
         long sumAcc = 0;
         for(Float acc : trainAccuracies)
         	sumAcc += acc;
-        	
+        	       
 		try(FileWriter fw = new FileWriter(logLocation, true);
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw)) {
@@ -492,7 +488,7 @@ public class LSTM implements IEgBotModel {
 			out.close();
 		}
 	}
-
+	
 	/**
 	 * close tensors to release memory used by them (to be used when try catch statement can't be used)
 	 */
@@ -596,20 +592,14 @@ public class LSTM implements IEgBotModel {
 	 */
 	public String sample(String question, int expectedAnswerLength) throws IOException {
 		String answer = "<ERROR>";
-		
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Session sess = new Session(graph);
 	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
 	    	
 	    	graph.importGraphDef(graphDef);
 	    	// initialise or restore.
@@ -668,6 +658,15 @@ public class LSTM implements IEgBotModel {
 	    return answer;
 	}
 	
+	public byte[] checkGraph() throws IOException {
+		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
+		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
+		Path gp = Paths.get(graphPath);
+		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		byte[] graphDef = Files.readAllBytes(gp);
+		return graphDef;
+	}
+
 	/**
 	 * sample a word from the model
 	 * @param question
@@ -676,31 +675,11 @@ public class LSTM implements IEgBotModel {
 	 */
 	public String sampleWord(String question) throws Exception {
 		String nextWord = "<ERROR>";
-		
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
 
 	    // load graph
-	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
-	    	
-	    	graph.importGraphDef(graphDef);
-			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-			} else {
-				System.out.print("Error: Couldn't restore model ...\n");
-				return "";
-			}
-			
+		Pair2<Graph, Session> graph_sess = loadGraph();
+	    try {	    		
+	    	Session sess = graph_sess.second;
 			// run graph with given input and fetch output
 			try (Tensor<?> input = Tensors.create(wordsIntoInputVector(EgBotDataLoader.tokenise(question)));
 					Tensor<?> output =
@@ -718,10 +697,31 @@ public class LSTM implements IEgBotModel {
 						"Instance: %s \n Prediction: %s \n",
 						question, nextWord);
 			}			
+	    } finally {
+	    	graph_sess.second.close();
+	    	graph_sess.first.close();
 	    }
 	    return nextWord;
 	}
 	
+	private Pair2<Graph,Session> loadGraph() throws IOException {
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
+		Graph graph = new Graph();
+		Session sess = new Session(graph);
+		
+		graph.importGraphDef(graphDef);
+		if ( ! checkpointExists) {
+			throw new IOException("Error: Couldn't restore model ...\n");
+		}
+
+        Tensor<String> checkpointPrefix = Tensors.create(Paths.get(saveLocation, "ckpt").toString());
+		System.out.println("Restoring model ...");
+		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();	
+	        
+		return new Pair2(graph,sess);
+	}
+
 	/**
 	 * score answer for given question (where the score is the avg log probability of each word in the answer being predicted)
 	 * @param q question
@@ -731,21 +731,14 @@ public class LSTM implements IEgBotModel {
 	 */
 	public double scoreAnswer(String q, String t) throws IOException {
 		double score = 0; 
-
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Session sess = new Session(graph);
 	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
 	    	
 	    	graph.importGraphDef(graphDef);
 			if (checkpointExists) {						
@@ -792,7 +785,7 @@ public class LSTM implements IEgBotModel {
 					score += Math.log(probWord);
 				}
 				
-				//shift questionArray to include the next targer word at the end so as to allow us to generate the next word after that
+				//shift questionArray to include the next target word at the end so as to allow us to generate the next word after that
 				System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
 				instanceArray[seq_length-1] = tArray[i];
 			}
@@ -800,6 +793,91 @@ public class LSTM implements IEgBotModel {
 			return score/tArray.length;
 	    }		
 	}	
+	
+	/**
+	 * score best guess 
+	 * @param q question 
+	 * @param t target
+	 * @param a answers
+	 * @return index of answer deemed to be the best guess
+	 * @throws IOException 
+	 */
+	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
+		double score = 0;
+		double bestAvg = -999; // artifically low score
+		int bestAnsIdx = -1;
+		
+		for (int k = 0; k < a.size(); k++) {
+			String ans = a.get(k);
+		
+			byte[] graphDef = checkGraph();	    
+			final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
+	
+		    // load graph
+		    try (Graph graph = new Graph();
+		        Session sess = new Session(graph);
+		        Tensor<String> checkpointPrefix =
+		        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
+		    	
+		    	graph.importGraphDef(graphDef);
+				if (checkpointExists) {						
+					//System.out.println("Restoring model ...");
+					sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
+				} else {
+					System.out.print("Error: Couldn't restore model ...\n");
+					return 0;
+				}
+				
+				// tokenise input
+				String[] qArray = EgBotDataLoader.tokenise(q);
+				String[] tArray = EgBotDataLoader.tokenise(ans);
+				
+				// ensure we take the last 30 words of the question (or if it's < 30, then fill it with <START> tags at the beginning)
+				String[] instanceArray = new String[seq_length];
+				Arrays.fill(instanceArray, "START");
+				if (qArray.length < seq_length) {
+					System.arraycopy(qArray, 0, instanceArray, seq_length-qArray.length, qArray.length);
+				}
+				else {
+					System.arraycopy(qArray, qArray.length-seq_length, instanceArray, 0, seq_length);
+				}
+				
+				// for each target word
+				for (int i = 0; i < tArray.length; i++) {
+					try (Tensor<?> input = Tensors.create(wordsIntoInputVector(instanceArray));
+						Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tArray[i]))) {
+						List<Tensor<?>> outputs = sess.runner()
+								.feed("input", input)
+								.feed("target", target)
+								.fetch("output") // prediction
+								.fetch("correct_pred") // validation accuracy
+								.run();
+						
+						// copy output tensors to array
+						float[][] outputArray = new float[1][vocab_size];
+						outputs.get(0).copyTo(outputArray);
+						// find out the position of the target word in the vocab
+						int targetPos = getKeyByValue(vocab,tArray[i]);
+						// find out the prob of that word, as returned from the model
+						float probWord = outputArray[0][targetPos];
+						// add the log prob to the score
+						score += Math.log(probWord);
+					}
+					
+					//shift questionArray to include the next target word at the end so as to allow us to generate the next word after that
+					System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
+					instanceArray[seq_length-1] = tArray[i];
+				}
+				// avg the score and then return it
+				double avg = score/tArray.length;
+				if (bestAvg > avg) {
+					bestAnsIdx = a.indexOf(ans);
+				}
+		    }
+		}
+		if (a.indexOf(t) == bestAnsIdx) return 1; 
+		else return 0;
+	}
 	
 	/**
 	 * Prints out the signature of the model, which specifies what type of model is being exported, 
@@ -838,7 +916,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	private void printVariables(Session sess) {
 	    List<Tensor<?>> values = sess.runner().fetch("W/read").fetch("b/read").run();
-	    float[][] w = new float[num_hidden*2][vocab_size]; // 2*num_hidden because of forward + backward cells
+	    float[][] w = new float[num_hidden][vocab_size]; // 2*num_hidden because of forward + backward cells
 	    values.get(0).copyTo(w);
 	    float[] b = new float[vocab_size];
 	    values.get(1).copyTo(b);
@@ -873,21 +951,16 @@ public class LSTM implements IEgBotModel {
 
 	/**
 	 * load saved model
-	 */
+	 */ //TODO: investigate the redundancy of loading and then not passing the sess variable
 	public void load() throws IOException {
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Session sess = new Session(graph);
 	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
 	    	
 	    	graph.importGraphDef(graphDef);
 	    	// initialise or restore.
@@ -914,20 +987,14 @@ public class LSTM implements IEgBotModel {
 	 */
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
 		String answer = "<ERROR>";
-		
-		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
-		final byte[] graphDef = Files.readAllBytes(gp);
-		final String checkpointDir = saveLocation;//System.getProperty("user.dir") + "/data/models/final/v3/checkpoint" + desc.getName();
-	    final boolean checkpointExists = Files.exists(Paths.get(checkpointDir));
+		byte[] graphDef = checkGraph();	    
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // load graph
 	    try (Graph graph = new Graph();
 	        Session sess = new Session(graph);
 	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(checkpointDir, "ckpt").toString())) {
+	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
 	    	
 	    	graph.importGraphDef(graphDef);
 	    	// initialise or restore.
@@ -940,7 +1007,7 @@ public class LSTM implements IEgBotModel {
 				System.out.println("Couldn't find model ...\n");
 				return "";
 			}
-			
+			//printVariables(sess);
 			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
 			// if the question is shorter than the set seq_length, we fill in the beginning slots with START (using a set seq_length is necessary for the lstm)
