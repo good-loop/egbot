@@ -62,11 +62,13 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	// true when model was successfully loaded
 	public boolean loadSuccessFlag;
-	
+		
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag;
 
 	public MarkovModel() {
+		loadSuccessFlag = false;
+		trainSuccessFlag = false;
 		sig = new String[] {"w-1", "w-2"};
 		tokeniserFactory = new WordAndPunctuationTokeniser();
 		ssFactory = new SitnStream(null, tokeniserFactory, sig);
@@ -74,7 +76,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// save load needs depot to be initialised
 		Depot.getDefault().init();
 		wmc = newModel();		
-		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm-slim", wmc.getClass());
+		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
 		desc.setTag("egbot");
 	}
 
@@ -85,6 +87,10 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		if (_wmc != null) {
 			wmc = _wmc;
 			loadSuccessFlag = true;
+			Log.d("Loaded succesfully :)");
+		}
+		else {
+			Log.d("Sorry, couldn't load ");
 		}
 	}
 	
@@ -229,6 +235,40 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		}
 		// avg the score
 		return score/count;
+	}
+	
+	/**
+	 * score best guess 
+	 * @param q question 
+	 * @param t target
+	 * @param a answers
+	 * @return index of answer deemed to be the best guess
+	 */
+	public int scorePickBest(String q, String t, ArrayList<String> a) {
+		double score = 0; 
+		double bestAvg = -999; // artifically low score
+		int bestAnsIdx = -1;
+		
+		for (String ans : a) {
+			String body = q + " " + ans;
+			SimpleDocument doc = new SimpleDocument(body);
+			SitnStream ss2 = ssFactory.factory(doc);
+			int count = 0;
+			for (Sitn<Tkn> sitn : ss2) {					
+				// add the log prob to the score
+				double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); 
+				//System.out.println("Example log prob: " + p);
+				score += p;
+				count++;
+			}
+			// avg the score
+			double avg = score/count;
+			if (bestAvg > avg) {
+				bestAnsIdx = a.indexOf(ans);
+			}
+		}
+		if (a.indexOf(t) == bestAnsIdx) return 1; 
+		else return 0;
 	}
 	
 	/**
