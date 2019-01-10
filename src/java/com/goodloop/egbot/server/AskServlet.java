@@ -42,8 +42,8 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = generateAnswerCL(q); 
-		
+		Object generatedAnswer = generateAnswerLSTM(q); 
+
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
 			"relatedAs", relatedAs,
@@ -73,11 +73,28 @@ public class AskServlet implements IServlet {
 	 */
 	private Object generateAnswerMM(String q) throws Exception {
 		MarkovModel mm = new MarkovModel();
+		System.out.println("Loading Markov model ...");
 		mm.load(); // TODO: check that I can actually load a specific trained model
-		String answer = mm.sample(q, 30);	//TODO: check that it can return a gen answer based on a string?
+		System.out.println("Generating answer ...");
+		String answer = mm.sample(q, 30);	
+		System.out.println(answer);
 		return answer;
 	}
 
+	/**
+	 * use trained LSTM model to generate an answer
+	 */
+	private Object generateAnswerLSTM(String q) throws Exception {
+		LSTM lstm = new LSTM();
+		System.out.println("Loading LSTM model ...");
+		lstm.load(); // TODO: check that I can actually load a specific trained model
+		lstm.init(EgBotDataLoader.setup());
+		System.out.println("Generating answer ...");
+		String answer = lstm.generateMostLikely(q, 30);	
+		System.out.println(answer);
+		return answer;
+	}
+	
 	/**
 	 * search ES and filter for questions that have accepted answers
 	 * @param q 
