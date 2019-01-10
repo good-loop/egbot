@@ -59,6 +59,15 @@ public class EgBotDataLoader {
 	}
 	
 	/**
+	 * finds dummy files in preparation for data loading
+	 * @return list of dummy files
+	 */
+	public static List<File> setupDummy() {
+		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/egbot/dummy.json"));
+		return fs;
+	}
+	
+	/**
 	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
 	 * @return trainingDataArray
 	 * @throws IOException

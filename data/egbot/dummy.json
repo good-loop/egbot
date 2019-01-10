@@ -1,0 +1,82 @@
+[   
+    {
+      "question": "What is Boolean Algebra?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What’s are atoms (propositional variables) in Boolean Algebra?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example of a truth table.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What is the product rule of probability?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example of a conditional probability problem.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example of binomial distribution.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What is a continuous probability distribution?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example for extrasensory perception.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example for Bayesian parameter estimation.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What is a Bayesian network?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "How do you calculate variance in probability theory?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "How to show a probability equation using induction?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What is the Gamma function?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give an example of Poisson distribution.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What’s the difference between joint probability and conditional probability?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give an example of Markov Chain in probability theory.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give an example of a probability paradox.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example of a random walk probability problem with solution.",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "What is the probability density function?",
+      "answer": "I'm not sure"
+    },
+    {
+      "question": "Give me an example of Central Limit Theorem being used.",
+      "answer": "I'm not sure"
+    }
+]
