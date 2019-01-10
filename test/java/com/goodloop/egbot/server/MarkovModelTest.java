@@ -33,7 +33,7 @@ public class MarkovModelTest {
 		mm.save();
 	}
 	
-	@Test
+//	@Test
 	public void testTrain() throws IOException {
 		MarkovModel mm = new MarkovModel();
 		Desc<IEgBotModel> modelDesc = mm.getDesc();
@@ -70,5 +70,12 @@ public class MarkovModelTest {
 		System.out.println("Generating answer ...");
 		String answer = mm.sample(q, 30);	
 		System.out.println(answer);
+	}
+	
+	@Test
+	public void testLoading() {
+		MarkovModel mm = new MarkovModel();
+		mm.load();
+		assert mm.isReady();
 	}
 }

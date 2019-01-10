@@ -289,7 +289,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	@Override
 	public boolean isReady() {
-		return trainSuccessFlag;
+		return loadSuccessFlag;
 	}
 
 	@Override
