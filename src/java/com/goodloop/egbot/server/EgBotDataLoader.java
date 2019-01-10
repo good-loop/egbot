@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.datascience.Experiment;
+import com.winterwell.depot.Depot;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.datastorage.HalfLifeMap;
@@ -179,9 +180,10 @@ public class EgBotDataLoader {
 			} 
 			jr.close();
 			
-//			if (false) break;
+			if (false) break;
 		}
 		model.setTrainSuccessFlag(true);
+		Depot.getDefault().flush();
 	}
 	
 }
