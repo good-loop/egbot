@@ -1,82 +1,82 @@
-{
-    "1": {
+[   
+    {
       "question": "What is Boolean Algebra?",
       "answer": ""
     },
-    "2": {
+    {
       "question": "What’s are atoms (propositional variables) in Boolean Algebra?",
       "answer": ""
     },
-    "3": {
+    {
       "question": "Give me an example of a truth table.",
       "answer": ""
     },
-    "4": {
+    {
       "question": "What is the product rule of probability?",
       "answer": ""
     },
-    "5": {
+    {
       "question": "Give me an example of a conditional probability problem.",
       "answer": ""
     },
-    "6": {
+    {
       "question": "Give me an example of binomial distribution.",
       "answer": ""
     },
-    "7": {
+    {
       "question": "What is a continuous probability distribution?",
       "answer": ""
     },
-    "8": {
+    {
       "question": "Give me an example for extrasensory perception.",
       "answer": ""
     },
-    "9": {
+    {
       "question": "Give me an example for Bayesian parameter estimation.",
       "answer": ""
     },
-    "10": {
+    {
       "question": "What is a Bayesian network?",
       "answer": ""
     },
-    "11": {
+    {
       "question": "How do you calculate variance in probability theory?",
       "answer": ""
     },
-    "12": {
+    {
       "question": "How to show a probability equation using induction?",
       "answer": ""
     },
-    "13": {
+    {
       "question": "What is the Gamma function?",
       "answer": ""
     },
-    "14": {
+    {
       "question": "Give an example of Poisson distribution.",
       "answer": ""
     },
-    "15": {
+    {
       "question": "What’s the difference between joint probability and conditional probability?",
       "answer": ""
     },
-    "16": {
+    {
       "question": "Give an example of Markov Chain in probability theory.",
       "answer": ""
     },
-    "17": {
+    {
       "question": "Give an example of a probability paradox.",
       "answer": ""
     },
-    "18": {
+    {
       "question": "Give me an example of a random walk probability problem with solution.",
       "answer": ""
     },
-    "19": {
+    {
       "question": "What is the probability density function?",
       "answer": ""
     },
-    "20": {
+    {
       "question": "Give me an example of Central Limit Theorem being used.",
       "answer": ""
     }
-  }
+]
