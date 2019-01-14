@@ -1,30 +1,17 @@
 package com.goodloop.egbot.server;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.util.ajax.JSON;
-import org.elasticsearch.index.analysis.WordDelimiterTokenFilterFactory;
-
-import com.goodloop.egbot.EgbotConfig;
-import com.winterwell.datalog.Rate;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.depot.IHasDesc;
 import com.winterwell.depot.ModularXML;
-import com.winterwell.gson.Gson;
-import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.ITrainable;
-import com.winterwell.maths.ITrainable.Supervised;
-import com.winterwell.maths.stats.distributions.IDistributionBase;
 import com.winterwell.maths.stats.distributions.cond.ACondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
 import com.winterwell.maths.stats.distributions.cond.ICondDistribution;
@@ -38,14 +25,8 @@ import com.winterwell.nlp.io.SitnStream;
 import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.utils.IFilter;
-import com.winterwell.utils.Printer;
-import com.winterwell.utils.TodoException;
 import com.winterwell.utils.containers.Containers;
-import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
-import com.winterwell.utils.time.RateCounter;
-import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.web.SimpleJson;
 
 public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
@@ -279,6 +260,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	public Desc getDesc() {
 		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
+		mmDesc.setTag("egbot");
 		mmDesc.addDependency("guts", desc);
 		return mmDesc;
 	}

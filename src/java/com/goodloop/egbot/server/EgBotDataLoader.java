@@ -15,7 +15,6 @@ import com.winterwell.datascience.Experiment;
 import com.winterwell.depot.Depot;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
-import com.winterwell.maths.datastorage.HalfLifeMap;
 import com.winterwell.nlp.io.ITokenStream;
 import com.winterwell.nlp.io.StopWordFilter;
 import com.winterwell.nlp.io.Tkn;
@@ -23,8 +22,6 @@ import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.web.SimpleJson;
-import com.goodloop.egbot.EgbotConfig;
 public class EgBotDataLoader {
 	List<File> files;
 	RateCounter rate;

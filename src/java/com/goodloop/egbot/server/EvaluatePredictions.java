@@ -1,30 +1,16 @@
 package com.goodloop.egbot.server;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.goodloop.egbot.EgbotConfig;
-import com.winterwell.datascience.Experiment;
 import com.winterwell.depot.Depot;
+import com.winterwell.depot.DepotConfig;
 import com.winterwell.depot.Desc;
-import com.winterwell.gson.Gson;
-import com.winterwell.gson.stream.JsonReader;
-import com.winterwell.maths.ITrainable;
-import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
 import com.winterwell.utils.IFilter;
-import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
-import com.winterwell.utils.time.RateCounter;
-import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.web.SimpleJson;
 /**
  * To evaluate EgBot!
  * 
@@ -36,6 +22,13 @@ import com.winterwell.utils.web.SimpleJson;
  * @testedby {@link EvaluationTest}
  */
 public class EvaluatePredictions {
+	
+	public static void main(String[] args) throws Exception {
+		new EvaluatePredictions().run();
+	}
+	
+	public EvaluatePredictions() {
+	}
 	
 	public void run() throws Exception {
 			
@@ -62,7 +55,7 @@ public class EvaluatePredictions {
 		List<File> files = EgBotDataLoader.setup();
 		
 		// set up experiment
-		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, testFilter, files);
+		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files);
 		
 		// Test
 		
@@ -83,7 +76,8 @@ public class EvaluatePredictions {
 		
 		if (false) {//QUAL EVAL
 			// test using Paulius' 20 questions set
-			List<File> evalFiles = Arrays.asList(new File(System.getProperty("user.dir") + "/data/eval/paulius20.json"));
+			List<File> evalFiles = Arrays.asList(
+					new File(FileUtils.getWorkingDirectory() + "/data/eval/paulius20.json"));
 			EgBotData testPaulData = new EgBotData(evalFiles, testFilter);
 			
 			// set the test data the experiment uses
@@ -101,7 +95,20 @@ public class EvaluatePredictions {
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));
 	}
 	
-	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, IFilter<Integer> trainFilter, IFilter<Integer> testFilter, List<File> files) throws IOException {
+	/**
+	 * 
+	 * @param model
+	 * @param modelDesc
+	 * @param trainFilter
+	 * @param testFilter
+	 * @param files Training files
+	 * @return
+	 * @throws IOException
+	 */
+	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, 
+			IFilter<Integer> trainFilter,  
+			List<File> files) throws IOException 
+	{
 		EgBotExperiment experiment = new EgBotExperiment();
 		// set the model the experiment uses
 		experiment.setModel(model, modelDesc);

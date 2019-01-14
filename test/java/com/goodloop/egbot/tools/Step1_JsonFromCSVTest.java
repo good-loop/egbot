@@ -1,7 +1,5 @@
 package com.goodloop.egbot.tools;
 
-import static org.junit.Assert.*;
-
 import java.util.regex.Matcher;
 
 import org.junit.Test;

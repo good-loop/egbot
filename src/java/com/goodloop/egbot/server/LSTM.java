@@ -9,7 +9,6 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,19 +17,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 
 import org.tensorflow.Graph;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
-import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
 import org.tensorflow.TensorFlow;
@@ -40,15 +35,11 @@ import org.tensorflow.framework.GraphDef;
 import org.tensorflow.framework.MetaGraphDef;
 import org.tensorflow.framework.SignatureDef;
 import org.tensorflow.framework.TensorInfo;
-import org.tensorflow.types.UInt8;
 
-import com.goodloop.egbot.EgbotConfig;
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
-import com.winterwell.json.JSONObject;
 import com.winterwell.maths.datastorage.HalfLifeMap;
 import com.winterwell.maths.stats.distributions.cond.ACondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
@@ -70,11 +61,9 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
-import com.winterwell.utils.log.KErrorPolicy;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.web.SimpleJson;
 
 /**
  * @testedby {@link TrainLSTMTest}
@@ -86,9 +75,6 @@ public class LSTM implements IEgBotModel {
 	List<Tensor<?>> model;
 	public Desc desc;
 	
-	// true when model was succesfully loaded
-	public boolean loadSuccessFlag;
-
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag; 
 
@@ -97,14 +83,27 @@ public class LSTM implements IEgBotModel {
 	int idealVocabSize;
 	int vocab_size;
 	
-	// training parameters
-	int seq_length; // sequence length
-	int num_epochs; // training epochs 
-	int num_hidden; // number of hidden layers
+	// training parameters	
+	int seq_length; 
+	/**
+	 * total training epochs to do. 
+	 */
+	int num_epochs;
+	/**
+	 * number of hidden layers
+	 */
+	int num_hidden;
 	
-	// output location
+	@Deprecated // use Depot
 	String saveLocation;
+	
+	/**
+	 * Saves interim results.
+	 * @deprecated // use Depot or remove
+	 */
 	String backupLocation;
+	
+	@Deprecated // use std logging
 	String logLocation;
 	
 	// stats tracker
@@ -120,7 +119,11 @@ public class LSTM implements IEgBotModel {
 	 */
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
-		desc = new Desc<>("Dummy-lstm", model.getClass());
+		
+		desc = new Desc<>("EgBot-lstm", model.getClass());
+		desc.setTag("egbot");
+		
+		// FIXME move out of algorithm level code. Also make it work on any checkout
 		String depotLocation = "/home/irina/egbot-learning-depot";	
 		logLocation = depotLocation + "/results/log.txt";
 		saveLocation = depotLocation + "/results/" + desc.getName();
@@ -458,8 +461,10 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException 
 	 */
 	private void save(Session sess, Tensor<?> checkpointPrefix) throws IOException {
-		// save latest model 
-		model = sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
+		// save latest model (the location is set in the checkpointPrefix) 
+		model = sess.runner()
+				.feed("save/Const", checkpointPrefix)
+				.addTarget("save/control_dependency").run();
 		// do backup every so often (for the full 500,000 questions, there should then be 50 backups)
 		if(questionCount%10000==0) {
 			String newBackupLocation = backupLocation + "/backup" + questionCount/10000;
@@ -591,28 +596,14 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException 
 	 */
 	public String sample(String question, int expectedAnswerLength) throws IOException {
-		String answer = "<ERROR>";
-		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
-
+		String answer = "<ERROR>"; 
+		
 	    // load graph
-	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-	    	
-	    	graph.importGraphDef(graphDef);
-	    	// initialise or restore.
-			// The names of the tensors and operations in the graph are printed out by the program that created the graph
-	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-			} else {
-				System.out.println("Couldn't find model ...\n");
-				return "";
-			}
-				        
+		Pair2<Graph, Session> graph_session = loadGraph();
+		Graph graph = graph_session.first;
+		Session sess = graph_session.second;
+	    try (Tensor<String> checkpointPrefix = createTensor())
+	    {	    					        
 			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
 			// if the question is shorter than the set seq_length, we fill in the beginning slots with START (using a set seq_length is necessary for the lstm)
@@ -650,19 +641,43 @@ public class LSTM implements IEgBotModel {
 				}
 			}
 			answer = Arrays.deepToString(answerArray);
+			return answer;
+	    } finally {
+	    	graph_session.second.close();
+	    	graph_session.first.close();	    	
 	    }
 	    
-//		System.out.printf(
-//				"Instance: %s \n Prediction: %s \n",
-//				question, answer);
-	    return answer;
 	}
+
+	private Tensor<String> createTensor() {
+		Desc cpdesc = new Desc("chckpt", Tensor.class);
+		cpdesc.setTag("egbot");
+		// create a Desc which is specific to this LSTM
+		cpdesc.addDependency("parent", getDesc());		
+		String id = cpdesc.getId(); // make sure the desc is finalised
+		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc);
+		// make it a dir
+		saveDirPath.mkdirs();
+		return Tensors.create(saveDirPath.getAbsolutePath());
+	}
+
+	/**
+	 * a blank untrained graph -- structure but no training
+	 */
+	static final File TENSORFLOW_GRAPH = new File(System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb");
 	
+	
+	/**
+	 * Load the graph
+	 * @return
+	 * @throws IOException
+	 */
 	public byte[] checkGraph() throws IOException {
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		final String graphPath = System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb";
-		Path gp = Paths.get(graphPath);
-		assert Files.exists(gp) : "No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py";
+		Path gp = Paths.get(TENSORFLOW_GRAPH.getAbsolutePath());
+		if ( ! Files.exists(gp)) {
+			new FileNotFoundException("No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py");
+		}
 		byte[] graphDef = Files.readAllBytes(gp);
 		return graphDef;
 	}
@@ -674,8 +689,8 @@ public class LSTM implements IEgBotModel {
 	 * @throws Exception
 	 */
 	public String sampleWord(String question) throws Exception {
-		String nextWord = "<ERROR>";
-
+		String nextWord = "<ERROR>"; // ??why??
+		final byte[] graphDef = checkGraph();
 	    // load graph
 		Pair2<Graph, Session> graph_sess = loadGraph();
 	    try {	    		
@@ -731,24 +746,14 @@ public class LSTM implements IEgBotModel {
 	 */
 	public double scoreAnswer(String q, String t) throws IOException {
 		double score = 0; 
-		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
-
 	    // load graph
-	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-	    	
-	    	graph.importGraphDef(graphDef);
-			if (checkpointExists) {						
-				//System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-			} else {
-				System.out.print("Error: Couldn't restore model ...\n");
-				return 0;
-			}
-			
+		Pair2<Graph, Session> gs = loadGraph();
+	    try (
+    		Graph graph = gs.first;
+            Session sess = gs.second;
+            Tensor<String> checkpointPrefix = createTensor();		
+	    )
+	    {
 			// tokenise input
 			String[] qArray = EgBotDataLoader.tokenise(q);
 			String[] tArray = EgBotDataLoader.tokenise(t);
@@ -791,7 +796,7 @@ public class LSTM implements IEgBotModel {
 			}
 			// avg the score and then return it
 			return score/tArray.length;
-	    }		
+	    }
 	}	
 	
 	/**
@@ -950,31 +955,10 @@ public class LSTM implements IEgBotModel {
 	}
 
 	/**
-	 * load saved model
-	 */ //TODO: investigate the redundancy of loading and then not passing the sess variable
+	 * load saved model. NB the model is actually loaded as needed by train / sample
+	 */
 	public void load() throws IOException {
-		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
-
-	    // load graph
-	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-	    	
-	    	graph.importGraphDef(graphDef);
-	    	// initialise or restore.
-			// The names of the tensors and operations in the graph are printed out by the program that created the graph
-	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-			if (checkpointExists) {						
-				//System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-				loadSuccessFlag = true;
-			} else {
-				System.out.println("Initialising model ...");
-				sess.runner().addTarget("init").run();
-			}
-	    }
+		loadGraph();
 	}
 	
 	/**
@@ -1048,19 +1032,7 @@ public class LSTM implements IEgBotModel {
 	    }
 	    
 	    return answer;
-	}
-	
-	public boolean isLoadSuccessFlag() {
-		return loadSuccessFlag;
-	}
-
-	public void setLoadSuccessFlag(boolean loadSuccessFlag) {
-		this.loadSuccessFlag = loadSuccessFlag;
-	}
-	
-	public boolean isTrainSuccessFlag() {
-		return trainSuccessFlag;
-	}
+	}		
 	
 	public void setTrainSuccessFlag(boolean trainSuccessFlag) {
 		this.trainSuccessFlag = trainSuccessFlag;

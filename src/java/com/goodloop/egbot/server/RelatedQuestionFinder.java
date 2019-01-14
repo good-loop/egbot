@@ -7,7 +7,6 @@ import com.goodloop.egbot.data.SEQuestion;
 import com.winterwell.es.IESRouter;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.SearchRequestBuilder;
-import com.winterwell.es.client.query.ESQueryBuilder;
 import com.winterwell.es.client.query.ESQueryBuilders;
 import com.winterwell.es.client.query.MoreLikeThisQueryBuilder;
 import com.winterwell.utils.Dep;

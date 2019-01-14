@@ -2,8 +2,6 @@ package com.goodloop.egbot.server;
 
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.web.app.AMain;
-import com.winterwell.web.app.AppUtils;
-import com.winterwell.web.app.ISiteConfig;
 import com.winterwell.web.app.JettyLauncher;
 import com.winterwell.web.app.MasterServlet;
 

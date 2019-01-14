@@ -3,8 +3,6 @@ package com.goodloop.egbot.tools;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jetty.util.ajax.JSON;
@@ -12,14 +10,11 @@ import org.eclipse.jetty.util.ajax.JSON;
 //import org.python.core.PyString;
 //import org.python.util.PythonInterpreter;
 
-import com.winterwell.gson.GsonBuilder;
-import com.winterwell.utils.IReplace;
 import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.CSVReader;
-import com.winterwell.utils.io.CSVWriter;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 /**
