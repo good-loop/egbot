@@ -11,6 +11,7 @@ import com.winterwell.depot.Desc;
 import com.winterwell.utils.IFilter;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.log.LogFile;
 /**
  * To evaluate EgBot!
  * 
@@ -29,6 +30,8 @@ public class EvaluatePredictions {
 	
 	public EvaluatePredictions() {
 	}
+	
+	static LogFile logFile = new LogFile();
 	
 	public void run() throws Exception {
 			
