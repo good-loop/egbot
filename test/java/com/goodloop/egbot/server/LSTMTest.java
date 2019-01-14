@@ -17,7 +17,7 @@ import com.winterwell.utils.log.Log;
 
 public class LSTMTest {
 
-	@Test
+//	@Test
 	public void testTrainDummy() throws Exception {
 		LSTM lstm = new LSTM();
 		Desc<IEgBotModel> modelDesc = lstm.getDesc();
@@ -57,5 +57,12 @@ public class LSTMTest {
 		String answer = lstm.generateMostLikely(q, 30);	
 		
 		System.out.println(answer);
+	}
+	
+	@Test
+	public void testSaveTensor() throws IOException {
+		LSTM lstm = new LSTM();
+		lstm.initSaveTensor();
+		lstm.loadSaveTensor();
 	}
 }

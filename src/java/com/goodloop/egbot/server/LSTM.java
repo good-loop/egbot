@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,10 +71,12 @@ import com.winterwell.utils.time.TUnit;
  * @author daniel
  *
  */
+
+// TODO: refactor to use Depot, as currently it redundantly performs its own version of logging and saving models 
 public class LSTM implements IEgBotModel {
 	// model guts
 	List<Tensor<?>> model;
-	public Desc desc;
+	public Desc cpdesc;
 	
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag; 
@@ -94,10 +97,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	int num_hidden;
 		
-	@Deprecated // use std logging
-	String logLocation;
-	
-	// stats tracker
+	// stats tracking
 	ArrayList<Float> trainAccuracies;
 	int sessRunCount;
 	int questionCount;
@@ -110,16 +110,9 @@ public class LSTM implements IEgBotModel {
 	 */
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
-		
-		desc = new Desc<>("EgBot-lstm", model.getClass());
-		desc.setTag("egbot");
-		
-		// FIXME move out of algorithm level code. Also make it work on any checkout
-		String depotLocation = "/home/irina/egbot-learning-depot";	
-		logLocation = depotLocation + "/results/log.txt";
-		saveLocation = depotLocation + "/results/" + desc.getName();
-		backupLocation = depotLocation + "/backups";
 		trainAccuracies = new ArrayList<Float>();
+		
+		initSaveTensor();			
 	}
 	
 	/**
@@ -127,14 +120,13 @@ public class LSTM implements IEgBotModel {
 	 */
 	public void init(List<File> files) throws IOException {
 		// training parameters
-		seq_length = 30; 	// sequence length
-		num_epochs = 10; // training epochs 
-		num_hidden = 256; // number of hidden layers
+		seq_length = 30;
+		num_epochs = 10; 
+		num_hidden = 256; 
 		idealVocabSize = 10000;
 		sessRunCount = 0;
 		questionCount = 0;
 		lStartTime = System.nanoTime();	
-
 		loadVocab(files);
 	}
 	
@@ -286,7 +278,7 @@ public class LSTM implements IEgBotModel {
 			// close file to save memory
 			jr.close();
 
-			System.out.printf("Saved trained model to file: %s\n", saveLocation);
+			System.out.printf("Saved trained model to file: %s\n", Depot.getDefault().getLocalPath(getDesc()));
 		}
 	}
 
@@ -325,20 +317,19 @@ public class LSTM implements IEgBotModel {
 		System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
 	}
 
+	// TODO: should we save vocab to depot?
 	private File vocabPath() {							
-		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + desc.getName()  + ".txt";
+		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + cpdesc.getName()  + ".txt";
 		return new File(vocabPath);
 	}
 	
 	/**
-	 * train the model and save it in /data/models/final/v3/checkpoint<VERSION_NUMBER>
+	 * train the model and save it 
 	 * @param trainingDataArray is the data that will be used for training, expected to be in the shape of a list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ] 
 	 * @throws IOException
 	 */
 	public void trainEach(List<List<String>> trainingDataArray) throws IOException {	
-		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
-
+		
 	    // setting session config to use the GPU
         GPUOptions gpuOptions = GPUOptions.newBuilder()
         		.setPerProcessGpuMemoryFraction(1)
@@ -346,44 +337,33 @@ public class LSTM implements IEgBotModel {
                 .setAllowGrowth(true)
                 .build();
         
-        ConfigProto config = ConfigProto.newBuilder()
+        byte[] config = ConfigProto.newBuilder()
         		//.setLogDevicePlacement(true)
                 .setGpuOptions(gpuOptions)
-                .build();
-
+                .build()
+                .toByteArray();
+        
 	    // load graph
-	    try (Graph graph = new Graph();
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-	    		    		    	
-	    	graph.importGraphDef(graphDef); //builder.build().toByteArray());
-	    	try(Session sess = new Session(graph, config.toByteArray())){
-		    	// initialise or restore.
-				// The names of the tensors and operations in the graph are printed out by the program that created the graph
-		    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-				if (checkpointExists) {						
-					//System.out.println("Restoring model ...");
-					sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-				} else {
-					System.out.println("Initialising model ...");
-					sess.runner().addTarget("init").run();
-				}
-				
-				// print out weight and bias initialisation
-				//System.out.print("Starting from: \n");
-				//printVariables(sess);
-				
-				questionCount ++;
-				
-				// train a bunch of times
-				// TODO: will it be more efficient if we sent batches instead of individual values?
-				for (int epoch = 1; epoch <= num_epochs; epoch++) {				
-					trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch, questionCount);
-				}
-	
-				// save model checkpoint
-				save(sess,checkpointPrefix);
-	    	}
+		Pair2<Graph, Session> gs = loadModel(null);
+	    try (Graph graph = gs.first;
+            Session sess = gs.second;
+            Tensor<String> checkpointPrefix = loadSaveTensor();
+    	)
+    	{
+			// print out weight and bias initialisation
+			//System.out.print("Starting from: \n");
+			//printVariables(sess);
+			
+			questionCount ++;
+			
+			// train a bunch of times
+			// TODO: will it be more efficient if we sent batches instead of individual values?
+			for (int epoch = 1; epoch <= num_epochs; epoch++) {				
+				trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch, questionCount);
+			}
+
+			// save model checkpoint
+			save(sess,checkpointPrefix);	    	
 	    }
 	}
 
@@ -456,33 +436,21 @@ public class LSTM implements IEgBotModel {
 		model = sess.runner()
 				.feed("save/Const", checkpointPrefix)
 				.addTarget("save/control_dependency").run();
-		// do backup every so often (for the full 500,000 questions, there should then be 50 backups)
-		if(questionCount%10000==0) {
-			String newBackupLocation = backupLocation + "/backup" + questionCount/10000;
-			new File(newBackupLocation).mkdir();
-			try(Tensor<String> backupPrefix =
-			        Tensors.create(Paths.get(newBackupLocation, "ckpt").toString())){
-			model = sess.runner().feed("save/Const", backupPrefix).addTarget("save/control_dependency").run();
-			}
-		}
 		// save stats log
         long lEndTime = System.nanoTime();
         long output = lEndTime - lStartTime;
         long sumAcc = 0;
         for(Float acc : trainAccuracies)
         	sumAcc += acc;
-        	       
-		try(FileWriter fw = new FileWriter(logLocation, true);
-			    BufferedWriter bw = new BufferedWriter(fw);
-			    PrintWriter out = new PrintWriter(bw)) {
-			out.println(desc);
-			out.println("No of questions processed: " + questionCount);
-			out.println("Elapsed time in seconds: " + output / 1000000000);
-	        out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
-	        out.println("Avg train accuracy: " + (float)sumAcc/sessRunCount);
-	        out.println();
-			out.close();
-		}
+        	    
+        // TODO: check that this is the proper way for me to log model results/ stats 
+        Log.i(
+			"Model description: " + cpdesc + "\n" +
+			"No of questions processed: " + questionCount + "\n" +
+			"Elapsed time in seconds: " + output / 1000000000 + "\n" +
+	        "Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000) + "\n" +
+	        "Avg train accuracy: " + (float)sumAcc/sessRunCount + "\n\n"
+        );
 	}
 	
 	/**
@@ -590,10 +558,13 @@ public class LSTM implements IEgBotModel {
 		String answer = "<ERROR>"; 
 		
 	    // load graph
-		Pair2<Graph, Session> graph_session = loadGraph();
-		Graph graph = graph_session.first;
-		Session sess = graph_session.second;
-	    try (Tensor<String> checkpointPrefix = createTensor())
+		Pair2<Graph, Session> gs = loadModel(null);
+		
+	    try (
+    		Graph graph = gs.first;
+    		Session sess = gs.second;
+    		Tensor<String> checkpointPrefix = loadSaveTensor()
+    	)
 	    {	    					        
 			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
@@ -633,20 +604,52 @@ public class LSTM implements IEgBotModel {
 			}
 			answer = Arrays.deepToString(answerArray);
 			return answer;
-	    } finally {
-	    	graph_session.second.close();
-	    	graph_session.first.close();	    	
-	    }
-	    
+	    }	    
 	}
-
-	private Tensor<String> createTensor() {
-		Desc cpdesc = new Desc("chckpt", Tensor.class);
-		cpdesc.setTag("egbot");
+	
+	/**
+	 *  initialises Desc to identify the model and creates Depot saving path 
+	 */
+	// TODO: find out how this would work when i want to train with different data and keep both results?
+	public void initSaveTensor() {
+		cpdesc = new Desc("chckpt", Tensor.class); 
+		cpdesc.setTag("egbot"); 	
 		// create a Desc which is specific to this LSTM
 		cpdesc.addDependency("parent", getDesc());		
 		String id = cpdesc.getId(); // make sure the desc is finalised
+		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); // saves it to datastore (e.g. /home/irina/winterwell/datastore/egbot/...)
+		// make it a dir
+		saveDirPath.mkdirs();
+	}
+	
+	/**
+	 * load the depot save location as a tensor
+	 * @return
+	 */
+	public Tensor<String> loadSaveTensor() {
+		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); 
+		return Tensors.create(saveDirPath.getAbsolutePath());
+	}
+	
+	/**
+	 * check that we have a saved model to load
+	 * @return
+	 */
+	public boolean checkModelExists() {
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc);
+		return saveDirPath.exists();
+	}
+
+	@Deprecated
+	public Tensor<String> createTensor() {
+		//!TODO: should this be done once and then called using a getter?
+		cpdesc = new Desc("chckpt", Tensor.class);
+		cpdesc.setTag("egbot"); 	// TODO: find out how it knows to back up egbot files on ext drive
+		// create a Desc which is specific to this LSTM
+		cpdesc.addDependency("parent", getDesc());		
+		String id = cpdesc.getId(); // make sure the desc is finalised
+		// TODO: does depot need to be initialised just like in MM (e.g. Depot.getDefault().init()) 
+		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); // saves it to datastore (e.g. /home/irina/winterwell/datastore/egbot/...)
 		// make it a dir
 		saveDirPath.mkdirs();
 		return Tensors.create(saveDirPath.getAbsolutePath());
@@ -656,8 +659,7 @@ public class LSTM implements IEgBotModel {
 	 * a blank untrained graph -- structure but no training
 	 */
 	static final File TENSORFLOW_GRAPH = new File(System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb");
-	
-	
+		
 	/**
 	 * Load the graph
 	 * @return
@@ -681,9 +683,8 @@ public class LSTM implements IEgBotModel {
 	 */
 	public String sampleWord(String question) throws Exception {
 		String nextWord = "<ERROR>"; // ??why??
-		final byte[] graphDef = checkGraph();
 	    // load graph
-		Pair2<Graph, Session> graph_sess = loadGraph();
+		Pair2<Graph, Session> graph_sess = loadModel(null);
 	    try {	    		
 	    	Session sess = graph_sess.second;
 			// run graph with given input and fetch output
@@ -710,18 +711,26 @@ public class LSTM implements IEgBotModel {
 	    return nextWord;
 	}
 	
-	private Pair2<Graph,Session> loadGraph() throws IOException {
+	/**
+	 * restores the trained model (the graph and session)
+	 * @param config is the tensorflow session settings allowing us to choose GPU/CPU usage etc 
+	 * @return
+	 * @throws IOException
+	 */
+	// TODO: should config be moved out so as to be defined in the constructor depending on whether the experiment should use the GPU?
+	private Pair2<Graph,Session> loadModel(byte[] config) throws IOException {
 		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 		Graph graph = new Graph();
-		Session sess = new Session(graph);
-		
+		Session sess = new Session(graph, config);
 		graph.importGraphDef(graphDef);
-		if ( ! checkpointExists) {
+		
+		// does the model exist?
+		if (!checkModelExists()) {
 			throw new IOException("Error: Couldn't restore model ...\n");
 		}
 
-        Tensor<String> checkpointPrefix = Tensors.create(Paths.get(saveLocation, "ckpt").toString());
+		// if yes, restore it
+        Tensor<String> checkpointPrefix = loadSaveTensor();
 		System.out.println("Restoring model ...");
 		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();	
 	        
@@ -738,11 +747,11 @@ public class LSTM implements IEgBotModel {
 	public double scoreAnswer(String q, String t) throws IOException {
 		double score = 0; 
 	    // load graph
-		Pair2<Graph, Session> gs = loadGraph();
+		Pair2<Graph, Session> gs = loadModel(null);
 	    try (
     		Graph graph = gs.first;
             Session sess = gs.second;
-            Tensor<String> checkpointPrefix = createTensor();		
+            Tensor<String> checkpointPrefix = loadSaveTensor();		
 	    )
 	    {
 			// tokenise input
@@ -806,24 +815,14 @@ public class LSTM implements IEgBotModel {
 		for (int k = 0; k < a.size(); k++) {
 			String ans = a.get(k);
 		
-			byte[] graphDef = checkGraph();	    
-			final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
-	
 		    // load graph
-		    try (Graph graph = new Graph();
-		        Session sess = new Session(graph);
-		        Tensor<String> checkpointPrefix =
-		        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-		    	
-		    	graph.importGraphDef(graphDef);
-				if (checkpointExists) {						
-					//System.out.println("Restoring model ...");
-					sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-				} else {
-					System.out.print("Error: Couldn't restore model ...\n");
-					return 0;
-				}
-				
+			Pair2<Graph, Session> gs = loadModel(null);
+		    try (
+	    		Graph graph = gs.first;
+	            Session sess = gs.second;
+	            Tensor<String> checkpointPrefix = loadSaveTensor();		
+		    )
+		    {				
 				// tokenise input
 				String[] qArray = EgBotDataLoader.tokenise(q);
 				String[] tArray = EgBotDataLoader.tokenise(ans);
@@ -949,7 +948,7 @@ public class LSTM implements IEgBotModel {
 	 * load saved model. NB the model is actually loaded as needed by train / sample
 	 */
 	public void load() throws IOException {
-		loadGraph();
+		loadModel(null);
 	}
 	
 	/**
@@ -962,26 +961,14 @@ public class LSTM implements IEgBotModel {
 	 */
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
 		String answer = "<ERROR>";
-		byte[] graphDef = checkGraph();	    
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 
 	    // load graph
-	    try (Graph graph = new Graph();
-	        Session sess = new Session(graph);
-	        Tensor<String> checkpointPrefix =
-	        Tensors.create(Paths.get(saveLocation, "ckpt").toString())) {
-	    	
-	    	graph.importGraphDef(graphDef);
-	    	// initialise or restore.
-			// The names of the tensors and operations in the graph are printed out by the program that created the graph
-	    	// you can find the names in the following file: data/models/final/v3/tensorNames.txt
-			if (checkpointExists) {						
-				System.out.println("Restoring model ...");
-				sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();
-			} else {
-				System.out.println("Couldn't find model ...\n");
-				return "";
-			}
+		Pair2<Graph, Session> gs = loadModel(null);
+	    try (Graph graph = gs.first;
+            Session sess = gs.second;
+            Tensor<String> checkpointPrefix = loadSaveTensor();
+    	)
+    	{
 			//printVariables(sess);
 			String[] questionArray = EgBotDataLoader.tokenise(question);
 			
@@ -1031,7 +1018,7 @@ public class LSTM implements IEgBotModel {
 
 	@Override
 	public Desc getDesc() {
-		return desc;
+		return cpdesc;
 	}
 	
 	@Override
