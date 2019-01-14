@@ -93,16 +93,7 @@ public class LSTM implements IEgBotModel {
 	 * number of hidden layers
 	 */
 	int num_hidden;
-	
-	@Deprecated // use Depot
-	String saveLocation;
-	
-	/**
-	 * Saves interim results.
-	 * @deprecated // use Depot or remove
-	 */
-	String backupLocation;
-	
+		
 	@Deprecated // use std logging
 	String logLocation;
 	
