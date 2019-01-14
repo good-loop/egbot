@@ -74,6 +74,8 @@ import com.winterwell.utils.time.TUnit;
 
 // TODO: refactor to use Depot, as currently it redundantly performs its own version of logging and saving models 
 public class LSTM implements IEgBotModel {
+	
+	private static final String LOGTAG = "LSTM";
 	// model guts
 	List<Tensor<?>> model;
 	public Desc cpdesc;
@@ -440,17 +442,16 @@ public class LSTM implements IEgBotModel {
         long lEndTime = System.nanoTime();
         long output = lEndTime - lStartTime;
         long sumAcc = 0;
-        for(Float acc : trainAccuracies)
+        for(Float acc : trainAccuracies) {
         	sumAcc += acc;
+        }
         	    
         // TODO: check that this is the proper way for me to log model results/ stats 
-        Log.i(
-			"Model description: " + cpdesc + "\n" +
-			"No of questions processed: " + questionCount + "\n" +
-			"Elapsed time in seconds: " + output / 1000000000 + "\n" +
-	        "Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000) + "\n" +
-	        "Avg train accuracy: " + (float)sumAcc/sessRunCount + "\n\n"
-        );
+        Log.i(LOGTAG, "Model description: " + cpdesc);
+        Log.i(LOGTAG, "No of questions processed: " + questionCount);
+        Log.i(LOGTAG, "Elapsed time in seconds: " + output / 1000000000); 
+        Log.i(LOGTAG, "Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
+        Log.i(LOGTAG, "Avg train accuracy: " + (float)sumAcc/sessRunCount);
 	}
 	
 	/**
