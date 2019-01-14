@@ -72,7 +72,6 @@ import com.winterwell.utils.time.TUnit;
  *
  */
 
-// TODO: refactor to use Depot, as currently it redundantly performs its own version of logging and saving models 
 public class LSTM implements IEgBotModel {
 	// model guts
 	List<Tensor<?>> model;
@@ -111,7 +110,6 @@ public class LSTM implements IEgBotModel {
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
 		trainAccuracies = new ArrayList<Float>();
-		
 		initSaveTensor();			
 	}
 	
@@ -800,18 +798,34 @@ public class LSTM implements IEgBotModel {
 	}	
 	
 	/**
-	 * score best guess 
+	 * score model's ability to guess the correct answer from a set of answers
+	 * @param q question 
+	 * @param t target
+	 * @param a answers
+	 * @return 1 if correct, 0 if incorrect
+	 * @throws IOException
+	 */
+	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
+		double score = 0;
+		int bestAnsIdx = pickBest(q, t, a);
+		if (a.indexOf(t) == bestAnsIdx) return 1; 
+		else return 0;
+	}
+	
+	/**
+	 * get model's best guess from a selection of answers, of which one is correct
 	 * @param q question 
 	 * @param t target
 	 * @param a answers
 	 * @return index of answer deemed to be the best guess
 	 * @throws IOException 
 	 */
-	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
-		double score = 0;
-		double bestAvg = -999; // artifically low score
+	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
+		double logLowScore = -999; // artifically low score (TODO: is this correct way of doing it?)
+		double bestAnsScore = logLowScore;
 		int bestAnsIdx = -1;
 		
+		// for each answer in the list
 		for (int k = 0; k < a.size(); k++) {
 			String ans = a.get(k);
 		
@@ -837,13 +851,14 @@ public class LSTM implements IEgBotModel {
 					System.arraycopy(qArray, qArray.length-seq_length, instanceArray, 0, seq_length);
 				}
 				
-				// for each target word
+				double wordScores = logLowScore; // sum of prob of each word appearing (based on the prev words before it)
+				// for each word in the answer (find out how likely it is that it would come up next)
 				for (int i = 0; i < tArray.length; i++) {
 					try (Tensor<?> input = Tensors.create(wordsIntoInputVector(instanceArray));
 						Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tArray[i]))) {
 						List<Tensor<?>> outputs = sess.runner()
 								.feed("input", input)
-								.feed("target", target)
+								.feed("target", target) // hmm we only get the probs of the best guess, rather than all probs?
 								.fetch("output") // prediction
 								.fetch("correct_pred") // validation accuracy
 								.run();
@@ -855,23 +870,21 @@ public class LSTM implements IEgBotModel {
 						int targetPos = getKeyByValue(vocab,tArray[i]);
 						// find out the prob of that word, as returned from the model
 						float probWord = outputArray[0][targetPos];
-						// add the log prob to the score
-						score += Math.log(probWord);
-					}
-					
+						// add the log prob to the score (so as to calculate the answer avg later)
+						wordScores += Math.log(probWord);
+					}					
 					//shift questionArray to include the next target word at the end so as to allow us to generate the next word after that
 					System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
 					instanceArray[seq_length-1] = tArray[i];
 				}
-				// avg the score and then return it
-				double avg = score/tArray.length;
-				if (bestAvg > avg) {
-					bestAnsIdx = a.indexOf(ans);
-				}
+			    double ansScore = wordScores/tArray.length;
+			    if (ansScore > bestAnsScore){
+				    bestAnsScore = ansScore;
+				    bestAnsIdx = k;
+			    }
 		    }
 		}
-		if (a.indexOf(t) == bestAnsIdx) return 1; 
-		else return 0;
+		return bestAnsIdx;
 	}
 	
 	/**
@@ -923,7 +936,8 @@ public class LSTM implements IEgBotModel {
 
 	/**
 	 * method called by EgBotDataLoader to train on new data point
-	 * this method is separate from trainEach, in case we want to do mini-batch training 
+	 * this method is separate from trainEach, in case we want to do mini-batch training
+	 * for reasons why it's called train1 rather than train see {@link com.winterwell.maths.ITrainable.Unsupervised.train1} 
 	 */
 	@Override
 	public void train1(Map qa) {
