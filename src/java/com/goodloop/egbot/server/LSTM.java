@@ -462,10 +462,10 @@ public class LSTM implements IEgBotModel {
 		model = sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/control_dependency").run();
 		// do backup every so often (for the full 500,000 questions, there should then be 50 backups)
 		if(questionCount%10000==0) {
-			backupLocation = backupLocation + "/backup" + questionCount/10000;
-			new File(backupLocation).mkdir();
+			String newBackupLocation = backupLocation + "/backup" + questionCount/10000;
+			new File(newBackupLocation).mkdir();
 			try(Tensor<String> backupPrefix =
-			        Tensors.create(Paths.get(backupLocation, "ckpt").toString())){
+			        Tensors.create(Paths.get(newBackupLocation, "ckpt").toString())){
 			model = sess.runner().feed("save/Const", backupPrefix).addTarget("save/control_dependency").run();
 			}
 		}
