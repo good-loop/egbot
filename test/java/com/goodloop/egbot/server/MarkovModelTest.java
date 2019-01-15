@@ -40,8 +40,8 @@ public class MarkovModelTest {
 
 		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 100 != 1;
-		// load the list of egbot files
-		List<File> files = EgBotDataLoader.setup();
+		// load the list of egbot files   
+		List<File> files = EgBotDataLoader.setupTiny(); // use dummy data
 		EgBotExperiment experiment = new EgBotExperiment();
 		// set the model the experiment uses
 		experiment.setModel(mm, modelDesc);
@@ -50,7 +50,7 @@ public class MarkovModelTest {
 		// set the train filter		
 		EgBotData trainData = new EgBotData(files, trainFilter);
 		// set the train data the experiment uses
-		Desc<EgBotData> trainDataDesc = new Desc("Dummy-data", EgBotData.class);
+		Desc<EgBotData> trainDataDesc = new Desc("Egbot-data", EgBotData.class);
 		trainDataDesc.put("use", "train");		
 		experiment.setTrainData(trainData, trainDataDesc);
 		// do training
@@ -63,19 +63,61 @@ public class MarkovModelTest {
 	public void testSample() throws IOException {
 		String q = "what is a gaussian distribution";
 		
-		System.out.println("Loading model ...");
+		Log.i("Loading model ...");
 		MarkovModel mm = new MarkovModel();
 		mm.load();  // TODO: clarify the diff between load and init for MM and LSTM
 		
-		System.out.println("Generating answer ...");
+		Log.i("Generating results ...");
+		Log.i("Question: " + q);
 		String answer = mm.sample(q, 30);	
-		System.out.println(answer);
+		Log.i("Answer: " + answer);
 	}
 	
-	@Test
+//	@Test
 	public void testLoading() {
 		MarkovModel mm = new MarkovModel();
 		mm.load();
 		assert mm.isReady();
+	}
+	
+	@Test
+	public void trainAndSaveMoreThanOneModel() throws Exception {
+		File saveLocation1;
+		File saveLocation2; 
+		
+		{// first model we want to save
+			MarkovModel mm = new MarkovModel();
+			Desc<IEgBotModel> modelDesc = mm.getDesc();
+	
+			// set up filters (that decide train/test split)
+			IFilter<Integer> trainFilter = n -> n % 100 != 1;
+			IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+			// load the list of egbot files
+			List<File> files = EgBotDataLoader.setupTiny();
+			
+			// set up experiment
+			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files);
+			
+			saveLocation1 = Depot.getDefault().getLocalPath(modelDesc);
+			Log.i("Results at: " + saveLocation1);
+		}
+		
+		{// second model we want to save
+			MarkovModel mm = new MarkovModel();
+			Desc<IEgBotModel> modelDesc = mm.getDesc();
+		
+			// set up filters (that decide train/test split)
+			IFilter<Integer> trainFilter = n -> n % 100 != 1;
+			IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+			// load the list of egbot files
+			List<File> files = EgBotDataLoader.setupTiny();
+			
+			// set up experiment
+			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files);
+			
+			saveLocation2 = Depot.getDefault().getLocalPath(modelDesc);
+			Log.i("Results at: " + saveLocation2);
+		}
+		assert !saveLocation1.equals(saveLocation2);
 	}
 }
