@@ -25,7 +25,7 @@ public class LSTMTest {
 		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 100 != 1;
 		// load the list of egbot files
-		List<File> files = EgBotDataLoader.setupDummy();
+		List<File> files = EgBotDataLoader.setupTiny();
 		EgBotExperiment experiment = new EgBotExperiment();
 		// set the model the experiment uses
 		experiment.setModel(lstm, modelDesc);
@@ -50,7 +50,7 @@ public class LSTMTest {
 		
 		System.out.println("Loading model ...");
 		LSTM lstm = new LSTM();
-		lstm.init(EgBotDataLoader.setupDummy());
+		lstm.init(EgBotDataLoader.setupTiny());
 		lstm.load(); 
 		
 		System.out.println("Generating answer ...");

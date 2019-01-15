@@ -13,7 +13,7 @@ public class EvaluationTest {
 	/**
 	 * artifacts tagged egbot should save to the shared network drive
 	 */
-	@Test
+//	@Test
 	public void testDepot() {		
 		Depot depot = Depot.getDefault();
 		DepotConfig config = depot.getConfig();
@@ -27,16 +27,16 @@ public class EvaluationTest {
 		assert lp.toString().contains("egbot-learning-depot") : lp;
 	}
 	
-	@Test
+//	@Test
 	public void testLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm);
 	}	
 
-//	@Test
-//	public void testMarkov() throws Exception {
-//		MarkovModel lstm = new MarkovModel();						
-//		new EvaluatePredictions().runModel(lstm);
-//	}
+	@Test
+	public void testMarkov() throws Exception {
+		MarkovModel mm = new MarkovModel();						
+		new EvaluatePredictions().runModel(mm);
+	}
 
 }

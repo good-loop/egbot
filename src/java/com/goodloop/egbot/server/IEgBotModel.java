@@ -61,5 +61,5 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 */
 	void setTrainSuccessFlag(boolean b);
 
-	double scorePickBest(String question, String target, ArrayList<String> answers);	
+	int scorePickBest(String question, String target, ArrayList<String> answers) throws IOException;	
 }

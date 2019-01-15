@@ -22,6 +22,8 @@ import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.RateCounter;
 import com.winterwell.utils.time.TUnit;
+import com.winterwell.utils.log.Log;
+
 public class EgBotDataLoader {
 	List<File> files;
 	RateCounter rate;
@@ -56,12 +58,12 @@ public class EgBotDataLoader {
 	}
 	
 	/**
-	 * finds dummy files in preparation for data loading
-	 * @return list of dummy files
+	 * finds tiny files in preparation for data loading
+	 * @return list of tiny files
 	 */
-	public static List<File> setupDummy() {
+	public static List<File> setupTiny() {
 		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/egbot/dummy.json"));
-		return fs;
+		return fs; 
 	}
 	
 	/**
@@ -74,7 +76,7 @@ public class EgBotDataLoader {
 		
 		List<List<String>> trainingData = new ArrayList<List<String>>(); 
 		for(File file : files) {
-			System.out.println("File: "+file+"...");
+			Log.i("File: "+file+"...");
 			Gson gson = new Gson();
 			JsonReader jr = new JsonReader(FileUtils.getReader(file));
 			jr.beginArray();
@@ -83,13 +85,11 @@ public class EgBotDataLoader {
 			while(jr.hasNext()) {
 				Map qa = gson.fromJson(jr, Map.class);			
 				String question_body = (String) qa.get("question");
-				//System.out.println(question_body);
 				String answer_body = (String) qa.get("answer");
-				//System.out.println(answer_body);
 				trainingData.add(Arrays.asList(tokenise(question_body + " " + answer_body)));
 				c++;
 				rate.plus(1);
-				if (c % 1000 == 0) System.out.println(c+" "+rate+"...");	
+				if (c % 1000 == 0) Log.i(c+" "+rate+"...");	
 			} 
 			jr.close();
 		}
@@ -152,13 +152,15 @@ public class EgBotDataLoader {
 		// no -- train!
 		assert model.getWmc() != null;
 		
+		Log.i("Starting training ...");
+		
 		// init model (vocab etc)
 		model.init(trainData.files);
 							
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		
 		for(File file : trainData.files) {
-			System.out.println("File: "+file+"...");
+			Log.i("File: "+file+"...");
 	
 			Gson gson = new Gson();
 			// zip or plain json?
@@ -182,12 +184,14 @@ public class EgBotDataLoader {
 				Map qa = gson.fromJson(jr, Map.class);
 				model.train1(qa);
 				rate.plus(1);
-				if (c % 1000 == 0) System.out.println(c+" "+rate+"...");
+				if (c % 1000 == 0) Log.i(c+" "+rate+"...");
 			} 
 			jr.close();
 			
 			if (false) break;
 		}
+		
+		Log.i("Yay, finished training :) \n");
 		model.setTrainSuccessFlag(true);
 		Depot.getDefault().flush();
 	}
