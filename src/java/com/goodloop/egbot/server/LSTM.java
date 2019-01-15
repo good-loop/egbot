@@ -443,8 +443,8 @@ public class LSTM implements IEgBotModel {
         for(Float acc : trainAccuracies) {
         	sumAcc += acc;
         }
-        	    
-        // TODO: check that this is the proper way for me to log model results/ stats 
+       
+        // log some stats about how the training went TODO: should i make these permanent?
         Log.i(LOGTAG, "Model description: " + cpdesc);
         Log.i(LOGTAG, "No of questions processed: " + questionCount);
         Log.i(LOGTAG, "Elapsed time in seconds: " + output / 1000000000); 
@@ -822,8 +822,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException 
 	 */
 	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
-		double logLowScore = -999; // artifically low score (TODO: is this correct way of doing it?)
-		double bestAnsScore = logLowScore;
+		double bestAnsScore = -999; // artifically low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
 		
 		// for each answer in the list
@@ -852,7 +851,7 @@ public class LSTM implements IEgBotModel {
 					System.arraycopy(qArray, qArray.length-seq_length, instanceArray, 0, seq_length);
 				}
 				
-				double wordScores = logLowScore; // sum of prob of each word appearing (based on the prev words before it)
+				double wordScores = 0; // sum of prob of each word appearing (based on the prev words before it)
 				// for each word in the answer (find out how likely it is that it would come up next)
 				for (int i = 0; i < tArray.length; i++) {
 					try (Tensor<?> input = Tensors.create(wordsIntoInputVector(instanceArray));
@@ -878,7 +877,9 @@ public class LSTM implements IEgBotModel {
 					System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
 					instanceArray[seq_length-1] = tArray[i];
 				}
+				// avg the word scores
 			    double ansScore = wordScores/tArray.length;
+				// save the index of the answer that has the best average word score
 			    if (ansScore > bestAnsScore){
 				    bestAnsScore = ansScore;
 				    bestAnsIdx = k;

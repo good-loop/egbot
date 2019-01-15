@@ -7,6 +7,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.tensorflow.Graph;
+import org.tensorflow.Session;
+import org.tensorflow.Tensor;
+import org.tensorflow.Tensors;
+
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.depot.IHasDesc;
@@ -26,6 +31,7 @@ import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.utils.IFilter;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.log.Log;
 
 public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
@@ -219,37 +225,52 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 	
 	/**
-	 * score best guess 
+	 * score model's ability to guess the correct answer from a set of answers
+	 * @param q question 
+	 * @param t target
+	 * @param a answers
+	 * @return 1 if correct, 0 if incorrect
+	 * @throws IOException
+	 */
+	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
+		int bestAnsIdx = pickBest(q, t, a);
+		if (a.indexOf(t) == bestAnsIdx) return 1; 
+		else return 0;
+	}
+	
+	/**
+	 * get model's best guess from a selection of answers, of which one is correct
 	 * @param q question 
 	 * @param t target
 	 * @param a answers
 	 * @return index of answer deemed to be the best guess
+	 * @throws IOException 
 	 */
-	public int scorePickBest(String q, String t, ArrayList<String> a) {
-		double score = 0; 
-		double bestAvg = -999; // artifically low score
+	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
+		double bestAvg = -999; // artifically low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
 		
+		// for each answer in the list
 		for (String ans : a) {
-			String body = q + " " + ans;
+			double wordScores = 0;
+			int count = 0;
+			String body = q + " " + ans; // concatenate q and a
 			SimpleDocument doc = new SimpleDocument(body);
 			SitnStream ss2 = ssFactory.factory(doc);
-			int count = 0;
 			for (Sitn<Tkn> sitn : ss2) {					
 				// add the log prob to the score
 				double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); 
-				//System.out.println("Example log prob: " + p);
-				score += p;
+				wordScores += p; // add the log prob to the score (so as to calculate the answer avg later)
 				count++;
 			}
-			// avg the score
-			double avg = score/count;
-			if (bestAvg > avg) {
+			// avg the word scores
+			double avg = wordScores/count;
+			// save the index of the answer that has the best average word score
+			if (avg > bestAvg) {
 				bestAnsIdx = a.indexOf(ans);
 			}
 		}
-		if (a.indexOf(t) == bestAnsIdx) return 1; 
-		else return 0;
+		return bestAnsIdx;
 	}
 	
 	/**

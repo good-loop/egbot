@@ -2,6 +2,7 @@ package com.goodloop.egbot.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -58,5 +59,7 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	/** 
 	 * used once training finished on all egbot files
 	 */
-	void setTrainSuccessFlag(boolean b);	
+	void setTrainSuccessFlag(boolean b);
+
+	double scorePickBest(String question, String target, ArrayList<String> answers);	
 }
