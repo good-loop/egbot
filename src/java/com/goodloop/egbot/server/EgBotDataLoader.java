@@ -62,7 +62,7 @@ public class EgBotDataLoader {
 	 * @return list of tiny files
 	 */
 	public static List<File> setupTiny() {
-		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/egbot/dummy.json"));
+		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/dummy.json"));
 		return fs; 
 	}
 	
