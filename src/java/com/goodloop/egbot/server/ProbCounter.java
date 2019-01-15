@@ -9,4 +9,14 @@ public class ProbCounter {
 		c = new Random();
 		c.setSeed(42);
 	}
+
+	public Random getC() {
+		return c;
+	}
+
+	public void setC(Random c) {
+		this.c = c;
+	}
+	
+	
 }

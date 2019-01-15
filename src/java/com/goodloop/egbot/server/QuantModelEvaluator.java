@@ -3,6 +3,9 @@ package com.goodloop.egbot.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.winterwell.depot.Depot;
@@ -50,7 +53,10 @@ public class QuantModelEvaluator {
 		assert model.isReady(); 
 
 		Log.d("Scoring ...");
+		
+		// construct evaluation data set
 		EgBotData testData = (EgBotData) experiment.getTestData();
+		ArrayList<Map<Object,Object>> evalSet = new ArrayList();
 		for(File file : testData.files) {
 			Gson gson = new Gson();
 			// zip or plain json?
@@ -71,20 +77,42 @@ public class QuantModelEvaluator {
 					continue;
 				}
 				c++;
-				
-				Map eg = gson.fromJson(jr, Map.class);		
-				String question = (String) eg.get("question");
-				String target = (String) eg.get("answer");				
-				double score = model.scoreAnswer(question, target);
-				assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
-				avgScore.train1(score);
-					
-				if(c%100==0) {
-					System.out.printf("Avg score after %d evaluation examples: %f\n", c, avgScore.getMean());			
-				}						
+				Map<Object,Object> eg = gson.fromJson(jr, Map.class);		
+				evalSet.add(eg);									
 			} 
-			jr.close();			
+			jr.close();
 		}	
+
+		// select right and wrong answers and then score the evaluation set
+		// TODO: should i do it this way or by simply selecting 5 random numbers a bunch of times (that might mean that not every answer gets to be a correct answer)
+		for (int i = 0; i < evalSet.size(); i++) {
+			Map<Object, Object> qa = evalSet.get(i);
+			String question = (String) qa.get("question");
+			String target = (String) qa.get("answer");
+			
+			// a list containing 1 correct answer and 4 wrong ones
+			ArrayList<String> answers = new ArrayList<String>();
+			// adding correct answer
+			answers.add(target);		
+
+			// probabilistic counter to determine a random selection of 4 wrong answers from the set
+			ProbCounter counter = new ProbCounter();
+			for (int j = 0; j < 4; j++) {
+				int wrongIdx = i; 
+				while (wrongIdx == i) {
+					wrongIdx = counter.getC().nextInt(evalSet.size());
+				} 				
+				String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
+				answers.add(wrongAns);
+			}						
+			double score = model.scorePickBest(question, target, answers);
+			assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
+			avgScore.train1(score);
+			
+			// log update
+			if(i%100==0) Log.i(MessageFormat.format("Avg score after %d evaluation examples: %f\n", i, avgScore.getMean()));	
+		}
+		// save final score
 		saveToFile(avgScore);
 	}
 
