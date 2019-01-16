@@ -25,8 +25,6 @@ import com.winterwell.utils.log.Log;
  */
 public class QuantModelEvaluator {
 
-	static File quantSetFile = new File("data/build/quantEval.json");
-	
 	final EgBotExperiment experiment;
 	
 	/**
@@ -46,7 +44,7 @@ public class QuantModelEvaluator {
 	 * @throws Exception
 	 */
 	public void evaluateModel()	throws Exception {
-		MeanVar1D avgScore = new MeanVar1D();			
+		MeanVar1D avgScore = new MeanVar1D();
 		IEgBotModel model = experiment.getModel();
 		assert model != null;
 		// train? no
@@ -105,15 +103,18 @@ public class QuantModelEvaluator {
 				String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
 				answers.add(wrongAns);
 			}						
-			double score = model.scorePickBest(question, target, answers);
+			double score = model.scorePickBest(question, target, answers); // score will be 1 if correct guess, 0 if incorrect
 			assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
 			avgScore.train1(score);
 			
+			//Log.i(MessageFormat.format(" Question: {0}\n Target: {1}\n Answers: {2}", question, target, answers.toString()));
+			
 			// log update
-			if(i%100==0) Log.i(MessageFormat.format("Avg score after %d evaluation examples: %f\n", i, avgScore.getMean()));	
+			if(i%10==0) Log.i(MessageFormat.format("Avg score after {0} evaluation examples: {1}\n", i, avgScore.getMean()));	
 		}
 		// save final score
 		saveToFile(avgScore);
+		Log.i(MessageFormat.format("Percent of correct guesses: {0}", avgScore.getMean()));
 	}
 
 	/**

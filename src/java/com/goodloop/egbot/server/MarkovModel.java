@@ -102,6 +102,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 			Tkn word = sitn.outcome;						
 			wmc.train1(prev, word, 1);				
 		}
+		trainSuccessFlag = true;
 		// save model
 		save();
 	}
@@ -249,7 +250,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
 		double bestAvg = -999; // artifically low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
-		
+
 		// for each answer in the list
 		for (String ans : a) {
 			double wordScores = 0;
@@ -259,7 +260,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 			SitnStream ss2 = ssFactory.factory(doc);
 			for (Sitn<Tkn> sitn : ss2) {					
 				// add the log prob to the score
-				double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); 
+				double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); // sometimes returns -Infinity
 				wordScores += p; // add the log prob to the score (so as to calculate the answer avg later)
 				count++;
 			}
@@ -268,6 +269,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 			// save the index of the answer that has the best average word score
 			if (avg > bestAvg) {
 				bestAnsIdx = a.indexOf(ans);
+				bestAvg = avg;
 			}
 		}
 		return bestAnsIdx;
@@ -292,7 +294,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	@Override
 	public boolean isReady() {
-		return loadSuccessFlag;
+		return loadSuccessFlag || trainSuccessFlag;
 	}
 
 	@Override
