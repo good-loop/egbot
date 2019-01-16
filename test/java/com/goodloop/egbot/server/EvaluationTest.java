@@ -35,7 +35,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testMarkov() throws Exception {
-		MarkovModel mm = new MarkovModel("MSE-20");						
+		MarkovModel mm = new MarkovModel("MSE-20");		
 		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20");	
 	}
 

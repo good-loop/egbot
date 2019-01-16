@@ -107,9 +107,7 @@ public class QuantModelEvaluator {
 			double score = model.scorePickBest(question, target, answers); // score will be 1 if correct guess, 0 if incorrect
 			assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
 			avgScore.train1(score);
-			
-			//Log.i(MessageFormat.format(" Question: {0}\n Target: {1}\n Answers: {2}", question, target, answers.toString()));
-			
+				
 			// log update
 			if(i%10==0) Log.i(MessageFormat.format("Avg score after {0} evaluation examples: {1}\n", i, avgScore.getMean()));	
 		}
@@ -132,7 +130,7 @@ public class QuantModelEvaluator {
 		Desc expDesc = experiment.getDesc();		
 		depot.put(experiment.getDesc(), experiment);
 				
-		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(expDesc));
+		Log.d("Results of quantitative experiment saved to: \n" + Depot.getDefault().getLocalPath(expDesc));
 		depot.flush();
 	}
 	

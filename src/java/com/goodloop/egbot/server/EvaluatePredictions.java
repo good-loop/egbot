@@ -67,13 +67,11 @@ public class EvaluatePredictions {
 		Log.i("Using following training data: " + trainLabel);
 		// load the list of files
 		List<File> files = EgBotDataLoader.setup(trainLabel);
-		// add to Depot desc what train files are used 
-		//modelDesc.put("trainingFiles", trainLabel); this gives me an error: java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 egbot/MarkovModel/local/8356295c56f17d990f0fec4619b8c1a5/w-1+w-2] != depot-desc: Desc[w-1+w-2 egbot/MarkovModel/local/trainingFiles=MSE-part/8356295c56f17d990f0fec4619b8c1a5/w-1+w-2]
-		
+
 		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 2 != 1;
 		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
-		
+
 		// set up experiment
 		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, trainLabel);
 		
@@ -87,7 +85,7 @@ public class EvaluatePredictions {
 		// set the test filter		
 		EgBotData testData = new EgBotData(evalFiles, testFilter);
 		// set the test data the experiment uses
-		Desc<EgBotData> testDataDesc = new Desc(evalLabel, EgBotData.class);
+		Desc testDataDesc = new Desc(evalLabel, EgBotData.class);
 		testDataDesc.put("use", "test");
 		experiment.setTestData(testData, testDataDesc);
 
@@ -98,7 +96,7 @@ public class EvaluatePredictions {
 			quant.evaluateModel();
 		}
 		
-		if (false) {//QUAL EVAL			
+		if (true) {//QUAL EVAL			
 			// set up qualitative evaluator
 			QualModelEvaluator qual = new QualModelEvaluator(experiment);
 			// conduct evaluation
@@ -128,7 +126,7 @@ public class EvaluatePredictions {
 		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();
 		
-		// get experiment desc? !TODO
+		// get experiment desc? 
 		//Desc expDesc = experiment.getDesc();
 		
 		// set the model the experiment uses
@@ -138,7 +136,7 @@ public class EvaluatePredictions {
 		// set the train filter		
 		EgBotData trainData = new EgBotData(files, trainFilter);
 		// set the train data the experiment uses
-		Desc<EgBotData> trainDataDesc = new Desc(trainLabel, EgBotData.class);
+		Desc trainDataDesc = new Desc(trainLabel, EgBotData.class);
 		trainDataDesc.put("use", "train");		
 		experiment.setTrainData(trainData, trainDataDesc);
 		// already trained?

@@ -53,7 +53,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag;
-	private final String tag = "egbot2";
+	private final String tag = "egbobot";
 
 	/**
 	 * default constructor
@@ -62,7 +62,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	 * by default it's using the "MSE-20" dataset which a set of MSE q&a's collected by me 
 	 * find it here: /home/irina/winterwell/egbot/data/eval/tiny.json
 	 * (if you want to specify train files, use other constructor)
-	 * TODO: tried to do keep datalabel outside this class but kept getting errors  
+	 * !TODO: tried to do keep datalabel outside this class but kept getting errors  
 	 * i suspect adding the dependency of wmcDesc to mmDesc messes this up ??   
 	 * 
 	 */
@@ -114,6 +114,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		Log.d("load MarkovModel guts from "+wmcDesc+"...");
 		// replace the newly made blank with a loaded copy if there is one
 		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(wmcDesc);
+		
 		if (_wmc != null) {
 			wmc = _wmc;
 			loadSuccessFlag = true;
@@ -131,6 +132,9 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		Desc d2 = ((IHasDesc) wmc).getDesc();
 		assert d2.equals(wmcDesc);
 		Depot.getDefault().put(wmcDesc, wmc);
+		
+		// saving model TODO: is this necessary?
+		Depot.getDefault().put(mmDesc, this);
 	}
 	
 	@Override

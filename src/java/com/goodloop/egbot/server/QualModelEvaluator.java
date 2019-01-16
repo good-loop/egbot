@@ -107,7 +107,7 @@ public class QualModelEvaluator {
 		Desc expDesc = experiment.getDesc();		
 		depot.put(experiment.getDesc(), experiment);
 		
-		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(expDesc));
+		Log.d("Results of qualitative experiment saved to: \n" + Depot.getDefault().getLocalPath(expDesc));
 		depot.flush();		
 	}
 	
