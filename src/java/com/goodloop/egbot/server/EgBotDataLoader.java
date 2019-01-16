@@ -27,11 +27,13 @@ import com.winterwell.utils.log.Log;
 public class EgBotDataLoader {
 	List<File> files;
 	RateCounter rate;
+	String evalName;
 	
 	/**
 	 * finds egbot files in preparation for data loading
 	 * @return list of egbot files
 	 */
+	@Deprecated
 	public static List<File> setup() {
 		List<File> files;
 		EgbotConfig config = new EgbotConfig();
@@ -45,7 +47,7 @@ public class EgBotDataLoader {
 			File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
 				@Override
 				public boolean accept(File dir, String name) {
-					return name.startsWith("MathStackExchangeAPI_Part") 
+					return name.startsWith("MathStackExchangeAPI_Part")  
 							&& (name.endsWith(".json") || name.endsWith(".json.zip"));
 				}
 			});
@@ -61,11 +63,45 @@ public class EgBotDataLoader {
 	 * finds tiny files in preparation for data loading
 	 * @return list of tiny files
 	 */
+	@Deprecated
 	public static List<File> setupTiny() {
-		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/dummy.json"));
+		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json"));
 		return fs; 
 	}
 	
+	/**
+	 * finds files in preparation for data loading
+	 * @return list of files
+	 */
+	public static List<File> setup(String dataLabel) {
+		List<File> files = null;
+		
+		switch (dataLabel) {
+        	case "MSE-full":
+        		EgbotConfig config = new EgbotConfig();
+        		assert config.srcDataDir.isDirectory() : config.srcDataDir+" -- maybe run python slimAndTrim.py";
+        		File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
+    				@Override
+    				public boolean accept(File dir, String name) {
+    					return name.startsWith("MathStackExchangeAPI_Part")  
+    							&& (name.endsWith(".json") || name.endsWith(".json.zip"));
+    				}
+    			});
+    			assert fs != null && fs.length > 0 : config.srcDataDir;
+    			files = Arrays.asList(fs);
+            	break;
+        	case "MSE-20": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json"));
+        		break;
+        	case "paul-20": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json"));
+        		break;        
+		}
+		// always have the same ordering
+		Collections.sort(files);
+		return files; 
+	}
+		
 	/**
 	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
 	 * @return trainingDataArray
@@ -194,6 +230,10 @@ public class EgBotDataLoader {
 		Log.i("Yay, finished training :) \n");
 		model.setTrainSuccessFlag(true);
 		Depot.getDefault().flush();
+	}
+
+	public String getEvalName() {
+		return evalName;
 	}
 	
 }
