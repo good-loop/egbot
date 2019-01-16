@@ -47,47 +47,46 @@ public class EvaluatePredictions {
 	
 	void runModel(IEgBotModel model) throws Exception {
 		Desc<IEgBotModel> modelDesc = model.getDesc();
-
 		// refresh cache?
 		//Depot.getDefault().remove(modelDesc);
 		
-		// set up filters (that decide train/test split)
-		IFilter<Integer> trainFilter = n -> n % 100 != 1;
-		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+		// TRAIN
+		
+		// decide on train data version (e.g. MSE-full, MSE-20, paul-20)
+		String trainLabel = "MSE-full";
 		// load the list of egbot files
-		List<File> files = EgBotDataLoader.setup();
+		List<File> files = EgBotDataLoader.setup(trainLabel);
+		// add to Depot desc what train files are used 
+		modelDesc.put("trainingFiles", trainLabel);
+		
+		// set up filters (that decide train/test split)
+		IFilter<Integer> trainFilter = n -> n % 2 != 1;
+		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
 		
 		// set up experiment
 		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files);
 		
-		// Test
+		// TEST
 		
-		if (false) { // QUANT EVAL
-			// set the test filter		
-			EgBotData testFullData = new EgBotData(files, testFilter);
-			
-			// set the test data the experiment uses
-			Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
-			testDataDesc.put("use", "test");
-			experiment.setTestData(testFullData, testDataDesc);
-			
+		// decide on eval data version (e.g. MSE-full, MSE-20, paul-20)
+		String evalLabel = "MSE-20";
+		// load eval files (e.g. Paulius' 20 questions set)
+		List<File> evalFiles = EgBotDataLoader.setup(evalLabel);
+		// set the test filter		
+		EgBotData testData = new EgBotData(evalFiles, testFilter);
+		// set the test data the experiment uses
+		Desc<EgBotData> testDataDesc = new Desc(evalLabel, EgBotData.class);
+		testDataDesc.put("use", "test");
+		experiment.setTestData(testData, testDataDesc);
+
+		if (true) { // QUANT EVAL
 			// set up quantitative evaluator
 			QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
 			// conduct evaluation
 			quant.evaluateModel();
 		}
 		
-		if (false) {//QUAL EVAL
-			// test using Paulius' 20 questions set
-			List<File> evalFiles = Arrays.asList(
-					new File(FileUtils.getWorkingDirectory() + "/data/eval/paulius20.json"));
-			EgBotData testPaulData = new EgBotData(evalFiles, testFilter);
-			
-			// set the test data the experiment uses
-			Desc<EgBotData> testDataDesc = new Desc("MSE-data", EgBotData.class);
-			testDataDesc.put("use", "test");
-			experiment.setTestData(testPaulData, testDataDesc);
-			
+		if (false) {//QUAL EVAL			
 			// set up qualitative evaluator
 			QualModelEvaluator qual = new QualModelEvaluator(experiment);
 			// conduct evaluation
@@ -127,7 +126,6 @@ public class EvaluatePredictions {
 		IEgBotModel trainedModel = Depot.getDefault().get(modelDesc);
 		if (trainedModel==null) {
 			// do training
-			Log.d("Starting training ...");
 			EgBotDataLoader.train(experiment);
 			Depot.getDefault().put(modelDesc, experiment.getModel());
 		} else {
