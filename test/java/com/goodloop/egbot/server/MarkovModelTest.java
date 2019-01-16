@@ -96,7 +96,7 @@ public class MarkovModelTest {
 			List<File> files = EgBotDataLoader.setupTiny();
 			
 			// set up experiment
-			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files);
+			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files, "MSE-20");
 			
 			saveLocation1 = Depot.getDefault().getLocalPath(modelDesc);
 			Log.i("Results at: " + saveLocation1);
@@ -113,7 +113,7 @@ public class MarkovModelTest {
 			List<File> files = EgBotDataLoader.setupTiny();
 			
 			// set up experiment
-			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files);
+			EgBotExperiment experiment = new EvaluatePredictions().trainExp(mm, modelDesc, trainFilter, files, "MSE-20");
 			
 			saveLocation2 = Depot.getDefault().getLocalPath(modelDesc);
 			Log.i("Results at: " + saveLocation2);

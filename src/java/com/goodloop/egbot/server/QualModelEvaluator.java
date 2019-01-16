@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.winterwell.depot.Depot;
+import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.utils.containers.ArrayMap;
@@ -52,7 +53,7 @@ public class QualModelEvaluator {
 
 		Log.d("Evaluating ...");
 		EgBotData testData = (EgBotData) experiment.getTestData();
-		List<Map<String,String>> saved = new ArrayList();
+		List<Map<String,?>> saved = new ArrayList();
 		for(File file : testData.files) {
 			Gson gson = new Gson();
 			// zip or plain json?
@@ -96,15 +97,17 @@ public class QualModelEvaluator {
 	 * save experiment evaluation results
 	 * @param saved
 	 */
-	private void saveToFile(List<Map<String, String>> saved) {
+	private void saveToFile(List<Map<String, ?>> saved) {
 		Depot depot = Depot.getDefault();
 
 		EgBotResults results = experiment.getResults();
-		results.generatedAnswers = (List) saved;
+		results.setGeneratedAnswers(saved);
+		experiment.setResults(results);
 
+		Desc expDesc = experiment.getDesc();		
 		depot.put(experiment.getDesc(), experiment);
 		
-		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(experiment.getDesc()));
+		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(expDesc));
 		depot.flush();		
 	}
 	

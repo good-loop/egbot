@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.winterwell.depot.Desc;
 import com.winterwell.depot.IHasDesc;
 import com.winterwell.maths.ITrainable;
 
@@ -61,5 +62,7 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	 */
 	void setTrainSuccessFlag(boolean b);
 
-	int scorePickBest(String question, String target, ArrayList<String> answers) throws IOException;	
+	int scorePickBest(String question, String target, ArrayList<String> answers) throws IOException;
+
+	Desc getWmcDesc();	
 }

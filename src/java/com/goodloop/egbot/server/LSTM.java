@@ -1054,4 +1054,10 @@ public class LSTM implements IEgBotModel {
 	@Override
 	public void resetup() {
 	}
+
+	@Override
+	public Desc getWmcDesc() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

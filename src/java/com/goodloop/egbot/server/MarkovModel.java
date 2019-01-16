@@ -42,7 +42,8 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	 * 
 	 * This is a desc of the guts ie wmc
 	 */
-	public final Desc desc;
+	public Desc wmcDesc;
+	public Desc mmDesc;
 	private String[] sig;
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
@@ -52,25 +53,67 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag;
+	private final String tag = "egbot2";
 
+	/**
+	 * default constructor
+	 * 
+	 * *CAREFUL* 
+	 * by default it's using the "MSE-20" dataset which a set of MSE q&a's collected by me 
+	 * find it here: /home/irina/winterwell/egbot/data/eval/tiny.json
+	 * (if you want to specify train files, use other constructor)
+	 * TODO: tried to do keep datalabel outside this class but kept getting errors  
+	 * i suspect adding the dependency of wmcDesc to mmDesc messes this up ??   
+	 * 
+	 */
 	public MarkovModel() {
 		loadSuccessFlag = false;
 		trainSuccessFlag = false;
 		sig = new String[] {"w-1", "w-2"};
 		tokeniserFactory = new WordAndPunctuationTokeniser();
 		ssFactory = new SitnStream(null, tokeniserFactory, sig);
+		
 		// NB: WWModel has its own desc which clashes with this and causes a bug :(
 		// save load needs depot to be initialised
 		Depot.getDefault().init();
-		wmc = newModel();		
-		desc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
-		desc.setTag("egbot");
+		wmc = newModel(); //guts
+		wmcDesc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
+		wmcDesc.put("trainingFiles", "MSE-20");
+		
+		mmDesc = new Desc(wmcDesc.getName(), MarkovModel.class);
+		mmDesc.put("trainingFiles", "MSE-20");
+		mmDesc.addDependency("guts", wmcDesc);
+	}
+	
+	/**
+	 * constructor with param telling the model which data sets to use for training
+	 * @param dataLabel 
+	 */
+	public MarkovModel(String dataLabel) {
+		loadSuccessFlag = false;
+		trainSuccessFlag = false;
+		sig = new String[] {"w-1", "w-2"};
+		tokeniserFactory = new WordAndPunctuationTokeniser();
+		ssFactory = new SitnStream(null, tokeniserFactory, sig);
+		
+		// NB: WWModel has its own desc which clashes with this and causes a bug :(
+		// save load needs depot to be initialised
+		Depot.getDefault().init();
+		wmc = newModel(); //guts
+		wmcDesc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
+		wmcDesc.setTag(tag);
+		wmcDesc.put("trainingFiles", dataLabel);
+		
+		mmDesc = new Desc(wmcDesc.getName(), MarkovModel.class);
+		mmDesc.setTag(tag);
+		mmDesc.put("trainingFiles", dataLabel);
+		mmDesc.addDependency("guts", wmcDesc);
 	}
 
 	public void load() {
-		Log.d("load MarkovModel guts from "+desc+"...");
+		Log.d("load MarkovModel guts from "+wmcDesc+"...");
 		// replace the newly made blank with a loaded copy if there is one
-		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(desc);
+		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(wmcDesc);
 		if (_wmc != null) {
 			wmc = _wmc;
 			loadSuccessFlag = true;
@@ -86,8 +129,8 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
 		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
 		Desc d2 = ((IHasDesc) wmc).getDesc();
-		assert d2.equals(desc);
-		Depot.getDefault().put(desc, wmc);
+		assert d2.equals(wmcDesc);
+		Depot.getDefault().put(wmcDesc, wmc);
 	}
 	
 	@Override
@@ -128,8 +171,10 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 100 != 1;
 		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
-		// load the list of egbot files
-		List<File> files = EgBotDataLoader.setup();
+		// decide on train data version (e.g. MSE-full, MSE-20, paul-20)
+		String trainLabel = "MSE-full";
+		// load the list of files
+		List<File> files = EgBotDataLoader.setup(trainLabel);
 
 		// Train
 		// set the train filter		
@@ -282,10 +327,11 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 	
 	public Desc getDesc() {
-		Desc mmDesc = new Desc(desc.getName(), MarkovModel.class);
-		mmDesc.setTag("egbot");
-		mmDesc.addDependency("guts", desc);
 		return mmDesc;
+	}
+	
+	public Desc getWmcDesc() {
+		return wmcDesc;
 	}
 
 	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {

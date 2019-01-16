@@ -78,7 +78,7 @@ public class AskServlet implements IServlet {
 		LSTM lstm = new LSTM();
 		System.out.println("Loading LSTM model ...");
 		lstm.load(); // TODO: check that I can actually load a specific trained model
-		lstm.init(EgBotDataLoader.setup());
+		lstm.init(EgBotDataLoader.setup("MSE-20")); //TODO: loading limited MSE data set
 		System.out.println("Generating answer ...");
 		String answer = lstm.generateMostLikely(q, 30);	
 		System.out.println(answer);

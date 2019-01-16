@@ -36,40 +36,52 @@ public class EvaluatePredictions {
 	public void run() throws Exception {
 			
 		// Markov 
-		MarkovModel mm = new MarkovModel();		
+		MarkovModel mm = new MarkovModel("MSE-20");		
 		mm.load();
-		runModel(mm);		
+		runModel(mm, "MSE-20", "MSE-20");		
 				
 		// LSTM 
 //		LSTM lstm = new LSTM();				
 //		runModel(lstm);				
 	}
 	
-	void runModel(IEgBotModel model) throws Exception {
+	/**
+	 * train model and then run evaluations (quant and qual)
+	 * 
+	 * @param model
+	 * @param tLabel training data label (e.g. "MSE-full", "MSE-part", "MSE-20", "paul-20")
+	 * @param eLabel evaluation data label
+	 * @throws Exception
+	 */
+	void runModel(IEgBotModel model, String tLabel, String eLabel) throws Exception {
 		Desc<IEgBotModel> modelDesc = model.getDesc();
+		//		modelDesc.put("trainingFiles", "MSE-part");
+		
 		// refresh cache?
 		//Depot.getDefault().remove(modelDesc);
 		
 		// TRAIN
 		
 		// decide on train data version (e.g. MSE-full, MSE-20, paul-20)
-		String trainLabel = "MSE-full";
-		// load the list of egbot files
+		String trainLabel = tLabel;
+		Log.i("Using following training data: " + trainLabel);
+		// load the list of files
 		List<File> files = EgBotDataLoader.setup(trainLabel);
 		// add to Depot desc what train files are used 
-		modelDesc.put("trainingFiles", trainLabel);
+		//modelDesc.put("trainingFiles", trainLabel); this gives me an error: java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 egbot/MarkovModel/local/8356295c56f17d990f0fec4619b8c1a5/w-1+w-2] != depot-desc: Desc[w-1+w-2 egbot/MarkovModel/local/trainingFiles=MSE-part/8356295c56f17d990f0fec4619b8c1a5/w-1+w-2]
 		
 		// set up filters (that decide train/test split)
 		IFilter<Integer> trainFilter = n -> n % 2 != 1;
 		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
 		
 		// set up experiment
-		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files);
+		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, trainLabel);
 		
 		// TEST
 		
 		// decide on eval data version (e.g. MSE-full, MSE-20, paul-20)
-		String evalLabel = "MSE-20";
+		String evalLabel = eLabel;
+		Log.i("Using following eval data: " + evalLabel);
 		// load eval files (e.g. Paulius' 20 questions set)
 		List<File> evalFiles = EgBotDataLoader.setup(evalLabel);
 		// set the test filter		
@@ -93,7 +105,9 @@ public class EvaluatePredictions {
 			qual.evaluateModel();
 		}
 		
-		// NB: the evaluator classes both save results		
+		// NB: the evaluator classes both save results
+		Log.i("Trained model at: "+Depot.getDefault().getLocalPath(experiment.getModel().getDesc()));
+		Log.i("Model guts at: "+Depot.getDefault().getLocalPath(experiment.getModel().getWmcDesc()));
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));
 	}
 	
@@ -109,9 +123,14 @@ public class EvaluatePredictions {
 	 */
 	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, 
 			IFilter<Integer> trainFilter,  
-			List<File> files) throws IOException 
+			List<File> files, String trainLabel) throws IOException 
 	{
+		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();
+		
+		// get experiment desc? !TODO
+		//Desc expDesc = experiment.getDesc();
+		
 		// set the model the experiment uses
 		experiment.setModel(model, modelDesc);
 
@@ -119,7 +138,7 @@ public class EvaluatePredictions {
 		// set the train filter		
 		EgBotData trainData = new EgBotData(files, trainFilter);
 		// set the train data the experiment uses
-		Desc<EgBotData> trainDataDesc = new Desc("MSE-data", EgBotData.class);
+		Desc<EgBotData> trainDataDesc = new Desc(trainLabel, EgBotData.class);
 		trainDataDesc.put("use", "train");		
 		experiment.setTrainData(trainData, trainDataDesc);
 		// already trained?
@@ -127,7 +146,7 @@ public class EvaluatePredictions {
 		if (trainedModel==null) {
 			// do training
 			EgBotDataLoader.train(experiment);
-			Depot.getDefault().put(modelDesc, experiment.getModel());
+			Depot.getDefault().put(experiment.getModel().getDesc(), experiment.getModel());
 		} else {
 			// replace the untrained with the trained
 			Log.d("Using pre-trained model");

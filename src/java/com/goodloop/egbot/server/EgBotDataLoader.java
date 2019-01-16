@@ -34,7 +34,7 @@ public class EgBotDataLoader {
 	 * @return list of egbot files
 	 */
 	@Deprecated
-	public static List<File> setup() {
+	public static List<File> setupOld() {
 		List<File> files;
 		EgbotConfig config = new EgbotConfig();
 		assert config.srcDataDir.isDirectory() : config.srcDataDir+" -- maybe run python slimAndTrim.py";
@@ -67,7 +67,8 @@ public class EgBotDataLoader {
 	public static List<File> setupTiny() {
 		List<File> fs = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json"));
 		return fs; 
-	}
+	}	
+	
 	
 	/**
 	 * finds files in preparation for data loading
@@ -77,18 +78,11 @@ public class EgBotDataLoader {
 		List<File> files = null;
 		
 		switch (dataLabel) {
+    		case "MSE-part":
+        		files = loadMSE("MathStackExchangeAPI_Part_1"); // load MSE data that starts with this string (aka only first part of egbot data)
+        		break;
         	case "MSE-full":
-        		EgbotConfig config = new EgbotConfig();
-        		assert config.srcDataDir.isDirectory() : config.srcDataDir+" -- maybe run python slimAndTrim.py";
-        		File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
-    				@Override
-    				public boolean accept(File dir, String name) {
-    					return name.startsWith("MathStackExchangeAPI_Part")  
-    							&& (name.endsWith(".json") || name.endsWith(".json.zip"));
-    				}
-    			});
-    			assert fs != null && fs.length > 0 : config.srcDataDir;
-    			files = Arrays.asList(fs);
+        		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
             	break;
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json"));
@@ -102,6 +96,27 @@ public class EgBotDataLoader {
 		return files; 
 	}
 		
+	/**
+	 * load MSE data that starts with the string passed as param 
+	 * @param fileNameStart
+	 * @return
+	 */
+	private static List<File> loadMSE(String fileNameStart) {
+		List<File> files = null;
+		EgbotConfig config = new EgbotConfig();
+		assert config.srcDataDir.isDirectory() : config.srcDataDir+" -- maybe run python slimAndTrim.py";
+		File[] fs = config.srcDataDir.listFiles(new FilenameFilter() {				
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith(fileNameStart)  
+						&& (name.endsWith(".json") || name.endsWith(".json.zip"));
+			}
+		});
+		assert fs != null && fs.length > 0 : config.srcDataDir;
+		files = Arrays.asList(fs);
+		return files;
+	}
+
 	/**
 	 * load egbot zenodo files and save them in trainingDataArray as list of qa paragraphs tokenised e.g. [ [ "let", "us", "suppose", ... ] ]
 	 * @return trainingDataArray

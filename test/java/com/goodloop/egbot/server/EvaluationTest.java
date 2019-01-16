@@ -30,13 +30,13 @@ public class EvaluationTest {
 //	@Test
 	public void testLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm);
+		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20");	
 	}	
 
 	@Test
 	public void testMarkov() throws Exception {
-		MarkovModel mm = new MarkovModel();						
-		new EvaluatePredictions().runModel(mm);
+		MarkovModel mm = new MarkovModel("MSE-20");						
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20");	
 	}
 
 }

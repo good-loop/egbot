@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.winterwell.depot.Depot;
+import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
@@ -125,11 +126,13 @@ public class QuantModelEvaluator {
 		Depot depot = Depot.getDefault();
 		
 		EgBotResults results = experiment.getResults();
-		results.avgScore = avgScore;
+		results.setAvgScore(avgScore);
+		experiment.setResults(results);
 		
+		Desc expDesc = experiment.getDesc();		
 		depot.put(experiment.getDesc(), experiment);
-		
-		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(experiment.getDesc()));
+				
+		Log.d("Results saved to: " + Depot.getDefault().getLocalPath(expDesc));
 		depot.flush();
 	}
 	
