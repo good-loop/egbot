@@ -53,7 +53,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag;
-	private final String tag = "egbobot";
+	private final String tag = "egbot";
 
 	/**
 	 * default constructor
@@ -63,7 +63,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	 * find it here: /home/irina/winterwell/egbot/data/eval/tiny.json
 	 * (if you want to specify train files, use other constructor)
 	 * !TODO: tried to do keep datalabel outside this class but kept getting errors  
-	 * i suspect adding the dependency of wmcDesc to mmDesc messes this up ??   
+	 * i suspect adding the dependency of wmcDesc to mmDesc messes this up ?? will look at it again
 	 * 
 	 */
 	public MarkovModel() {

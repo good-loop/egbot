@@ -33,6 +33,7 @@ public class EvaluatePredictions {
 	
 	static LogFile logFile = new LogFile();
 	
+	@Deprecated
 	public void run() throws Exception {
 			
 		// Markov 
