@@ -83,7 +83,10 @@ public class QuantModelEvaluator {
 		}	
 
 		// select right and wrong answers and then score the evaluation set
-		// TODO: should i do it this way or by simply selecting 5 random numbers a bunch of times (that might mean that not every answer gets to be a correct answer)
+		// TODO: shouldn't this choke if run on MSE-full eval dataset? loading all eval data in memory to then randomly pick wrong ans seems like a lot 
+		// (but i ran it once and it was fine but i'm really surprised? but then again it was with MM not LSTM)
+		// possible solution: should i go thru each one like i do or simply select 5 random numbers a bunch of times 
+		// (but that might mean that not every answer gets to be a correct answer and some redundancy)
 		for (int i = 0; i < evalSet.size(); i++) {
 			Map<Object, Object> qa = evalSet.get(i);
 			String question = (String) qa.get("question");

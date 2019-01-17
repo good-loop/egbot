@@ -13,6 +13,7 @@ import java.util.Map;
 import com.goodloop.egbot.EgbotConfig;
 import com.winterwell.datascience.Experiment;
 import com.winterwell.depot.Depot;
+import com.winterwell.depot.Desc;
 import com.winterwell.gson.Gson;
 import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.nlp.io.ITokenStream;
@@ -85,10 +86,10 @@ public class EgBotDataLoader {
         		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
             	break;
         	case "MSE-20": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json"));
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
         	case "paul-20": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json"));
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json")); // paulius' 20 questions (TODO: needs answers, currently has dummy ones)
         		break;        
 		}
 		// always have the same ordering
@@ -183,7 +184,7 @@ public class EgBotDataLoader {
 	}
 	
 	/**
-	 * a common train-over-MSE-data class
+	 * a common train-over-MSE-data class. This will load the model from Depot if it can -- replacing the object in Experiment
 	 * Does NOT save the model
 	 * @throws IOException
 	 */
@@ -191,8 +192,17 @@ public class EgBotDataLoader {
 		EgBotData trainData = (EgBotData) e.getTrainData();
 		IEgBotModel model = (IEgBotModel) e.getModel();
 
-		assert model.getWmc() != null;
-		// load if we can
+		Desc<IEgBotModel> modelDesc = model.getDesc();
+		// Do we have a pre-trained version?
+		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
+		if (pretrained!=null) {
+			// replace the untrained with the trained
+			Log.d("Using pre-trained model");
+			model = pretrained;
+			e.setModel(pretrained, modelDesc);
+		}
+
+		// call load
 		model.load();
 
 		// already done?
@@ -201,8 +211,6 @@ public class EgBotDataLoader {
 		}
 		
 		// no -- train!
-		assert model.getWmc() != null;
-		
 		Log.i("Starting training ...");
 		
 		// init model (vocab etc)
@@ -242,8 +250,9 @@ public class EgBotDataLoader {
 			if (false) break;
 		}
 		
-		Log.i("Yay, finished training :) \n");
+		Log.i("Yay, finished training :) \n");		
 		model.setTrainSuccessFlag(true);
+		Depot.getDefault().put(modelDesc, model);
 		Depot.getDefault().flush();
 	}
 

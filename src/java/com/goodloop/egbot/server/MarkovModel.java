@@ -36,14 +36,15 @@ import com.winterwell.utils.log.Log;
 
 public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
-	ITrainable.Supervised<Cntxt, Tkn> wmc;
+//	ITrainable.Supervised<Cntxt, Tkn> 
+	WWModel<Tkn> wmc;
 	/**
 	 * we need this early for load()
 	 * 
 	 * This is a desc of the guts ie wmc
 	 */
 	public Desc wmcDesc;
-	public Desc mmDesc;
+	public Desc<IEgBotModel> mmDesc;
 	private String[] sig;
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
@@ -55,17 +56,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	public boolean trainSuccessFlag;
 	private final String tag = "egbot";
 
-	/**
-	 * default constructor
-	 * 
-	 * *CAREFUL* 
-	 * by default it's using the "MSE-20" dataset which a set of MSE q&a's collected by me 
-	 * find it here: /home/irina/winterwell/egbot/data/eval/tiny.json
-	 * (if you want to specify train files, use other constructor)
-	 * !TODO: tried to do keep datalabel outside this class but kept getting errors  
-	 * i suspect adding the dependency of wmcDesc to mmDesc messes this up ?? will look at it again
-	 * 
-	 */
 	public MarkovModel() {
 		loadSuccessFlag = false;
 		trainSuccessFlag = false;
@@ -76,65 +66,45 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// NB: WWModel has its own desc which clashes with this and causes a bug :(
 		// save load needs depot to be initialised
 		Depot.getDefault().init();
-		wmc = newModel(); //guts
-		wmcDesc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
-		wmcDesc.put("trainingFiles", "MSE-20");
-		
-		mmDesc = new Desc(wmcDesc.getName(), MarkovModel.class);
-		mmDesc.put("trainingFiles", "MSE-20");
-		mmDesc.addDependency("guts", wmcDesc);
-	}
-	
-	/**
-	 * constructor with param telling the model which data sets to use for training
-	 * @param dataLabel 
-	 */
-	public MarkovModel(String dataLabel) {
-		loadSuccessFlag = false;
-		trainSuccessFlag = false;
-		sig = new String[] {"w-1", "w-2"};
-		tokeniserFactory = new WordAndPunctuationTokeniser();
-		ssFactory = new SitnStream(null, tokeniserFactory, sig);
-		
-		// NB: WWModel has its own desc which clashes with this and causes a bug :(
-		// save load needs depot to be initialised
-		Depot.getDefault().init();
-		wmc = newModel(); //guts
-		wmcDesc = wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
+		wmc = (WWModel<Tkn>) newModel(); //guts
+		wmcDesc = wmc.getDesc(); // wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
 		wmcDesc.setTag(tag);
-		wmcDesc.put("trainingFiles", dataLabel);
 		
 		mmDesc = new Desc(wmcDesc.getName(), MarkovModel.class);
 		mmDesc.setTag(tag);
-		mmDesc.put("trainingFiles", dataLabel);
-		mmDesc.addDependency("guts", wmcDesc);
+		mmDesc.addDependency("guts", wmcDesc); 
 	}
 
+	/**
+	 * The load/save is done by {@link EgBotDataLoader} using Depot on the whole MarkovModel object.
+	 * 
+	 * Internal state is not separately load/saved
+	 */
 	public void load() {
-		Log.d("load MarkovModel guts from "+wmcDesc+"...");
-		// replace the newly made blank with a loaded copy if there is one
-		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(wmcDesc);
-		
-		if (_wmc != null) {
-			wmc = _wmc;
-			loadSuccessFlag = true;
-			Log.d("Loaded succesfully :)");
-		}
-		else {
-			Log.d("Sorry, couldn't load ");
-		}
+//		Log.d("load MarkovModel guts from "+wmcDesc+"...");
+//		// replace the newly made blank with a loaded copy if there is one
+//		Supervised<Cntxt, Tkn> _wmc = (ITrainable.Supervised<Cntxt, Tkn>) Depot.getDefault().get(wmcDesc);
+//		
+//		if (_wmc != null) {
+//			wmc = _wmc;
+//			loadSuccessFlag = true;
+//			Log.d("Loaded succesfully :)");
+//		}
+//		else {
+//			Log.d("Sorry, couldn't load ");
+//		}
 	}
 	
-	public void save() {
-		// NB: had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
-		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
-		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
-		Desc d2 = ((IHasDesc) wmc).getDesc();
-		assert d2.equals(wmcDesc);
-		Depot.getDefault().put(wmcDesc, wmc);
-		
-		// saving model TODO: is this necessary?
-		Depot.getDefault().put(mmDesc, this);
+	public void save() {//TODO flag
+//		// NB: had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
+//		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
+//		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
+//		Desc d2 = ((IHasDesc) wmc).getDesc();
+//		assert d2.equals(wmcDesc);
+//		Depot.getDefault().put(wmcDesc, wmc);
+//		
+//		// saving model TODO: is this necessary?
+//		Depot.getDefault().put(mmDesc, this);
 	}
 	
 	@Override
@@ -156,7 +126,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		
 	private ITrainable.Supervised<Cntxt, Tkn> newModel() {
 		if (false) {
-			// a simple markov model -- will eat memory!
+			// a simple markov model -- will eat memory!Model
 			return new WordMarkovChain<>();
 		}
 		WWModel<Tkn> model = new WWModelFactory().fullFromSig(Arrays.asList(sig));
@@ -166,7 +136,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	public static void main(String[] args) throws IOException {
 		MarkovModel mm = new MarkovModel();		
 		Desc<IEgBotModel> trainedModelDesc = mm.getDesc();
-		IEgBotModel trainedMarkov = Depot.getDefault().get(trainedModelDesc);
+		MarkovModel trainedMarkov = (MarkovModel) Depot.getDefault().get(trainedModelDesc);
 		
 		// set up experiment
 		EgBotExperiment e1 = new EgBotExperiment();
@@ -330,18 +300,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	public void init(List<File> files) throws IOException {
 	}
 	
-	public Desc getDesc() {
-		return mmDesc;
-	}
-	
-	public Desc getWmcDesc() {
-		return wmcDesc;
-	}
-
-	public ITrainable.Supervised<Cntxt, Tkn> getWmc() {
-		return wmc;
-	}
-
 	@Override
 	public boolean isReady() {
 		return loadSuccessFlag || trainSuccessFlag;
@@ -379,6 +337,10 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	public void setTrainSuccessFlag(boolean trainSuccessFlag) {
 		this.trainSuccessFlag = trainSuccessFlag;
+	}
+	
+	public Desc<IEgBotModel> getDesc() {
+		return mmDesc;
 	}
 }
 

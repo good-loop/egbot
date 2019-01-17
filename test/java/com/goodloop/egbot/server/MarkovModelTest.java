@@ -34,7 +34,7 @@ public class MarkovModelTest {
 	}
 	
 //	@Test
-	public void testTrain() throws IOException {
+	public void testTrain() throws IOException {		
 		MarkovModel mm = new MarkovModel();
 		Desc<IEgBotModel> modelDesc = mm.getDesc();
 

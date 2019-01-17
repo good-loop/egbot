@@ -104,7 +104,6 @@ public class LSTM implements IEgBotModel {
 	int questionCount;
 	long lStartTime;
 	
-
 	/**
 	 * default constructor
 	 * @throws IOException
@@ -344,7 +343,7 @@ public class LSTM implements IEgBotModel {
                 .toByteArray();
         
 	    // load graph
-		Pair2<Graph, Session> gs = loadModel(null);
+		Pair2<Graph, Session> gs = loadModel(null); //TODO: pass config
 	    try (Graph graph = gs.first;
             Session sess = gs.second;
             Tensor<String> checkpointPrefix = loadSaveTensor();
@@ -712,7 +711,7 @@ public class LSTM implements IEgBotModel {
 	
 	/**
 	 * restores the trained model (the graph and session)
-	 * @param config is the tensorflow session settings allowing us to choose GPU/CPU usage etc 
+	 * @param config is the tensorflow session settings allowing us to choose GPU/CPU usage etc, null is fine
 	 * @return
 	 * @throws IOException
 	 */
@@ -729,7 +728,7 @@ public class LSTM implements IEgBotModel {
 		}
 
 		// if yes, restore it
-        Tensor<String> checkpointPrefix = loadSaveTensor();
+        Tensor<String> checkpointPrefix = loadSaveTensor(); // Depot path as a tensor
 		System.out.println("Restoring model ...");
 		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();	
 	        
@@ -1038,11 +1037,6 @@ public class LSTM implements IEgBotModel {
 	}
 	
 	@Override
-	public Object getWmc() {
-		return model;
-	}
-	
-	@Override
 	public boolean isReady() {
 		return trainSuccessFlag;
 	}
@@ -1053,11 +1047,5 @@ public class LSTM implements IEgBotModel {
 
 	@Override
 	public void resetup() {
-	}
-
-	@Override
-	public Desc getWmcDesc() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

@@ -7,6 +7,10 @@ import org.junit.Test;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.DepotConfig;
 import com.winterwell.depot.Desc;
+import com.winterwell.depot.IHasDesc;
+import com.winterwell.maths.ITrainable.Supervised;
+import com.winterwell.maths.stats.distributions.cond.Cntxt;
+import com.winterwell.nlp.io.Tkn;
 
 public class EvaluationTest {
 
@@ -35,8 +39,14 @@ public class EvaluationTest {
 
 	@Test
 	public void testMarkov() throws Exception {
-		MarkovModel mm = new MarkovModel("MSE-full"); // TODO: redundant desc, will change this (see {@link com.goodloop.egbot.server.MarkovModel.MarkovModel()})
-		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-20");	
+		MarkovModel mm = new MarkovModel(); 
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20");	
+	}
+	
+//	@Test
+	public void testMarkovRefactor() throws Exception {
+		MarkovModel mm = new MarkovModel(); 		
+		new EvaluatePredictions().runModel(mm, "MSE-part", "MSE-20");
 	}
 
 }

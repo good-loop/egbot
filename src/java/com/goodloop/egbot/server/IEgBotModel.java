@@ -42,16 +42,14 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 	String generateMostLikely(String question, int expectedAnswerLength) throws IOException;
 	
 	/**
-	 * model loading if it exists
+	 * Internal state model loading if it exists.
+	 * 
+	 * NB: The overall IEgbotModel object is load/saved by {@link EgBotDataLoader} using Depot.
+	 * 
+	 * Use-case for this: e.g. TensorFlow checkpoint files.
 	 */
 	void load() throws IOException;
 
-	/**
-	 * get model object
-	 * @return
-	 */
-	Object getWmc();
-	
 	/**
 	 * initialise any model parameters to prepare for training
 	 */
@@ -64,5 +62,4 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 
 	int scorePickBest(String question, String target, ArrayList<String> answers) throws IOException;
 
-	Desc getWmcDesc();	
 }
