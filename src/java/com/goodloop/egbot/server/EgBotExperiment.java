@@ -19,10 +19,13 @@ public class EgBotExperiment extends Experiment<EgBotData, IEgBotModel, EgBotRes
 	
 	transient EgBotData trainData;
 	Desc<EgBotData> trainDataDesc;
+	
+	private String tag = "egbot";
 		
 	public EgBotExperiment() {
 		// init with blank results
 		setResults(new EgBotResults());
+		setTag(tag);
 	}
 	
 }
