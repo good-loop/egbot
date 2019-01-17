@@ -41,7 +41,7 @@ public class EvaluatePredictions {
 		mm.load();
 		runModel(mm, "MSE-20", "MSE-20");		
 				
-		// LSTM 
+//		 LSTM 
 //		LSTM lstm = new LSTM();				
 //		runModel(lstm);				
 	}
@@ -51,7 +51,7 @@ public class EvaluatePredictions {
 	 * 
 	 * @param model
 	 * @param tLabel training data label (e.g. "MSE-full", "MSE-part", "MSE-20", "paul-20")
-	 * @param eLabel evaluation data label
+	 * @param eLabel evaluation data label (same as above)
 	 * @throws Exception
 	 */
 	void runModel(IEgBotModel model, String tLabel, String eLabel) throws Exception {
@@ -70,7 +70,8 @@ public class EvaluatePredictions {
 		List<File> files = EgBotDataLoader.setup(trainLabel);
 
 		// set up filters (that decide train/test split)
-		IFilter<Integer> trainFilter = n -> n % 2 != 1;
+		IFilter<Integer> trainFilter = n -> n % 100 != 1; 
+		// TODO: filter only if full dataset, not if its a pre-selected one (e.g. MSE-20, paul-20)
 		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
 
 		// set up experiment
@@ -126,10 +127,7 @@ public class EvaluatePredictions {
 	{
 		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();
-		
-		// get experiment desc? 
-		//Desc expDesc = experiment.getDesc();
-		
+
 		// set the model the experiment uses
 		experiment.setModel(model, modelDesc);
 

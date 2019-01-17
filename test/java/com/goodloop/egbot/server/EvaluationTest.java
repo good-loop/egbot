@@ -36,7 +36,7 @@ public class EvaluationTest {
 	@Test
 	public void testMarkov() throws Exception {
 		MarkovModel mm = new MarkovModel("MSE-full"); // TODO: redundant desc, will change this (see {@link com.goodloop.egbot.server.MarkovModel.MarkovModel()})
-		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-full");	
+		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-20");	
 	}
 
 }
