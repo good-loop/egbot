@@ -34,19 +34,28 @@ public class EvaluationTest {
 //	@Test
 	public void testLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20");	
+		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 100, 1);
 	}	
 
 	@Test
 	public void testMarkov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 
-		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20");	
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1);
 	}
-	
+
+	/**
+	 * if the same model and setup is used, depot should load the trained model the 2nd time (rather than train it from scratch)
+	 * @throws Exception
+	 */
 //	@Test
-	public void testMarkovRefactor() throws Exception {
-		MarkovModel mm = new MarkovModel(); 		
-		new EvaluatePredictions().runModel(mm, "MSE-part", "MSE-20");
+	public void testSameMarkovRunTwice() throws Exception {
+		MarkovModel mm = new MarkovModel(); 
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1);
+		assert mm.trainSuccessFlag;
+		
+		MarkovModel mm2 = new MarkovModel(); 
+		new EvaluatePredictions().runModel(mm2, "MSE-20", "MSE-20", 100, 1);
+		assert mm2.loadSuccessFlag;
 	}
 
 }

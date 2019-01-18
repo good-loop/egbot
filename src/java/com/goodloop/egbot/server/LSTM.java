@@ -1048,4 +1048,10 @@ public class LSTM implements IEgBotModel {
 	@Override
 	public void resetup() {
 	}
+
+	@Override
+	public void setLoadSuccessFlag(boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
 }

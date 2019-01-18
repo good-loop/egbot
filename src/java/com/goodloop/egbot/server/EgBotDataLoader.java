@@ -200,10 +200,12 @@ public class EgBotDataLoader {
 			Log.d("Using pre-trained model");
 			model = pretrained;
 			e.setModel(pretrained, modelDesc);
+			// TODO: remove temporary loadSuccessFlag flag and associated methods, this is just while I test model loading (can't hold loadSuccessFlag within model because of how we load the model)
+			model.setLoadSuccessFlag(true);
 		}
 
 		// call load
-		model.load();
+		//model.load();
 
 		// already done?
 		if (model.isReady()) {

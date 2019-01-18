@@ -49,6 +49,10 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	private WordAndPunctuationTokeniser tokeniserFactory;
 	private SitnStream ssFactory;
 	
+	public WordAndPunctuationTokeniser getTokeniserFactory() {
+		return tokeniserFactory;
+	}
+	
 	// true when model was successfully loaded
 	public boolean loadSuccessFlag;
 		
@@ -63,16 +67,23 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		tokeniserFactory = new WordAndPunctuationTokeniser();
 		ssFactory = new SitnStream(null, tokeniserFactory, sig);
 		
-		// NB: WWModel has its own desc which clashes with this and causes a bug :(
 		// save load needs depot to be initialised
-		Depot.getDefault().init();
 		wmc = (WWModel<Tkn>) newModel(); //guts
-		wmcDesc = wmc.getDesc(); // wmc instanceof IHasDesc? ((IHasDesc) wmc).getDesc() : new Desc<>("MSE-mm", wmc.getClass()); 
+		Depot.getDefault().init();
+		wmcDesc = wmc.getDesc();  
 		wmcDesc.setTag(tag);
 		
 		mmDesc = new Desc(wmcDesc.getName(), MarkovModel.class);
 		mmDesc.setTag(tag);
-		mmDesc.addDependency("guts", wmcDesc); 
+		mmDesc.addDependency("guts", wmcDesc);  
+		
+		// ??how should we say these modules are only for this object,
+		// without creating a dependency circular reference mess??
+		// TODO add a feature to Depot or Desc to say "don't use modular saving please"
+		String p = toString();
+		for(IHasDesc md : getModules()) {
+			md.getDesc().put("parent", p);
+		}
 	}
 
 	/**
@@ -95,11 +106,11 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 //		}
 	}
 	
-	public void save() {//TODO flag
+	public void save() {
 //		// NB: had to change it so that it uses the wmc's desc rather than the global desc variable because of the error below
 //		// java.lang.IllegalStateException: Desc mismatch: artifact-desc: Desc[w-1+w-2 null/WWModel/local/TPW=5000_sig=w-1, w-2_tr=1250, 2500, 12, 25/ce4f5336357e370c771aa5d4e1cfc709/w-1+w-2] != depot-desc: Desc[MSE-all egbot/WWModel/local/sig=w-1, w-2/MSE-all]
 //		// at com.winterwell.depot.Depot.safetySyncDescs(Depot.java:475)
-//		Desc d2 = ((IHasDesc) wmc).getDesc();
+//		Desc d2 = ((IHasDesc) wmc).getDesc(); 
 //		assert d2.equals(wmcDesc);
 //		Depot.getDefault().put(wmcDesc, wmc);
 //		
@@ -236,7 +247,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		for (Sitn<Tkn> sitn : ss2) {					
 			// add the log prob to the score
 			double p = ((ACondDistribution<Tkn, Cntxt>) wmc).logProb(sitn.outcome, sitn.context); 
-			//System.out.println("Example log prob: " + p);
 			score += p;
 			count++;
 		}
@@ -267,7 +277,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	 * @throws IOException 
 	 */
 	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
-		double bestAvg = -999; // artifically low score (TODO: is this correct way of doing it?)
+		double bestAvg = -999; // artificially low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
 
 		// for each answer in the list
@@ -317,10 +327,11 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	public IHasDesc[] getModules() {
 		if (wmc instanceof IHasDesc) {
 			return new IHasDesc[] {
-					(IHasDesc) wmc
+					(IHasDesc) wmc,
+					tokeniserFactory
 			};
 		}
-		return null;
+		return new IHasDesc[] {tokeniserFactory};
 	}
 	
 	public boolean isLoadSuccessFlag() {
@@ -329,10 +340,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	public void setLoadSuccessFlag(boolean loadSuccessFlag) {
 		this.loadSuccessFlag = loadSuccessFlag;
-	}
-	
-	public boolean isTrainSuccessFlag() {
-		return trainSuccessFlag;
 	}
 	
 	public void setTrainSuccessFlag(boolean trainSuccessFlag) {

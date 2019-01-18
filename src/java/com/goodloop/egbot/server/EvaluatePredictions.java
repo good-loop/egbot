@@ -42,11 +42,11 @@ public class EvaluatePredictions {
 			
 		// Markov 
 		MarkovModel mm = new MarkovModel();		
-		runModel(mm, "MSE-20", "MSE-20");		
+		runModel(mm, "MSE-20", "MSE-20", 100, 1);		
 				
-//		 LSTM 
-//		LSTM lstm = new LSTM();				
-//		runModel(lstm);				
+		//	LSTM 
+		//	LSTM lstm = new LSTM();				
+		//	runModel(lstm);				
 	}
 	
 	/**
@@ -55,13 +55,16 @@ public class EvaluatePredictions {
 	 * @param model
 	 * @param tLabel training data label (e.g. "MSE-full", "MSE-part", "MSE-20", "paul-20")
 	 * @param eLabel evaluation data label (same as above)
+	 * TODO: implement filter split param  
+	 * @param tSplit percentage of train split (e.g. 2 for the first 1 of 2, 100 for the first 99 of 100), if it's 1 then it's the whole data set 
+	 * @param eSplit percentage of train split (e.g. 2 for 1 of 2, 1 etc)
 	 * @throws Exception
 	 */
-	void runModel(IEgBotModel model, String tLabel, String eLabel) throws Exception {
+	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter) throws Exception {
 		// TODO: does the lstm have this mm/ wmc equivalence? i suppose there's the LSTM model class and there's the session object
 		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
-		modelDesc.put("trainingFiles", tLabel);
+		modelDesc.put("train", tLabel);
 		
 		// refresh cache?
 		//Depot.getDefault().remove(modelDesc);
@@ -74,13 +77,36 @@ public class EvaluatePredictions {
 		List<File> files = EgBotDataLoader.setup(tLabel);
 
 		// set up filters (that decide train/test split)
-		IFilter<Integer> trainFilter = n -> n % 100 != 1; 
-		// TODO: filter only if full dataset, not if its a pre-selected one (e.g. MSE-20, paul-20)
-		//IFilter<Integer> testFilter = n -> true;
-		IFilter<Integer> testFilter = n -> ! trainFilter.accept(n);
+		// NB: we specify the filter by passing a parameter that specifies the train/test split n % x != 1, 
+		// but if x is 1 then it's the whole dataset (which allows for using completely diff datasets)
+		// TODO: check w/ DW that this makes sense in terms of usability
+		IFilter<Integer> trainFilter = n -> true;
+		IFilter<Integer> testFilter;
+		if (tFilter != 1) { // 1 is for when no filter is used
+			IFilter<Integer> temp = n -> n % tFilter != 1;	
+			if (eFilter != 1) {
+				testFilter = n -> ! temp.accept(n);
+			}
+			else { 
+				testFilter = n -> true;
+			}
+			trainFilter = temp;
+		}
+		else { 
+			trainFilter = n -> true;
+			testFilter = n -> true;
+		}
+		
+		// or like this?
+		//		IFilter<Integer> trainFilter = tSplit == 1 ? n -> true : n -> n % (100-tSplit) != 1;
+		//		IFilter<Integer> testFilter = eSplit == 1 ? n -> true : n -> (n % (eSplit != 1);
+			
+		// and we set the tag to know which filter was used
+		modelDesc.put("tFilter", tFilter);
+		modelDesc.put("eFilter", eFilter);
 
 		// set up experiment
-		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, tLabel);
+		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, testFilter, files, tLabel);
 		
 		// TEST
 		
@@ -114,7 +140,7 @@ public class EvaluatePredictions {
 		Log.i("Trained model at: "+Depot.getDefault().getLocalPath(experiment.getModel().getDesc()));
 		Log.i("Results at: "+Depot.getDefault().getLocalPath(experiment.getDesc()));
 	}
-	
+
 	/**
 	 * 
 	 * @param model Do not use this again -- use the experiment.getModel() which may be a version loaded from the Depot cache
@@ -126,8 +152,7 @@ public class EvaluatePredictions {
 	 * @throws IOException
 	 */
 	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, 
-			IFilter<Integer> trainFilter,  
-			List<File> files, String trainLabel) throws IOException 
+			IFilter<Integer> trainFilter,  IFilter<Integer> testFilter, List<File> files, String trainLabel) throws IOException 
 	{
 		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();
