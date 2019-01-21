@@ -80,6 +80,7 @@ public class LSTM implements IEgBotModel {
 	List<Tensor<?>> model;
 	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot");
 	private Desc<Tensor> cpdesc;
+	private Desc<String> vocabdesc;
 	
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag; 
@@ -318,11 +319,29 @@ public class LSTM implements IEgBotModel {
 		System.out.printf("Loaded vocabulary size: %s\n", vocab_size);
 	}
 
-	// TODO: should we save vocab to depot?
+	/**
+	 * save vocab 
+	 * @return
+	 */
 	private File vocabPath() {			
 		initSaveTensor();
 		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + cpdesc.getName()  + ".txt";
 		return new File(vocabPath);
+	}
+	
+	/**
+	 * save vocab to depot
+	 * @return
+	 */
+	private File vocabPathToDepot() {		
+		vocabdesc = new Desc("vocab", String.class); 
+		vocabdesc.setTag("egbot"); 	
+		vocabdesc.addDependency("parent", cpdesc);		
+		String id = vocabdesc.getId(); // make sure the desc is finalised
+		File vocabPath = Depot.getDefault().getLocalPath(vocabdesc); // saves it to datastore (e.g. /home/irina/winterwell/datastore/egbot/...)
+		// make it a dir
+		vocabPath.mkdirs();
+		return vocabPath;
 	}
 	
 	/**
