@@ -77,8 +77,8 @@ public class EvaluatePredictions {
 		List<File> files = EgBotDataLoader.setup(tLabel);
 
 		// set up filters (that decide train/test split)
-		// NB: we specify the filter by passing a parameter that specifies the train/test split n % x != 1, 
-		// but if x is 1 then it's the whole dataset (which allows for using completely diff datasets)
+		// NB: we specify the filter by passing a parameter x that specifies the train/test split n % x != 1, 
+		// if x is 1 then it's the whole dataset (which allows us to use completely different datasets)
 		// TODO: check w/ DW that this makes sense in terms of usability
 		IFilter<Integer> trainFilter = n -> true;
 		IFilter<Integer> testFilter;

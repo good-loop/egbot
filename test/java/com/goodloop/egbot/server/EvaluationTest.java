@@ -31,13 +31,13 @@ public class EvaluationTest {
 		assert lp.toString().contains("egbot-learning-depot") : lp;
 	}
 	
-//	@Test
+	@Test
 	public void testLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 100, 1);
 	}	
 
-	@Test
+//	@Test
 	public void testMarkov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 
 		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1);
