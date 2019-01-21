@@ -46,6 +46,7 @@ import com.winterwell.maths.stats.distributions.cond.ACondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Cntxt;
 import com.winterwell.maths.stats.distributions.cond.ICondDistribution;
 import com.winterwell.maths.stats.distributions.cond.Sitn;
+import com.winterwell.maths.stats.distributions.cond.WWModel;
 import com.winterwell.maths.stats.distributions.discrete.IFiniteDistribution;
 import com.winterwell.nlp.NLPWorkshop;
 import com.winterwell.nlp.corpus.SimpleDocument;
@@ -77,7 +78,8 @@ public class LSTM implements IEgBotModel {
 	private static final String LOGTAG = "LSTM";
 	// model guts
 	List<Tensor<?>> model;
-	public Desc cpdesc;
+	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot");
+	private Desc<Tensor> cpdesc;
 	
 	// true once training finished on all egbot files
 	public boolean trainSuccessFlag; 
@@ -111,7 +113,7 @@ public class LSTM implements IEgBotModel {
 	LSTM() throws IOException{
 		model = new ArrayList<Tensor<?>>();
 		trainAccuracies = new ArrayList<Float>();
-		initSaveTensor();			
+//		initSaveTensor(); bleurgh - this would lock the Desc too early 	
 	}
 	
 	/**
@@ -317,7 +319,8 @@ public class LSTM implements IEgBotModel {
 	}
 
 	// TODO: should we save vocab to depot?
-	private File vocabPath() {							
+	private File vocabPath() {			
+		initSaveTensor();
 		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + cpdesc.getName()  + ".txt";
 		return new File(vocabPath);
 	}
@@ -343,7 +346,8 @@ public class LSTM implements IEgBotModel {
                 .toByteArray();
         
 	    // load graph
-		Pair2<Graph, Session> gs = loadModel(null); //TODO: pass config
+		Pair2<Graph, Session> gs = loadModel(config); 
+		System.out.println("Loaded/Created");
 	    try (Graph graph = gs.first;
             Session sess = gs.second;
             Tensor<String> checkpointPrefix = loadSaveTensor();
@@ -361,8 +365,10 @@ public class LSTM implements IEgBotModel {
 				trainEach2_epoch(trainingDataArray, sess, trainAccuracies, epoch, questionCount);
 			}
 
+			System.out.println("Trained");
 			// save model checkpoint
-			save(sess,checkpointPrefix);	    	
+			save(sess,checkpointPrefix);
+			System.out.println("Saved");
 	    }
 	}
 
@@ -415,7 +421,7 @@ public class LSTM implements IEgBotModel {
 							.run();
 					sessRunCount++;
 					
-					trainAccuracies.add(runner.get(0).floatValue());							
+					trainAccuracies.add(runner.get(0).floatValue()); // TODO: change this to be a sum? rather than a really long vector that we then avg							
 
 					// close tensors to save memory
 					closeTensors(runner);
@@ -431,6 +437,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException 
 	 */
 	private void save(Session sess, Tensor<?> checkpointPrefix) throws IOException {
+		initSaveTensor(); // paranoia
 		// save latest model (the location is set in the checkpointPrefix) 
 		model = sess.runner()
 				.feed("save/Const", checkpointPrefix)
@@ -608,9 +615,9 @@ public class LSTM implements IEgBotModel {
 	/**
 	 *  initialises Desc to identify the model and creates Depot saving path 
 	 */
-	// TODO: find out how this would work when i want to train with different data and keep both results?
-	public void initSaveTensor() {
-		cpdesc = new Desc("chckpt", Tensor.class); 
+	void initSaveTensor() {
+		if (cpdesc!=null) return;
+		cpdesc = new Desc("ckpt", Tensor.class); 
 		cpdesc.setTag("egbot"); 	
 		// create a Desc which is specific to this LSTM
 		cpdesc.addDependency("parent", getDesc());		
@@ -625,8 +632,12 @@ public class LSTM implements IEgBotModel {
 	 * @return
 	 */
 	public Tensor<String> loadSaveTensor() {
+		initSaveTensor();
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); 
-		return Tensors.create(saveDirPath.getAbsolutePath());
+    	String saveLocation = saveDirPath.getAbsolutePath();
+		final boolean checkpointExists = Files.exists(Paths.get(saveLocation ));
+		assert checkpointExists;
+		return Tensors.create(saveLocation);
 	}
 	
 	/**
@@ -634,23 +645,10 @@ public class LSTM implements IEgBotModel {
 	 * @return
 	 */
 	public boolean checkModelExists() {
+		//initSaveTensor();
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc);
-		return saveDirPath.exists();
-	}
-
-	@Deprecated
-	public Tensor<String> createTensor() {
-		//!TODO: should this be done once and then called using a getter?
-		cpdesc = new Desc("chckpt", Tensor.class);
-		cpdesc.setTag("egbot"); 	// TODO: find out how it knows to back up egbot files on ext drive
-		// create a Desc which is specific to this LSTM
-		cpdesc.addDependency("parent", getDesc());		
-		String id = cpdesc.getId(); // make sure the desc is finalised
-		// TODO: does depot need to be initialised just like in MM (e.g. Depot.getDefault().init()) 
-		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); // saves it to datastore (e.g. /home/irina/winterwell/datastore/egbot/...)
-		// make it a dir
-		saveDirPath.mkdirs();
-		return Tensors.create(saveDirPath.getAbsolutePath());
+		//return saveDirPath.exists();
+		return saveDirPath.getParentFile().list().length>1; // checks if there are ckpt files; TODO: get rid of this hack (currently needed bc for some reason it saves the ckpt files in the parent dir, dunno why, this has to be investigated further)
 	}
 
 	/**
@@ -680,7 +678,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws Exception
 	 */
 	public String sampleWord(String question) throws Exception {
-		String nextWord = "<ERROR>"; // ??why??
+		String nextWord = "<ERROR>"; // TODO: shouldn't I get rid of this?
 	    // load graph
 		Pair2<Graph, Session> graph_sess = loadModel(null);
 	    try {	    		
@@ -716,7 +714,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException
 	 */
 	// TODO: should config be moved out so as to be defined in the constructor depending on whether the experiment should use the GPU?
-	private Pair2<Graph,Session> loadModel(byte[] config) throws IOException {
+	private Pair2<Graph, Session> loadModel(byte[] config) throws IOException {
 		byte[] graphDef = checkGraph();	    
 		Graph graph = new Graph();
 		Session sess = new Session(graph, config);
@@ -724,7 +722,9 @@ public class LSTM implements IEgBotModel {
 		
 		// does the model exist?
 		if (!checkModelExists()) {
-			throw new IOException("Error: Couldn't restore model ...\n");
+			System.out.println("Initialising model ...");
+			sess.runner().addTarget("init").run();
+			return new Pair2(graph,sess);
 		}
 
 		// if yes, restore it
@@ -1032,8 +1032,9 @@ public class LSTM implements IEgBotModel {
 	}
 
 	@Override
-	public Desc getDesc() {
-		return cpdesc;
+	public Desc<IEgBotModel> getDesc() {
+		assert desc != null;
+		return desc;
 	}
 	
 	@Override
