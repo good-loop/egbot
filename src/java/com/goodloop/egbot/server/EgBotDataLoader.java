@@ -253,7 +253,8 @@ public class EgBotDataLoader {
 		}
 		
 		Log.i("Yay, finished training :) \n");		
-		model.setTrainSuccessFlag(true);
+		model.finishTraining();
+		model.setTrainSuccessFlag(true); // ?? ideally move into finishTraining() but who cares
 		Depot.getDefault().put(modelDesc, model);
 		Depot.getDefault().flush();
 	}

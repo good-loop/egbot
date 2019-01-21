@@ -44,9 +44,9 @@ public class EvaluatePredictions {
 		MarkovModel mm = new MarkovModel();		
 		runModel(mm, "MSE-20", "MSE-20", 100, 1);		
 				
-		//	LSTM 
-		//	LSTM lstm = new LSTM();				
-		//	runModel(lstm);				
+		// LSTM 
+		LSTM lstm = new LSTM();				
+		runModel(lstm, "MSE-20", "MSE-20", 100, 1);		
 	}
 	
 	/**
@@ -61,7 +61,6 @@ public class EvaluatePredictions {
 	 * @throws Exception
 	 */
 	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter) throws Exception {
-		// TODO: does the lstm have this mm/ wmc equivalence? i suppose there's the LSTM model class and there's the session object
 		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		modelDesc.put("train", tLabel);
@@ -93,14 +92,11 @@ public class EvaluatePredictions {
 			trainFilter = temp;
 		}
 		else { 
+			// no filter - train and test on ALL -- which makes sense 'cos the files for train test can be differen
 			trainFilter = n -> true;
 			testFilter = n -> true;
 		}
 		
-		// or like this?
-		//		IFilter<Integer> trainFilter = tSplit == 1 ? n -> true : n -> n % (100-tSplit) != 1;
-		//		IFilter<Integer> testFilter = eSplit == 1 ? n -> true : n -> (n % (eSplit != 1);
-			
 		// and we set the tag to know which filter was used
 		modelDesc.put("tFilter", tFilter);
 		modelDesc.put("eFilter", eFilter);

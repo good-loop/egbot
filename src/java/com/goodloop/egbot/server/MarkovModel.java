@@ -130,7 +130,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 			Tkn word = sitn.outcome;						
 			wmc.train1(prev, word, 1);				
 		}
-		trainSuccessFlag = true;
+		trainSuccessFlag = true; // TODO: set it at the end
 		// save model
 		save();
 	}
