@@ -227,7 +227,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 				break;
 			}			
 			answer = answer + " " + sampled.toString();
-			cntxt = new Cntxt(sig, sampled, cntxt.getBits()[0]);
+			cntxt = new Cntxt(sig, sampled, cntxt.getBits()[0]); //TODO: currently this is written up to generate only bigrams, fix this so that depending on the sig length n, it generates ngrams
 		}
 		return answer;
 	}

@@ -37,7 +37,12 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = generateAnswerLSTM(q, "MSE-20", 100, 1); 
+		
+		//TODO: fix trained mm loading, the problem seems to be that it generates a different dependency signature every time (as can be seen in the console); but it does this only here, not in training (how strange)
+		MarkovModel mm = new MarkovModel(); 
+		System.out.println("Model desc: " + mm.getDesc());
+		Object generatedAnswer = generateAnswer(mm, q, "MSE-20", 100, 1);
+		//Object generatedAnswer = generateAnswer(new LSTM(), q, "MSE-20", 100, 1); 
 
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -64,34 +69,22 @@ public class AskServlet implements IServlet {
 	}
 	
 	/**
-	 * use trained markov model to generate an answer
-	 */
-	private Object generateAnswerMM(String q) throws Exception {
-		MarkovModel mm = new MarkovModel();
-		System.out.println("Loading Markov model ...");
-		mm.load(); // TODO: check that I can actually load a specific trained model
-		System.out.println("Generating answer ...");
-		String answer = mm.sample(q, 30);	
-		System.out.println(answer);
-		return answer;
-	}
-
-	/**
 	 * use trained LSTM model to generate an answer
 	 */
-	private Object generateAnswerLSTM(String q, String trainLabel, int tFilter, int eFilter) throws Exception {
-		System.out.println("Loading LSTM model ...");
-		IEgBotModel model = new LSTM();
+	private Object generateAnswer(IEgBotModel model, String q, String trainLabel, int tFilter, int eFilter) throws Exception {
+		System.out.println("Loading model ...");
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		modelDesc.put("train", trainLabel);
 		modelDesc.put("tFilter", tFilter);
 		modelDesc.put("eFilter", eFilter);
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
+		// do we have a trained model that fits the description?
 		if (pretrained!=null) {
 			// replace the untrained with the trained
 			Log.d("Using pre-trained model");
 			model = pretrained;
 			model.setLoadSuccessFlag(true);
+			// generate answer
 			System.out.println("Generating answer ...");
 			String answer = model.generateMostLikely(q, 30);	
 			System.out.println(answer);
