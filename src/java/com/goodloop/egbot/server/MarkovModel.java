@@ -80,7 +80,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// ??how should we say these modules are only for this object,
 		// without creating a dependency circular reference mess??
 		// TODO add a feature to Depot or Desc to say "don't use modular saving please"
-		String p = toString();
+		String p = "MarkovModel:w-1,w-2"; // Hack - use a fixed string. NB: we tried toString(), but that has unstable outputs e.g. "MarkovModel@591f989e";
 		for(IHasDesc md : getModules()) {
 			md.getDesc().put("parent", p);
 		}

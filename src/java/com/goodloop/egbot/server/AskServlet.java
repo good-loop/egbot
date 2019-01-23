@@ -40,7 +40,7 @@ public class AskServlet implements IServlet {
 		
 		//TODO: fix trained mm loading, the problem seems to be that it generates a different dependency signature every time (as can be seen in the console); but it does this only here, not in training (how strange)
 		MarkovModel mm = new MarkovModel(); 
-		System.out.println("Model desc: " + mm.getDesc());
+//		System.out.println("Model desc: " + mm.getDesc()); this is the Desc before we add in training data parameters
 		Object generatedAnswer = generateAnswer(mm, q, "MSE-20", 100, 1);
 		//Object generatedAnswer = generateAnswer(new LSTM(), q, "MSE-20", 100, 1); 
 
@@ -72,11 +72,11 @@ public class AskServlet implements IServlet {
 	 * use trained LSTM model to generate an answer
 	 */
 	private Object generateAnswer(IEgBotModel model, String q, String trainLabel, int tFilter, int eFilter) throws Exception {
-		System.out.println("Loading model ...");
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		modelDesc.put("train", trainLabel);
 		modelDesc.put("tFilter", tFilter);
 		modelDesc.put("eFilter", eFilter);
+		Log.d("AskServlet", "Loading model ... "+modelDesc);
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
 		// do we have a trained model that fits the description?
 		if (pretrained!=null) {
