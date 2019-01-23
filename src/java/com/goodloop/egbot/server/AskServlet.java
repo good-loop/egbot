@@ -9,10 +9,13 @@ import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 import org.tensorflow.TensorFlow;
 
+import com.winterwell.depot.Depot;
+import com.winterwell.depot.Desc;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.web.ajax.JSend;
@@ -24,6 +27,8 @@ import jep.JepConfig;
 import jep.JepException;
 
 public class AskServlet implements IServlet {
+	
+	String failAnswer = "Hmm I couldn't figure it out ...";
 
 	@Override
 	public void process(WebRequest state) throws Exception {
@@ -75,14 +80,26 @@ public class AskServlet implements IServlet {
 	 * use trained LSTM model to generate an answer
 	 */
 	private Object generateAnswerLSTM(String q) throws Exception {
-		LSTM lstm = new LSTM();
+		IEgBotModel model = new LSTM();
 		System.out.println("Loading LSTM model ...");
-		lstm.load(); // TODO: check that I can actually load a specific trained model
-		lstm.init(EgBotDataLoader.setup("MSE-20")); //TODO: loading limited MSE data set
-		System.out.println("Generating answer ...");
-		String answer = lstm.generateMostLikely(q, 30);	
-		System.out.println(answer);
-		return answer;
+		Desc<IEgBotModel> modelDesc = model.getDesc();
+		modelDesc.put("train", "MSE-20");
+		modelDesc.put("tFilter", 100);
+		modelDesc.put("eFilter", 1);
+		// Do we have a pre-trained version?
+		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
+		if (pretrained!=null) {
+			// replace the untrained with the trained
+			Log.d("Using pre-trained model");
+			model = pretrained;
+			model.setLoadSuccessFlag(true);
+			System.out.println("Generating answer ...");
+			// model.init(EgBotDataLoader.setup("MSE-20")); //TODO: loading limited MSE data set
+			String answer = model.generateMostLikely(q, 30);	
+			System.out.println(answer);
+			return answer;
+		}		
+		return failAnswer;
 	}
 	
 	/**
