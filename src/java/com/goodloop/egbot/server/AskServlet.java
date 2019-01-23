@@ -37,7 +37,7 @@ public class AskServlet implements IServlet {
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		Object generatedAnswer = generateAnswerLSTM(q); 
+		Object generatedAnswer = generateAnswerLSTM(q, "MSE-20", 100, 1); 
 
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -79,14 +79,13 @@ public class AskServlet implements IServlet {
 	/**
 	 * use trained LSTM model to generate an answer
 	 */
-	private Object generateAnswerLSTM(String q) throws Exception {
-		IEgBotModel model = new LSTM();
+	private Object generateAnswerLSTM(String q, String trainLabel, int tFilter, int eFilter) throws Exception {
 		System.out.println("Loading LSTM model ...");
+		IEgBotModel model = new LSTM();
 		Desc<IEgBotModel> modelDesc = model.getDesc();
-		modelDesc.put("train", "MSE-20");
-		modelDesc.put("tFilter", 100);
-		modelDesc.put("eFilter", 1);
-		// Do we have a pre-trained version?
+		modelDesc.put("train", trainLabel);
+		modelDesc.put("tFilter", tFilter);
+		modelDesc.put("eFilter", eFilter);
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
 		if (pretrained!=null) {
 			// replace the untrained with the trained
@@ -94,11 +93,11 @@ public class AskServlet implements IServlet {
 			model = pretrained;
 			model.setLoadSuccessFlag(true);
 			System.out.println("Generating answer ...");
-			// model.init(EgBotDataLoader.setup("MSE-20")); //TODO: loading limited MSE data set
 			String answer = model.generateMostLikely(q, 30);	
 			System.out.println(answer);
 			return answer;
 		}		
+		Log.d("Error: Couldn't find trained model");
 		return failAnswer;
 	}
 	
