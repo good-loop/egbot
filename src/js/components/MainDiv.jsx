@@ -114,8 +114,8 @@ const apath = () => {
 
 const QuestionForm = () => {
 	// talking to the online servlet by default so as to allow running the app locally without an ES setup
-	let askServlet = 'https://egbot.good-loop.com/ask';
-	//let askServlet = 'http://local.egbot.com/ask';
+	//let askServlet = 'https://egbot.good-loop.com/ask';
+	let askServlet = 'http://local.egbot.com/ask';
 	notifyUser("Using server " + askServlet);
 
 	const onEnterPress = (e) => {
