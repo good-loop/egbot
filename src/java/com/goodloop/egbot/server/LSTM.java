@@ -182,7 +182,7 @@ public class LSTM implements IEgBotModel {
 		// save to file
 		Set<String> vocabWords = hlVocab.keySet();
 		
-		File vocabFile = vocabPath();
+		File vocabFile = vocabPathToDepot();
 		vocabFile.createNewFile();		
 		try (PrintWriter out = new PrintWriter(vocabFile)) {			
 			for (String word : vocabWords) {
@@ -300,7 +300,7 @@ public class LSTM implements IEgBotModel {
 		vocab.put(3,"ERROR");
 		int vocabIdx = 4;
 		
-		File vocabFile = vocabPath();
+		File vocabFile = vocabPathToDepot();
         // checks to see if it finds the vocab file
 	    final boolean checkpointExists = vocabFile.exists();
 	    if( ! checkpointExists) {
@@ -320,20 +320,11 @@ public class LSTM implements IEgBotModel {
 	}
 
 	/**
-	 * save vocab 
-	 * @return
-	 */
-	private File vocabPath() {			
-		initSaveTensor();
-		String vocabPath = 	System.getProperty("user.dir") + "/data/models/final/v3/vocab_" + cpdesc.getName()  + ".txt";
-		return new File(vocabPath);
-	}
-	
-	/**
 	 * save vocab to depot
 	 * @return
 	 */
 	private File vocabPathToDepot() {		
+		initSaveTensor();
 		vocabdesc = new Desc("vocab", String.class); 
 		vocabdesc.setTag("egbot"); 	
 		vocabdesc.addDependency("parent", cpdesc);		
@@ -341,7 +332,8 @@ public class LSTM implements IEgBotModel {
 		File vocabPath = Depot.getDefault().getLocalPath(vocabdesc); // saves it to datastore (e.g. /home/irina/winterwell/datastore/egbot/...)
 		// make it a dir
 		vocabPath.mkdirs();
-		return vocabPath;
+		String path = vocabPath.getPath() + File.separator + "vocab.txt"; // create the file
+		return new File(path);
 	}
 	
 	/**
@@ -458,6 +450,7 @@ public class LSTM implements IEgBotModel {
 	private void save(Session sess, Tensor<?> checkpointPrefix) throws IOException {
 		initSaveTensor(); // paranoia
 		// save latest model (the location is set in the checkpointPrefix) 
+		// TODO: maybe fix this -- for some reason it saves the checkpoint in the parent folder, not in checkpointPrefix; must have something to do with how tf saves checkpoints
 		model = sess.runner()
 				.feed("save/Const", checkpointPrefix)
 				.addTarget("save/control_dependency").run();
@@ -654,8 +647,8 @@ public class LSTM implements IEgBotModel {
 		initSaveTensor();
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); 
     	String saveLocation = saveDirPath.getAbsolutePath();
-		final boolean checkpointExists = Files.exists(Paths.get(saveLocation ));
-		assert checkpointExists;
+    	final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
+		assert checkpointExists; 
 		return Tensors.create(saveLocation);
 	}
 	
