@@ -35,7 +35,7 @@ noOfClosedUnclear = 0
 
 for no in range(1,9):
     filename = "MathStackExchangeAPI_Part_" + str(no) + ".json"
-    filepath = os.path.abspath("../../data/build/"+filename)
+    filepath = os.path.abspath("../../data/build/slim/"+filename)
     print("Opening " + filename)
     with open(filepath) as f:
         data = json.load(f)
@@ -44,24 +44,27 @@ for no in range(1,9):
         slim = []
         for i in range(0, len(data)):
             noOfQs += 1
-            lenOfQChars += len(data[i]["body_markdown"])
-            splitQs = data[i]["body_markdown"].split()
-            lenOfQWords += len(splitQs)
-            score = data[i]["score"]
-            avgScorePerQ += score
+            if noOfQs < 6:
+                print(data[i]["question"])
+                print("----------------------------")
+            # lenOfQChars += len(data[i]["body_markdown"])
+            # splitQs = data[i]["body_markdown"].split()
+            # lenOfQWords += len(splitQs)
+            # score = data[i]["score"]
+            # avgScorePerQ += score
 
-            if (score >= 0):
-                noOfQsWithPosScore += 1
-            if (score > 0):
-                noOfQsWithGoodScore += 1
+            # if (score >= 0):
+            #     noOfQsWithPosScore += 1
+            # if (score > 0):
+            #     noOfQsWithGoodScore += 1
 
-            if("closed_details" in data[i].keys()):
-                noOfClosed += 1
-                reason = data[i]["closed_details"]["reason"]
-                if "duplicate" in reason:  noOfClosedDuplicates += 1;
-                elif "off-topic" in reason:  noOfClosedOffTopic += 1;
-                elif "opinion" in reason:  noOfClosedOpinion += 1;
-                elif "unclear" in reason:  noOfClosedUnclear += 1;
+            # if("closed_details" in data[i].keys()):
+            #     noOfClosed += 1
+            #     reason = data[i]["closed_details"]["reason"]
+            #     if "duplicate" in reason:  noOfClosedDuplicates += 1;
+            #     elif "off-topic" in reason:  noOfClosedOffTopic += 1;
+            #     elif "opinion" in reason:  noOfClosedOpinion += 1;
+            #     elif "unclear" in reason:  noOfClosedUnclear += 1;
 
             hasGoodA = False
             hasAccA = False

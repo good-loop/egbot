@@ -82,14 +82,16 @@ public class EvaluatePredictions {
 		IFilter<Integer> trainFilter = n -> true;
 		IFilter<Integer> testFilter;
 		if (tFilter != 1) { // 1 is for when no filter is used
-			IFilter<Integer> temp = n -> n % tFilter != 1;	
+			IFilter<Integer> trainTemp = n -> n % tFilter != 1;
+			IFilter<Integer> testTemp;
 			if (eFilter != 1) {
-				testFilter = n -> ! temp.accept(n);
+				testTemp = n -> ! trainTemp.accept(n);
 			}
 			else { 
-				testFilter = n -> true;
+				testTemp = n -> true;
 			}
-			trainFilter = temp;
+			trainFilter = trainTemp;
+			testFilter = testTemp;
 		}
 		else { 
 			// no filter - train and test on ALL -- which makes sense 'cos the files for train test can be differen
@@ -99,10 +101,12 @@ public class EvaluatePredictions {
 		
 		// and we set the tag to know which filter was used
 		modelDesc.put("tFilter", tFilter);
-		modelDesc.put("eFilter", eFilter);
+		
+		
+		modelDesc.put("eFilter", eFilter); // TODO: not ideal because this should be part of the desc of the experiment, not the model -- but we're leaving it like this for now
 
 		// set up experiment
-		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, testFilter, files, tLabel);
+		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, tLabel);
 		
 		// TEST
 		
@@ -122,7 +126,7 @@ public class EvaluatePredictions {
 			// set up quantitative evaluator
 			QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
 			// conduct evaluation
-			quant.evaluateModel();
+			quant.evaluateModel(eLabel);
 		}
 		
 		if (true) {//QUAL EVAL			
@@ -148,7 +152,7 @@ public class EvaluatePredictions {
 	 * @throws IOException
 	 */
 	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, 
-			IFilter<Integer> trainFilter,  IFilter<Integer> testFilter, List<File> files, String trainLabel) throws IOException 
+			IFilter<Integer> trainFilter, List<File> files, String trainLabel) throws IOException 
 	{
 		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();

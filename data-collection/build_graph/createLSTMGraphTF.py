@@ -11,8 +11,8 @@ learning_rate = 0.001
 #training_steps = 10000
 #batch_size = 128
 #display_step = 200
-vocab_size = 1197 #13346 # TODO: put in real number
-num_hidden = 256 # hidden layer num of features
+vocab_size = 1197 #15807 #13346 #1197 # TODO: put in real number
+num_hidden = 256#128 #256 # hidden layer num of features
 seq_length = 30
 
 # check now that we're in the right place
@@ -61,9 +61,9 @@ def BiRNN(x, weights, biases):
 
 g = tf.get_default_graph()
 
-with g.device('/device:GPU:0'):
+with g.device('/device:XLA_GPU:0'):
     logits = BiRNN(X, weights, biases)
-    #prediction = tf.identity(logits, name='output')
+    #prediction = tf.identity(logits, name='output')    
     prediction = tf.nn.softmax(logits, name="output")
 
     # Define loss and optimizer

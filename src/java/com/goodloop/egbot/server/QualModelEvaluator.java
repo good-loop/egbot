@@ -13,48 +13,50 @@ import com.winterwell.gson.stream.JsonReader;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+
 /**
  * Qualitative Model Evaluator
  * 
- * takes in evaluation inputs and spits out generated outputs from trained models 
+ * takes in evaluation inputs and spits out generated outputs from trained
+ * models
  * 
  * @author Irina
  *
  */
 public class QualModelEvaluator {
-	
+
 	/**
 	 * Suggested number of words in answer
 	 */
 	static int expectedAnswerLength = 30;
 
 	static File qualSetFile = new File("data/build/qualEval.json");
-	
+
 	final EgBotExperiment experiment;
-	
+
 	/**
 	 * Can be reused
 	 */
 	public QualModelEvaluator(EgBotExperiment experiment) {
 		this.experiment = experiment;
 	}
-	
+
 	/**
-	 * evaluate model 
-	 * by scoring the avg accuracy of log probabilities 
-	 * and showing examples of generated output
+	 * evaluate model by scoring the avg accuracy of log probabilities and showing
+	 * examples of generated output
+	 * 
 	 * @throws Exception
 	 */
 	public void evaluateModel() throws Exception {
 		IEgBotModel model = experiment.getModel();
 		assert model != null;
 		// train? no
-		assert model.isReady(); 
+		assert model.isReady();
 
 		Log.d("Evaluating ...");
 		EgBotData testData = (EgBotData) experiment.getTestData();
-		List<Map<String,?>> saved = new ArrayList();
-		for(File file : testData.files) {
+		List<Map<String, ?>> saved = new ArrayList();
+		for (File file : testData.files) {
 			Gson gson = new Gson();
 			// zip or plain json?
 			Reader r;
@@ -65,36 +67,36 @@ public class QualModelEvaluator {
 			}
 			JsonReader jr = new JsonReader(r);
 			jr.beginArray();
-						
-			int c=0;
-			while(jr.hasNext()) {
-				// filter so as to evaluate only on test data
-				if ( ! testData.filter.accept(c)) {
-					c++;
-					continue;
-				}
+
+			int c = 0;
+			while (jr.hasNext()) {
 				c++;
-				Map eg = gson.fromJson(jr, Map.class);		
+				Map eg = gson.fromJson(jr, Map.class);
 				String question = (String) eg.get("question");
 				String target = (String) eg.get("answer");
-				String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question, expectedAnswerLength);
-				
-				Map<String,String> temp = new ArrayMap<>(
-					"question", question,
-					"target", target,
-					"generated", generated
-				);			
-				System.out.printf("Example of generated answer: %s\n\n", generated);
+
+				// filter so as to evaluate only on test data
+				if (!testData.filter.accept(c)) {
+					continue;
+				}
+				String generated = ((IEgBotModel) experiment.getModel()).generateMostLikely(question,
+						expectedAnswerLength);
+
+				Map<String, String> temp = new ArrayMap<>("question", question, "target", target, "generated",
+						generated);
+				// log update
+				if (c % 100 == 0)
+					Log.i("Example of generated answer: %s\n\n", generated);
 				saved.add(temp);
-				
-			} 
-			jr.close();			
-		}	
+			}
+			jr.close();
+		}
 		saveToFile(saved);
 	}
 
 	/**
 	 * save experiment evaluation results
+	 * 
 	 * @param saved
 	 */
 	private void saveToFile(List<Map<String, ?>> saved) {
@@ -104,11 +106,11 @@ public class QualModelEvaluator {
 		results.setGeneratedAnswers(saved);
 		experiment.setResults(results);
 
-		Desc expDesc = experiment.getDesc();		
+		Desc expDesc = experiment.getDesc();
 		depot.put(experiment.getDesc(), experiment);
-		
+
 		Log.d("Results of qualitative experiment saved to: \n" + Depot.getDefault().getLocalPath(expDesc));
-		depot.flush();		
+		depot.flush();
 	}
-	
+
 }

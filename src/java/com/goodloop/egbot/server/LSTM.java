@@ -520,7 +520,7 @@ public class LSTM implements IEgBotModel {
 	 * @return
 	 */
 	private String mostLikelyWord(float[][] vector) {
-		String word = "<ERROR>";
+		String word = "<ERROR2>";
 		String[] vocabArray = vocab.values().toArray(new String[0]);
 
 		// find word with highest probability
@@ -609,6 +609,7 @@ public class LSTM implements IEgBotModel {
 					// copy tensor to array
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
+					closeTensors(outputs); // free memory
 					nextWord = mostLikelyWord(outputArray);
 					
 					// add generated word to answer 
@@ -649,6 +650,7 @@ public class LSTM implements IEgBotModel {
     	String saveLocation = saveDirPath.getAbsolutePath();
     	final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 		assert checkpointExists; 
+		Log.d("Restoring model: " + cpdesc);
 		return Tensors.create(saveLocation);
 	}
 	
@@ -740,9 +742,9 @@ public class LSTM implements IEgBotModel {
 		}
 
 		// if yes, restore it
-        Tensor<String> checkpointPrefix = loadSaveTensor(); // Depot path as a tensor
-		System.out.println("Restoring model ...");
-		sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();	
+		try (Tensor<String> checkpointPrefix = loadSaveTensor()) { // Depot path as a tensor
+			sess.runner().feed("save/Const", checkpointPrefix).addTarget("save/restore_all").run();	
+		}		
 	        
 		return new Pair2(graph,sess);
 	}
@@ -792,6 +794,7 @@ public class LSTM implements IEgBotModel {
 					// copy output tensors to array
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
+					closeTensors(outputs); // free memory
 					// find out the position of the target word in the vocab
 					int targetPos = getKeyByValue(vocab,tArray[i]);
 					// find out the prob of that word, as returned from the model
@@ -805,23 +808,24 @@ public class LSTM implements IEgBotModel {
 				instanceArray[seq_length-1] = tArray[i];
 			}
 			// avg the score and then return it
-			return score/tArray.length;
+			return score/tArray.length; 
 	    }
 	}	
-	
+
 	/**
-	 * score model's ability to guess the correct answer from a set of answers
-	 * @param q question 
-	 * @param t target
-	 * @param a answers
-	 * @return 1 if correct, 0 if incorrect
-	 * @throws IOException
-	 */
-	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
-		double score = 0;
-		int bestAnsIdx = pickBest(q, t, a);
-		if (a.indexOf(t) == bestAnsIdx) return 1; 
-		else return 0;
+	 * returns index of answer that has best score (aka avg log prob)
+	 */	
+	public int pickBest(String q, String target, ArrayList<String> answers) throws IOException  {
+		int currBestIndex = -1;
+		double currBestScore = Double.NEGATIVE_INFINITY;
+		for (int i = 0; i < answers.size(); i++) {
+			double temp = scoreAnswer(q, answers.get(i));
+			if( temp > currBestScore) {
+				currBestScore = temp;
+				currBestIndex = i;
+			}
+		}
+		return currBestIndex;
 	}
 	
 	/**
@@ -832,7 +836,8 @@ public class LSTM implements IEgBotModel {
 	 * @return index of answer deemed to be the best guess
 	 * @throws IOException 
 	 */
-	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
+	@Deprecated
+	public int pickBestOLD(String q, String t, ArrayList<String> a) throws IOException {
 		double bestAnsScore = -999; // artifically low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
 		
@@ -869,7 +874,7 @@ public class LSTM implements IEgBotModel {
 						Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tArray[i]))) {
 						List<Tensor<?>> outputs = sess.runner()
 								.feed("input", input)
-								.feed("target", target) // hmm we only get the probs of the best guess, rather than all probs?
+								.feed("target", target) // hmm do we only get the probs of the best guess, rather than all probs?
 								.fetch("output") // prediction
 								.fetch("correct_pred") // validation accuracy
 								.run();
@@ -877,6 +882,7 @@ public class LSTM implements IEgBotModel {
 						// copy output tensors to array
 						float[][] outputArray = new float[1][vocab_size];
 						outputs.get(0).copyTo(outputArray);
+						closeTensors(outputs); // free memory
 						// find out the position of the target word in the vocab
 						int targetPos = getKeyByValue(vocab,tArray[i]);
 						// find out the prob of that word, as returned from the model
@@ -1011,7 +1017,7 @@ public class LSTM implements IEgBotModel {
 			
 			// we generate as many words as we decided to expect the answer to have
 			for (int i = 0; i < expectedAnswerLength; i++) {			
-				String nextWord = "<ERROR>";
+				String nextWord = "<ERROR1>";
 				
 				// run graph with given input and fetch output
 				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(questionArray))) {
@@ -1023,6 +1029,7 @@ public class LSTM implements IEgBotModel {
 					// copy tensor to array
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
+					closeTensors(outputs); // free memory
 					nextWord = mostLikelyWord(outputArray);
 					
 					// add generated word to answer 

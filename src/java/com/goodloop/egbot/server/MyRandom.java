@@ -2,10 +2,10 @@ package com.goodloop.egbot.server;
 
 import java.util.Random;
 
-public class ProbCounter {
+public class MyRandom {
 	Random c;
 	
-	ProbCounter() {
+	MyRandom() {
 		c = new Random();
 		c.setSeed(42);
 	}

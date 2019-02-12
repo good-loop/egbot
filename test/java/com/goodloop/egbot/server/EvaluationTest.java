@@ -32,15 +32,39 @@ public class EvaluationTest {
 	}
 	
 //	@Test
-	public void testLTSM() throws Exception {
+	public void test20LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 100, 1);
-	}	
-
+		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 1, 1);
+	}
+	
 	@Test
-	public void testMarkov() throws Exception {
-		MarkovModel mm = new MarkovModel(); 
-		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1);
+	public void testX20LTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-X20", "MSE-X20", 1, 1);
+	}
+	
+//	@Test
+	public void testPartLTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-part", "MSE-part", 100, 100);
+	}
+
+//	@Test
+	public void testFullLTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-full", "MSE-full", 100, 100);
+	}
+
+//	@Test
+	public void test20Markov() throws Exception {
+		MarkovModel mm = new MarkovModel(); 	
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 1, 1);
+	}
+	
+//	@Test
+	public void testFullMarkov() throws Exception {
+		MarkovModel mm = new MarkovModel(); 	
+		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-full", 100, 100);
 	}
 
 	/**

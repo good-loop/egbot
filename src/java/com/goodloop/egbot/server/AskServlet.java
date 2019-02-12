@@ -32,17 +32,25 @@ public class AskServlet implements IServlet {
 
 	@Override
 	public void process(WebRequest state) throws Exception {
-		String q = state.get("q");
 
+		IEgBotModel model;
+		// which model should it use?
+		String m = state.get("m");
+		if (m.equals("LSTM")) {
+			model = new LSTM();
+		}
+		else {
+			model = new MarkovModel();
+		}
+
+		// now find an answer based on the question
+		String q = state.get("q");
 		Object answer;
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
-		
-		//TODO: fix trained mm loading, the problem seems to be that it generates a different dependency signature every time (as can be seen in the console); but it does this only here, not in training (how strange)
-		MarkovModel mm = new MarkovModel(); 
-//		System.out.println("Model desc: " + mm.getDesc()); this is the Desc before we add in training data parameters
-		Object generatedAnswer = generateAnswer(mm, q, "MSE-20", 100, 1);
-		//Object generatedAnswer = generateAnswer(new LSTM(), q, "MSE-20", 100, 1); 
+		 
+		//Object generatedAnswer = generateAnswer(new MarkovModel(), q, "MSE-20", 100, 1);
+		Object generatedAnswer = generateAnswer(model, q, "MSE-20", 100, 1); 
 
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -67,9 +75,9 @@ public class AskServlet implements IServlet {
         proc.close();
 		return answer;
 	}
-	
+
 	/**
-	 * use trained LSTM model to generate an answer
+	 * load trained model to generate an answer
 	 */
 	private Object generateAnswer(IEgBotModel model, String q, String trainLabel, int tFilter, int eFilter) throws Exception {
 		Desc<IEgBotModel> modelDesc = model.getDesc();

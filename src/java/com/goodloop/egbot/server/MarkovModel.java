@@ -253,21 +253,6 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 		// avg the score
 		return score/count;
 	}
-	
-	/**
-	 * score model's ability to guess the correct answer from a set of answers
-	 * @param q question 
-	 * @param t target
-	 * @param a answers
-	 * @return 1 if correct, 0 if incorrect
-	 * @throws IOException
-	 */
-	public int scorePickBest(String q, String t, ArrayList<String> a) throws IOException {
-		int bestAnsIdx = pickBest(q, t, a);
-		if (a.indexOf(t) == bestAnsIdx) return 1; 
-		else return 0;
-	}
-	
 	/**
 	 * get model's best guess from a selection of answers, of which one is correct
 	 * @param q question 
@@ -276,7 +261,8 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	 * @return index of answer deemed to be the best guess
 	 * @throws IOException 
 	 */
-	public int pickBest(String q, String t, ArrayList<String> a) throws IOException {
+	@Deprecated
+	public int pickBestOLD(String q, String t, ArrayList<String> a) throws IOException {
 		double bestAvg = -999; // artificially low score (TODO: is this correct way of doing it?)
 		int bestAnsIdx = -1;
 

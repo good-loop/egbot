@@ -81,7 +81,6 @@ class MainDiv extends Component {
 						<div className="row">
 							<div className="col-md-4 question-area-wrapper">
 								<div className="input-group question-area">
-									<div><b>Type in your question</b></div>
 									<QuestionForm />
 								</div>
 							</div>
@@ -127,12 +126,20 @@ const QuestionForm = () => {
 
 	return (
 		<div>
+			<div><b>Type in your question</b></div>
 			<PropControl 
 				path={qpath} prop='q'
 				type="textarea" 
 				label=""
 				rows="3"
 				onKeyDown={onEnterPress}
+			/>
+			<PropControl 
+				path={qpath} prop='m'
+				type="radio" 
+				label="Choose the model (optional):"
+				options={['Markov','LSTM']}
+				dflt="Markov"
 			/>
 			<div className="btn-group" role="group" aria-label="">
 				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url={askServlet} responsePath={apath()}>Ask</Misc.SubmitButton>

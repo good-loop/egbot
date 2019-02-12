@@ -88,6 +88,9 @@ public class EgBotDataLoader {
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
+        	case "MSE-X20": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
+        		break;
         	case "paul-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json")); // paulius' 20 questions (TODO: needs answers, currently has dummy ones)
         		break;        
@@ -198,6 +201,7 @@ public class EgBotDataLoader {
 		if (pretrained!=null) {
 			// replace the untrained with the trained
 			Log.d("Using pre-trained model");
+			Log.d("Model description: " + modelDesc);
 			model = pretrained;
 			e.setModel(pretrained, modelDesc);
 			// TODO: remove temporary loadSuccessFlag flag and associated methods, this is just while I test model loading (can't hold loadSuccessFlag within model because of how we load the model)
@@ -234,15 +238,13 @@ public class EgBotDataLoader {
 			JsonReader jr = new JsonReader(r);
 			jr.beginArray();
 						
-			int c=0;
+			int c=-1;
 			while(jr.hasNext()) {
-				if ( ! trainData.filter.accept(c)) {
-					c++;
-					continue;
-				}
 				c++;
-				
 				Map qa = gson.fromJson(jr, Map.class);
+				if ( ! trainData.filter.accept(c)) {
+					continue;
+				}			
 				model.train1(qa);
 				rate.plus(1);
 				if (c % 1000 == 0) Log.i(c+" "+rate+"...");
