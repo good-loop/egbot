@@ -41,9 +41,9 @@ public class EvaluationTest {
 	
 	
 //	@Test
-	public void testPart1LTSM() throws Exception {
+	public void test100LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-part1", "MSE-20", 100, 100);
+		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1);
 	}
 	
 //	@Test
@@ -58,6 +58,7 @@ public class EvaluationTest {
 		new EvaluatePredictions().runModel(lstm, "MSE-full-trial", "MSE-20", 100, 100);
 	}
 
+	
 	// TEST MARKOV
 	
 //	@Test
