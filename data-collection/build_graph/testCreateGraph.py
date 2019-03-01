@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-x = tf.placeholder(tf.float32, name='input')
+x = tf.placeholder(tf.float32, name='inp')
 y_ = tf.placeholder(tf.float32, name='target')
 
 W = tf.Variable(5., name='W')
@@ -15,6 +15,10 @@ loss = tf.reduce_mean(tf.square(y - y_))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
 train_op = optimizer.minimize(loss, name='train')
 
+prediction = tf.nn.softmax(y) 
+correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1), name="correct_pred")
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
+
 init = tf.global_variables_initializer()
 
 # Creating a tf.train.Saver adds operations to the graph to save and
@@ -22,7 +26,7 @@ init = tf.global_variables_initializer()
 saver_def = tf.train.Saver().as_saver_def()
 
 print('Operation to initialize variables:       ', init.name)
-print('Tensor to feed as input data:            ', x.name)
+print('Tensor to feed as inp data:            ', x.name)
 print('Tensor to feed as training targets:      ', y_.name)
 print('Tensor to fetch as prediction:           ', y.name)
 print('Operation to train one step:             ', train_op.name)

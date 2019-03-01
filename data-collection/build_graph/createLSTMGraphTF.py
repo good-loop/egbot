@@ -11,15 +11,15 @@ learning_rate = 0.001
 #training_steps = 10000
 #batch_size = 128
 #display_step = 200
-vocab_size = 1197 #15807 #13346 #1197 # TODO: put in real number
-num_hidden = 256#128 #256 # hidden layer num of features
+vocab_size = 14410#11153#14410 #15807 #13346 #1197 # TODO: put in real number
+num_hidden = 128#128 #256 # hidden layer num of features
 seq_length = 30
 
 # check now that we're in the right place
 egbotdir = os.path.abspath('../..')
 assert egbotdir.endswith("egbot"), egbotdir+" Try running from the build_graph dir"
 
-# tf Graph input
+# tf Graph inp
 X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
 Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
 
@@ -35,13 +35,13 @@ biases = {
 def BiRNN(x, weights, biases):
 
     # Prepare data shape to match `rnn` function requirements
-    # Current data input shape: (batch_size, timesteps, n_input)
-    # Required shape: 'timesteps' tensors list of shape (batch_size, num_input)
+    # Current data inp shape: (batch_size, timesteps, n_inp)
+    # Required shape: 'timesteps' tensors list of shape (batch_size, num_inp)
 
     # reshape to [1, seq_length]
     x = tf.reshape(x, [-1, seq_length])
 
-    # Generate a seq_length-element sequence of inputs
+    # Generate a seq_length-element sequence of inps
     # (eg. [had] [a] [general] -> [20] [6] [33])
     x = tf.split(x, seq_length, 1)
 
@@ -61,10 +61,10 @@ def BiRNN(x, weights, biases):
 
 g = tf.get_default_graph()
 
-with g.device('/device:XLA_GPU:0'):
+with g.device('/device:GPU:0'):
     logits = BiRNN(X, weights, biases)
     #prediction = tf.identity(logits, name='output')    
-    prediction = tf.nn.softmax(logits, name="output")
+    prediction = tf.nn.softmax(logits, name="output") # TODO: why don't we feed this into loss op??
 
     # Define loss and optimizer
     loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y), name="loss_op")
@@ -84,8 +84,8 @@ init = tf.global_variables_initializer()
 saver_def = tf.train.Saver().as_saver_def()
 
 print('Operation to initialize variables:       ', init.name)
-print('Tensor to feed as input data:            ', X.name)
-print('Tensor to feed as training targets:      ', Y.name)
+print('Tensor to feed as inp data:            ', X.name)
+print('Tensor to feed as training targetts:      ', Y.name)
 print('Tensor to fetch as prediction:           ', prediction.name)
 print('Operation to train one step:             ', train_op.name)
 print('Tensor to be fed for checkpoint filename:', saver_def.filename_tensor_name)
@@ -114,4 +114,6 @@ with open('../../data/models/final/v3/lstmGraphTF.pb', 'wb') as f:
 summary_writer = tf.summary.FileWriter('../../data/models/final/v3/logdir', sess.graph)
 # tf.train.SummaryWriter('../../data/models/final/v3/logdir', sess.graph_def)
 # tf.get_default_graph().as_graph_def()) #
+
+print("\nI saved the graph here for you: " + os.path.abspath("../../data/models/final/v3/lstmGraphTF.pb"))
 
