@@ -79,17 +79,32 @@ public class EgBotDataLoader {
 		List<File> files = null;
 		
 		switch (dataLabel) {
-    		case "MSE-part":
-        		files = loadMSE("MathStackExchangeAPI_Part_1"); // load MSE data that starts with this string (aka only first part of egbot data)
+    		case "MSE-part1":
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_Part_1.json")); // 100 MSE q&a pairs
+        		break;
+    		case "MSE-part2":
+        		files = loadMSE("MathStackExchangeAPI_Part_2"); // load MSE data that starts with this string (aka only first part of egbot data)
         		break;
         	case "MSE-full":
         		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
             	break;
+        	case "MSE-full-trial":
+        		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
+            	break;
+        	case "MSE-full-old":
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/test.json")); // todo: remove this 
+        		break;
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
+        	case "MSE-X100": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_1.json")); // 100 MSE q&a pairs
+        		break;
+        	case "MSE-100": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
+        		break;
         	case "MSE-X20": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/xtiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
         	case "paul-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json")); // paulius' 20 questions (TODO: needs answers, currently has dummy ones)
@@ -248,9 +263,9 @@ public class EgBotDataLoader {
 				model.train1(qa);
 				rate.plus(1);
 				if (c % 1000 == 0) Log.i(c+" "+rate+"...");
+				if (false) break;
 			} 
 			jr.close();
-			
 			if (false) break;
 		}
 		

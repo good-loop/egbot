@@ -131,7 +131,7 @@ public class QuantModelEvaluator {
 	 * @throws Exception
 	 */
 	public void evaluateModel(String eLabel) throws Exception {
-		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20")) {
+		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20") || eLabel.equals("MSE-100")) {
 			evaluateModelTinyData();
 			return;
 		}

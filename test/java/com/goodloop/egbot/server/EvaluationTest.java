@@ -31,34 +31,45 @@ public class EvaluationTest {
 		assert lp.toString().contains("egbot-learning-depot") : lp;
 	}
 	
+	// TEST LSTM
+	
 //	@Test
 	public void test20LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 1, 1);
 	}
 	
-	@Test
-	public void testX20LTSM() throws Exception {
-		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-X20", "MSE-X20", 1, 1);
-	}
 	
 //	@Test
-	public void testPartLTSM() throws Exception {
+	public void testPart1LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-part", "MSE-part", 100, 100);
+		new EvaluatePredictions().runModel(lstm, "MSE-part1", "MSE-20", 100, 100);
 	}
-
+	
 //	@Test
 	public void testFullLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "MSE-full", "MSE-full", 100, 100);
 	}
+	
+//	@Test
+	public void testFullTrialLTSM() throws Exception { // MSE-full-trial AKA the old trained-model
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-full-trial", "MSE-20", 100, 100);
+	}
 
+	// TEST MARKOV
+	
 //	@Test
 	public void test20Markov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 	
 		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 1, 1);
+	}
+	
+	@Test
+	public void test100Markov() throws Exception {
+		MarkovModel mm = new MarkovModel(); 	
+		new EvaluatePredictions().runModel(mm, "MSE-100", "MSE-20", 1, 1);
 	}
 	
 //	@Test

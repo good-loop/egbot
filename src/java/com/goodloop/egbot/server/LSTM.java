@@ -383,7 +383,7 @@ public class LSTM implements IEgBotModel {
 	    }
 	}
 
-	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch, int questionCount) 
+	private void trainEach2_epoch(List<List<String>> trainingDataArray, Session sess, ArrayList<Float> trainAccuracies, int epoch, int questionCount) throws IOException 
 	{		
 		// for each qa segment
 		for (int batchIdx = 0; batchIdx < trainingDataArray.size(); batchIdx++) {
@@ -431,6 +431,9 @@ public class LSTM implements IEgBotModel {
 							.fetch("accuracy") // training accuracy
 							.run();
 					sessRunCount++;
+					//Log.d("sessRunCount: ",sessRunCount);
+
+					Log.d("Test train-then-gen: ",generateMostLikely("what", 30));
 					
 					trainAccuracies.add(runner.get(0).floatValue()); // TODO: change this to be a sum? rather than a really long vector that we then avg							
 
@@ -520,7 +523,7 @@ public class LSTM implements IEgBotModel {
 	 * @return
 	 */
 	private String mostLikelyWord(float[][] vector) {
-		String word = "<ERROR2>";
+		String word = "<ERROR>";
 		String[] vocabArray = vocab.values().toArray(new String[0]);
 
 		// find word with highest probability
@@ -648,9 +651,11 @@ public class LSTM implements IEgBotModel {
 		initSaveTensor();
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc); 
     	String saveLocation = saveDirPath.getAbsolutePath();
+    	Log.d(Paths.get(saveLocation));
+    	Log.d(Files.exists(Paths.get(saveLocation)));
     	final boolean checkpointExists = Files.exists(Paths.get(saveLocation));
 		assert checkpointExists; 
-		Log.d("Restoring model: " + cpdesc);
+		Log.d("Restoring model guts: " + cpdesc);
 		return Tensors.create(saveLocation);
 	}
 	
@@ -662,6 +667,7 @@ public class LSTM implements IEgBotModel {
 		//initSaveTensor();
 		File saveDirPath = Depot.getDefault().getLocalPath(cpdesc);
 		//return saveDirPath.exists();
+		Log.d("saveDirPath: ", saveDirPath);
 		return saveDirPath.getParentFile().list().length>1; // checks if there are ckpt files; TODO: get rid of this hack (currently needed bc for some reason it saves the ckpt files in the parent dir, dunno why, this has to be investigated further)
 	}
 
@@ -736,7 +742,7 @@ public class LSTM implements IEgBotModel {
 		
 		// does the model exist?
 		if (!checkModelExists()) {
-			System.out.println("Initialising model ...");
+			//System.out.println("Initialising model ...");
 			sess.runner().addTarget("init").run();
 			return new Pair2(graph,sess);
 		}
@@ -794,6 +800,8 @@ public class LSTM implements IEgBotModel {
 					// copy output tensors to array
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
+					boolean[] output2Array = new boolean[1];
+					outputs.get(1).copyTo(output2Array);
 					closeTensors(outputs); // free memory
 					// find out the position of the target word in the vocab
 					int targetPos = getKeyByValue(vocab,tArray[i]);
@@ -1017,7 +1025,7 @@ public class LSTM implements IEgBotModel {
 			
 			// we generate as many words as we decided to expect the answer to have
 			for (int i = 0; i < expectedAnswerLength; i++) {			
-				String nextWord = "<ERROR1>";
+				String nextWord = "<ERROR>";
 				
 				// run graph with given input and fetch output
 				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(questionArray))) {

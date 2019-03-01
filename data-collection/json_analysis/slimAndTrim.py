@@ -14,9 +14,10 @@ def findFile(prefix):
     return null
 
 # make the output directory
-os.mkdir(buildPath+"slim.1")
+os.mkdir(buildPath+"slimmer")
 
-for no in range(1,9):
+count = 0
+for no in range(1,2):
     # find e.g. MathStackExchangeAPI_Part_1_TimeStamps_1512760268_1535031491.json (e.g. what the Zenodo fils are called)
     filename = findFile("MathStackExchangeAPI_Part_" + str(no))
     filepath = os.path.abspath(buildPath+filename)
@@ -27,6 +28,8 @@ for no in range(1,9):
 
         slim = []
         for i in range(0, len(data)):
+            #if count>=100:
+            #    break
             if("answers" in data[i].keys()):
                 for j in range(0, len(data[i]["answers"])):
                     is_accepted = data[i]["answers"][j]["is_accepted"]
@@ -35,8 +38,10 @@ for no in range(1,9):
                         temp["question"] = data[i]["body_markdown"]
                         temp["answer"] = data[i]["answers"][j]["body_markdown"]
                         slim.append(temp)
+                        count += 1                        
                         
-        outpath = os.path.abspath(buildPath + "slim/" + filename)
+        outpath = os.path.abspath(buildPath + "slimmer/" + filename)
+        print("count ", count)
         print("Saving ... to ", outpath)
         with open(outpath, 'w') as outfile:  
             json.dump(slim, outfile)
