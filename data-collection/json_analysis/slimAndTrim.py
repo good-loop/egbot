@@ -37,8 +37,8 @@ def trim(no, count):
                         slim.append(temp)
                         count += 1                                
         if capped:
-            filename = "MathStackExchangeAPI_" + str(cap)
-        outpath = os.path.abspath(buildPath + "slimmer/" + filename)
+            filename = "MathStackExchangeAPI_" + str(cap) 
+        outpath = os.path.abspath(buildPath + "slimmer/" + filename + ".json")
         print("Count: ", count)
         print("Saving ... to ", outpath)
         with open(outpath, 'w') as outfile:  
