@@ -33,16 +33,15 @@ public class AskServlet implements IServlet {
 	@Override
 	public void process(WebRequest state) throws Exception {
 
-		IEgBotModel model;
+		IEgBotModel model = new MarkovModel();
+
 		// which model should it use?
 		String m = state.get("m");
-		if (m.equals("LSTM")) {
-			model = new LSTM();
+		if (m != null) {
+			if( m.equals("LSTM")) {
+				model = new LSTM();
+			}
 		}
-		else {
-			model = new MarkovModel();
-		}
-
 		// now find an answer based on the question
 		String q = state.get("q");
 		Object answer;
