@@ -13,8 +13,8 @@ import C from '../C';
 // Widgets
 import Messaging, {notifyUser} from '../base/plumbing/Messaging';
 import MessageBar from '../base/components/MessageBar';
-import NavBar from '../base/components/NavBar';
-import LoginWidget from '../base/components/LoginWidget';
+//import NavBar from '../base/components/NavBar';
+// import LoginWidget from '../base/components/LoginWidget';
 import Misc from '../base/components/Misc';
 
 import CardAccordion, {Card} from '../base/components/CardAccordion';
@@ -22,7 +22,7 @@ import PropControl from '../base/components/PropControl';
 import BS3 from '../base/components/BS3';
 
 // Pages
-import BasicAccountPage from '../base/components/AccountPageWidgets';
+//import BasicAccountPage from '../base/components/AccountPageWidgets';
 import E404Page from '../base/components/E404Page';
 import TestPage from './EgbotTestPage';
 
