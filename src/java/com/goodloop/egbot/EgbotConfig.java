@@ -13,11 +13,11 @@ public class EgbotConfig implements IESRouter, ISiteConfig {
 	private int port = 8641;
 
 	@Override
-	public ESPath getPath(CharSequence dataspace, Class type, String id, Object status) {
+	public <T> ESPath<T> getPath(CharSequence dataspace, Class<T> type, CharSequence id, Object status) {
 		String stype = type.getSimpleName().toLowerCase();
 		return new ESPath("egbot."+stype, stype,id);
-	}
-
+	} 
+	
 	@Override
 	public int getPort() {
 		return port;
@@ -27,6 +27,6 @@ public class EgbotConfig implements IESRouter, ISiteConfig {
 	 * Slimmed data files -- generated from data/build/MathStackExchangeAPI_Part_X
 	 * by Python script data-collection/json_analysis/slimAndTrim.py
 	 */
-	public File srcDataDir = new File("data/build/slim"); 
+	public File srcDataDir = new File("data/build/slim");
 
 }
