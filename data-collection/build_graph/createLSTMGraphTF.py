@@ -11,7 +11,9 @@ learning_rate = 0.001
 #training_steps = 10000
 #batch_size = 128
 #display_step = 200
-vocab_size = 14410#11153#14410 #15807 #13346 #1197 # TODO: put in real number
+# WARNING: this might trip you up, because it needs the vocab size of the training data
+# TODO: this can be solved by having the script run with a parameter that tells it what the vocab size is expected to be (this is useful for the code to be able to run for any training data)
+vocab_size = 5544#11153#14410 #15807 #13346 #1197 # TODO: put in real number
 num_hidden = 128#128 #256 # hidden layer num of features
 seq_length = 30
 
@@ -44,6 +46,7 @@ def BiRNN(x, weights, biases):
     # Generate a seq_length-element sequence of inps
     # (eg. [had] [a] [general] -> [20] [6] [33])
     x = tf.split(x, seq_length, 1)
+    words = tf.identity(x, name="words")
 
     # Define lstm cells with tensorflow
     # Forward direction cell
@@ -61,20 +64,32 @@ def BiRNN(x, weights, biases):
 
 g = tf.get_default_graph()
 
+<<<<<<< Updated upstream
+#with g.device('/device:GPU:0'): // 03.04 IP: trying it out without the GPU because of this error "Cannot assign a device for operation Reshape: Operation was explicitly assigned to /device:GPU:0"
+logits = BiRNN(X, weights, biases)
+#prediction = tf.identity(logits, name='output')    
+prediction = tf.nn.softmax(logits, name="output") # TODO: why don't we feed this into loss op??
+
+# Define loss and optimizer
+loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y), name="loss_op")
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
+train_op = optimizer.minimize(loss_op, name="train_op")
+=======
 with g.device('/device:GPU:0'):
-    logits = BiRNN(X, weights, biases)
+    logits = tf.identity(BiRNN(X, weights, biases), name="logits")
     #prediction = tf.identity(logits, name='output')    
-    prediction = tf.nn.softmax(logits, name="output") # TODO: why don't we feed this into loss op??
+    prediction = tf.nn.softmax(logits, name="output")
 
     # Define loss and optimizer
-    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y), name="loss_op")
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=Y), name="loss_op")
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
     train_op = optimizer.minimize(loss_op, name="train_op")
+>>>>>>> Stashed changes
 
-    # Evaluate model (with test logits, for dropout to be disabled)
-    correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1), name="correct_pred")
-    #correct = tf.nn.in_top_k(logits, Y, 1, name="correct_pred")
-    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
+# Evaluate model (with test logits, for dropout to be disabled)
+correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1), name="correct_pred")
+#correct = tf.nn.in_top_k(logits, Y, 1, name="correct_pred")
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()

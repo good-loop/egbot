@@ -133,7 +133,7 @@ public class QuantModelEvaluator {
 	 */
 	public void evaluateModel(String eLabel) throws Exception {
 		final MyRandom counter = new MyRandom();
-		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20") || eLabel.equals("MSE-100")) {
+		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20") || eLabel.equals("MSE-20X") || eLabel.equals("MSE-100")) {
 			evaluateModelTinyData();
 			return;
 		}
