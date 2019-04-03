@@ -97,10 +97,16 @@ public class EgBotDataLoader {
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
+        	case "MSE-20X": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
+        		break;
         	case "MSE-X100": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_1.json")); // 100 MSE q&a pairs
         		break;
         	case "MSE-100": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
+        		break;
+        	case "MSE-100-trial": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
         		break;
         	case "MSE-X20": 
