@@ -5,81 +5,77 @@
 
 import tensorflow as tf
 import os
+from tensorflow.contrib import rnn
 
 # Training Parameters
 learning_rate = 0.001
 #training_steps = 10000
 #batch_size = 128
 #display_step = 200
+
 # WARNING: this might trip you up, because it needs the vocab size of the training data
 # TODO: this can be solved by having the script run with a parameter that tells it what the vocab size is expected to be (this is useful for the code to be able to run for any training data)
-vocab_size = 5544#11153#14410 #15807 #13346 #1197 # TODO: put in real number
-num_hidden = 128#128 #256 # hidden layer num of features
-seq_length = 30
+vocab_size = 1197
+num_hidden = 512 # number of units in RNN cell
+seq_length = 3 # length of training window
+
+# Experiment
+experimentName = "lstmGraphTF_vocab=" + str(vocab_size) + "_numHidden=" + str(num_hidden) + "_seqLength=" + str(seq_length) + ".pb";
+experimentGraphFile = '../../data/models/final/v3/'+experimentName;
 
 # check now that we're in the right place
 egbotdir = os.path.abspath('../..')
 assert egbotdir.endswith("egbot"), egbotdir+" Try running from the build_graph dir"
 
-# tf Graph inp
-X = tf.placeholder(tf.float32, [None, seq_length, 1], name='input')
-Y = tf.placeholder(tf.float32, [None, vocab_size], name='target')
+# tf Graph input
+x = tf.placeholder("float", [None, seq_length, 1], name='input')
+y = tf.placeholder("float", [None, vocab_size], name='target')
 
-# Define weights
+# RNN output node weights and biases
 weights = {
-    # Hidden layer weights => 2*num_hidden because of forward + backward cells
-    'out': tf.Variable(tf.random_normal([2*num_hidden, vocab_size], seed=42, mean=1.0), name='W')
+    'out': tf.Variable(tf.random_normal([num_hidden, vocab_size]), name="W")
 }
 biases = {
-    'out': tf.Variable(tf.random_normal([vocab_size], seed=24, mean=1.0), name='b')
+    'out': tf.Variable(tf.random_normal([vocab_size]), name="b")
 }
 
-def BiRNN(x, weights, biases):
-
-    # Prepare data shape to match `rnn` function requirements
-    # Current data inp shape: (batch_size, timesteps, n_inp)
-    # Required shape: 'timesteps' tensors list of shape (batch_size, num_inp)
+def RNN(x, weights, biases):
 
     # reshape to [1, seq_length]
     x = tf.reshape(x, [-1, seq_length])
 
-    # Generate a seq_length-element sequence of inps
+    # Generate a seq_length-element sequence of inputs
     # (eg. [had] [a] [general] -> [20] [6] [33])
-    x = tf.split(x, seq_length, 1)
-    words = tf.identity(x, name="words")
+    x = tf.split(x,seq_length,1)
 
-    # Define lstm cells with tensorflow
-    # Forward direction cell
-    lstm_fw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.nn.relu)
-    # Backward direction cell
-    lstm_bw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.nn.relu)
-    #rnn_cell = tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.BasicLSTMCell(num_hidden),tf.nn.rnn_cell.BasicLSTMCell(num_hidden)])
+    # 2-layer LSTM, each layer has num_hidden units.
+    # Average Accuracy= 95.20% at 50k iter
+    rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_hidden),rnn.BasicLSTMCell(num_hidden)])
 
-    # Get lstm cell output
-    outputs, _, _ = tf.nn.static_bidirectional_rnn(lstm_fw_cell, lstm_bw_cell, x, dtype=tf.float32)
-    #outputs, states = tf.nn.static_rnn(rnn_cell, x, dtype=tf.float32)
+    # 1-layer LSTM with num_hidden units but with lower accuracy.
+    # Average Accuracy= 90.60% 50k iter
+    # Uncomment line below to test but comment out the 2-layer rnn.MultiRNNCell above
+    # rnn_cell = rnn.BasicLSTMCell(num_hidden)
 
-    # Linear activation, using rnn inner loop last output
+    # generate prediction
+    outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
+
+    # there are seq_length outputs but
+    # we only want the last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
-g = tf.get_default_graph()
+pred = tf.identity(RNN(x, weights, biases), name="output");
 
-#with g.device('/device:GPU:0'): // 03.04 IP: trying it out without the GPU because of this error "Cannot assign a device for operation Reshape: Operation was explicitly assigned to /device:GPU:0"
-logits = BiRNN(X, weights, biases)
-#prediction = tf.identity(logits, name='output')    
-prediction = tf.nn.softmax(logits, name="output") # TODO: why don't we feed this into loss op??
-
-# Define loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y), name="loss_op")
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
+# Loss and optimizer
+loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y), name="loss_op")
+optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss_op, name="train_op")
 
-# Evaluate model (with test logits, for dropout to be disabled)
-correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1), name="correct_pred")
-#correct = tf.nn.in_top_k(logits, Y, 1, name="correct_pred")
+# Model evaluation
+correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1), name="correct_pred")
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name="accuracy")
 
-# Initialize the variables (i.e. assign their default value)
+# Initializing the variables
 init = tf.global_variables_initializer()
 
 # Creating a tf.train.Saver adds operations to the graph to save and
@@ -87,9 +83,9 @@ init = tf.global_variables_initializer()
 saver_def = tf.train.Saver().as_saver_def()
 
 print('Operation to initialize variables:       ', init.name)
-print('Tensor to feed as inp data:            ', X.name)
-print('Tensor to feed as training targetts:      ', Y.name)
-print('Tensor to fetch as prediction:           ', prediction.name)
+print('Tensor to feed as inp data:            ', x.name)
+print('Tensor to feed as training targets:      ', y.name)
+print('Tensor to fetch as prediction:           ', pred.name)
 print('Operation to train one step:             ', train_op.name)
 print('Tensor to be fed for checkpoint filename:', saver_def.filename_tensor_name)
 print('Operation to save a checkpoint:          ', saver_def.save_tensor_name)
@@ -110,7 +106,7 @@ mkdir('../../data/models/final/v3/logdir')
 
 sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
-with open('../../data/models/final/v3/lstmGraphTF.pb', 'wb') as f:
+with open(experimentGraphFile, 'wb') as f:
   f.write(tf.get_default_graph().as_graph_def().SerializeToString())
 
 # write to log c.f. https://stackoverflow.com/questions/37128652/creating-log-directory-in-tensorboard
@@ -118,5 +114,5 @@ summary_writer = tf.summary.FileWriter('../../data/models/final/v3/logdir', sess
 # tf.train.SummaryWriter('../../data/models/final/v3/logdir', sess.graph_def)
 # tf.get_default_graph().as_graph_def()) #
 
-print("\nI saved the graph here for you: " + os.path.abspath("../../data/models/final/v3/lstmGraphTF.pb"))
+print("\nI saved the graph here for you: " + os.path.abspath(experimentGraphFile))
 

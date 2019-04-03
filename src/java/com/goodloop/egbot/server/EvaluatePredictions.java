@@ -126,7 +126,7 @@ public class EvaluatePredictions {
 			// set up quantitative evaluator
 			QuantModelEvaluator quant = new QuantModelEvaluator(experiment);
 			// conduct evaluation
-			quant.evaluateModel(eLabel);
+			quant.evaluateModel(eLabel); 
 		}
 		
 		if (true) {//QUAL EVAL			

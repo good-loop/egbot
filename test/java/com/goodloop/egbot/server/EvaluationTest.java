@@ -40,7 +40,7 @@ public class EvaluationTest {
 	}
 	
 	
-	@Test
+//	@Test
 	public void test100LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1);

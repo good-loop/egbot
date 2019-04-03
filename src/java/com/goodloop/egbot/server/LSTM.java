@@ -59,6 +59,7 @@ import com.winterwell.nlp.io.StopWordFilter;
 import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
 import com.winterwell.nlp.io.FilteredTokenStream.KInOut;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.Pair2;
@@ -76,6 +77,7 @@ import com.winterwell.utils.time.TUnit;
 public class LSTM implements IEgBotModel {
 	
 	private static final String LOGTAG = "LSTM";
+	private static final String outOfVocab = "<ERROR>";
 	// model guts
 	List<Tensor<?>> model;
 	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot");
@@ -91,7 +93,7 @@ public class LSTM implements IEgBotModel {
 	int vocab_size;
 	
 	// training parameters	
-	int seq_length; 
+	int seq_length;
 	/**
 	 * total training epochs to do. 
 	 */
@@ -99,7 +101,7 @@ public class LSTM implements IEgBotModel {
 	/**
 	 * number of hidden layers
 	 */
-	int num_hidden;
+	final int num_hidden = 512; // hack to set the no of layers and load the right graph, if it's not set to final for some reason it changes (although I haven't been able to find out why)
 		
 	// stats tracking
 	ArrayList<Float> trainAccuracies;
@@ -122,9 +124,8 @@ public class LSTM implements IEgBotModel {
 	 */
 	public void init(List<File> files) throws IOException {
 		// training parameters
-		seq_length = 30;
-		num_epochs = 10; 
-		num_hidden = 256; 
+		num_epochs = 10;
+		seq_length = 3;
 		idealVocabSize = 10000;
 		sessRunCount = 0;
 		questionCount = 0;
@@ -132,6 +133,10 @@ public class LSTM implements IEgBotModel {
 		loadVocab(files);
 	}
 	
+	public void setSeq_length(int seq_length) {
+		this.seq_length = seq_length;
+	}
+
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
 	 * 
@@ -390,20 +395,13 @@ public class LSTM implements IEgBotModel {
 			// A Q+A training string
 			List<String> temp = trainingDataArray.get(batchIdx);
 			String[] qa = temp.toArray(new String[temp.size()]);
-			
+			//String[] qa = {"let","us","suppose","that","in"}; 
+					
 			// for each word in the qa segment (not including the last seq_length ones)
 			// TODO: cover the case where the instance stream reached the end of the training data (aka filling in END tags)?
-			for (int wordIdx = 0; wordIdx < qa.length-seq_length; wordIdx++) {
-				String[] instanceArray = new String[seq_length];
-				String target = "";
-				// filling in seq_length-1 START tags to allow guessing of words at the beginning (aka where the word position < seq_length)
-				Arrays.fill(instanceArray, "START");
-				if (wordIdx < seq_length) {
-					System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
-				}
-				else {
-					System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
-				}
+			for (int wordIdx = 0; wordIdx < qa.length-1; wordIdx++) {
+				String target;
+				String[] instanceArray = createInstanceArray(qa, wordIdx);
 				target = qa[wordIdx+1];
 				
 				// print out training example and some stats occasionally
@@ -431,53 +429,94 @@ public class LSTM implements IEgBotModel {
 							.fetch("accuracy") // training accuracy
 							.fetch("loss_op") // loss
 							.fetch("output") // prediction
-							.fetch("logits") // logits
-							.fetch("words") // words
-							.fetch("outs") // words
 							.run();
+					
+					// copy output tensors to array
+					float[][] outputArray = new float[1][vocab_size];
+					runner.get(2).copyTo(outputArray);
+					// find out the position of the target word in the vocab
+					int targetPos = getKeyByValue(vocab,target);
+					// find out the prob of that word, as returned from the model
+					float probWord = outputArray[0][targetPos];
+					Log.d("Input sequence: "+Arrays.toString(instanceArray));
+					Log.d("Target word: "+target);	
+					Log.d("Prob target word: "+probWord);	
+					float[] output = outputArray[0];
+					float max = -100000;
+					int maxIdx = -1;
+					for (int idx=0;idx<output.length;idx++) {
+						if  (max < output[idx]) {
+							max = output[idx];
+							maxIdx = idx;
+						}
+					}
+					System.out.println(max);
+					System.out.println(maxIdx);
+					Log.d("Guessed word: "+vocab.get(maxIdx));	
+										
 					sessRunCount++;
 					//Log.d("sessRunCount: ",sessRunCount);
 
-					Log.d("Test train-then-gen: ",generateMostLikely("what", 30));
+					Log.d("Test train-then-gen: ",generateMostLikely("what", seq_length));
 					
-					trainAccuracies.add(runner.get(0).floatValue()); // TODO: change this to be a sum? rather than a really long vector that we then avg							
+					trainAccuracies.add(probWord);//runner.get(0).floatValue()); // TODO: change this to be a sum? rather than a really long vector that we then avg							
 
 					// check loss values
 					Log.d("Loss: " + runner.get(1).floatValue());
 					
-					// check soft maxed logits TODO: this is not leading to a soft max result (it does not add up to 1)
-					float[][] outputArray = new float[1][vocab_size];
-					runner.get(2).copyTo(outputArray);
-					float[] output = outputArray[0];
-					//Log.d("Prediction (raw): " + Arrays.toString(output));
-					for (int idx=0;idx<output.length;idx++) {
-						if  (output[idx] > 0) {
-							System.out.println(output[idx]);
-						}
-					}
-					String nextWord = mostLikelyWord(outputArray);
-					Log.d("Next word: " + nextWord);
-					
-					// check logits are calculated properly
-					float[][] logitsArray = new float[1][vocab_size];
-					runner.get(3).copyTo(logitsArray);
-					float[] logits = logitsArray[0];
-					Log.d("Logits (raw): " + Arrays.toString(logits));
-					
-					// check words propagate well
-					float[][][] inpsArray = new float[seq_length][1][1];
-					runner.get(4).copyTo(inpsArray);
-					//float[][] inps = inpsArray[0];
-					//Log.d("Logits (raw): " + Arrays.toString(inpsArray));
-					for (int idx = 0; idx < inpsArray.length; idx++) {
-						Log.d(inpsArray[idx][0][0] + " = " + vocab.get((int)inpsArray[idx][0][0]));
-					}
+//					// check soft maxed logits TODO: this is not leading to a soft max result (it does not add up to 1)
+//					float[][] outputArray = new float[1][vocab_size];
+//					runner.get(2).copyTo(outputArray);
+//					float[] output = outputArray[0];
+//					//Log.d("Prediction (raw): " + Arrays.toString(output));
+//					for (int idx=0;idx<output.length;idx++) {
+//						if  (output[idx] > 0) {
+//							System.out.println(output[idx]);
+//						}
+//					}
+//					String nextWord = mostLikelyWord(outputArray);
+//					Log.d("Next word: " + nextWord);
+//					
+//					// check logits are calculated properly
+//					float[][] logitsArray = new float[1][vocab_size];
+//					runner.get(3).copyTo(logitsArray);
+//					float[] logits = logitsArray[0];
+//					Log.d("Logits (raw): " + Arrays.toString(logits));
+//					
+//					// check words propagate well
+//					float[][][] inpsArray = new float[seq_length][1][1];
+//					runner.get(4).copyTo(inpsArray);
+//					//float[][] inps = inpsArray[0];
+//					//Log.d("Logits (raw): " + Arrays.toString(inpsArray));
+//					for (int idx = 0; idx < inpsArray.length; idx++) {
+//						Log.d(inpsArray[idx][0][0] + " = " + vocab.get((int)inpsArray[idx][0][0]));
+//					}
 
 					// close tensors to save memory
 					closeTensors(runner);
 				}
 			} // ./ each word
 		} // ./ each q-a example
+	}
+
+	/**
+	 * will take question and answer input and generate an array of tokens
+	 * @param qa question and answer concatenated string (e.g. "What is a probability? It is ...")
+	 * @param wordIdx location in the QA array
+	 * @return seq_length sized generated QA in the form needed for training (e.g. ["<START>", "<START>", ..., "What"])
+	 */
+	private String[] createInstanceArray(String[] qa, int wordIdx) {
+		String[] instanceArray = new String[seq_length];
+		String target = "";
+		// filling in seq_length-1 START tags to allow guessing of words at the beginning (aka where the word position < seq_length)
+		Arrays.fill(instanceArray, "START");
+		if (wordIdx < seq_length) {
+			System.arraycopy(qa, 0, instanceArray, seq_length-wordIdx-1, wordIdx+1);
+		}
+		else {
+			System.arraycopy(qa, wordIdx-seq_length+1, instanceArray, 0, seq_length);
+		}
+		return instanceArray;
 	}
 
 	/**
@@ -559,7 +598,7 @@ public class LSTM implements IEgBotModel {
 	 * @return
 	 */
 	private String mostLikelyWord(float[][] vector) {
-		String word = "<ERROR>";
+		String word = outOfVocab;
 		String[] vocabArray = vocab.values().toArray(new String[0]);
 
 		// find word with highest probability
@@ -588,7 +627,7 @@ public class LSTM implements IEgBotModel {
 		float[][] wordsOneHotEncoded = new float[1][vocab_size]; 
 		Arrays.fill(wordsOneHotEncoded[0], 0);
 		
-		int rem = -1;
+		int rem = -1; // debugging var
 		// don't we always expect just one word? if so, we should make it clearer
 		for (int i = 0; i < splitted.length; i++) {
 			if (vocab.containsValue(splitted[i])) {
@@ -597,6 +636,7 @@ public class LSTM implements IEgBotModel {
 				rem = vocabIdx;
 			}
 			else {
+				//rem = outOfVocab;
 				//System.out.printf("Couldn't find word in vocab: %s\n", words);
 			}
 		}
@@ -611,7 +651,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws IOException 
 	 */
 	public String sample(String question, int expectedAnswerLength) throws IOException {
-		String answer = "<ERROR>"; 
+		String answer = outOfVocab; 
 		
 	    // load graph
 		Pair2<Graph, Session> gs = loadModel(null);
@@ -636,7 +676,7 @@ public class LSTM implements IEgBotModel {
 			
 			// we generate as many words as we decided to expect the answer to have
 			for (int i = 0; i < expectedAnswerLength; i++) {			
-				String nextWord = "<ERROR>";
+				String nextWord = outOfVocab;
 				
 				// run graph with given input and fetch output
 				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(questionArray))) {
@@ -708,9 +748,16 @@ public class LSTM implements IEgBotModel {
 	}
 
 	/**
-	 * a blank untrained graph -- structure but no training
+	 * returns the file that contains a blank untrained graph -- structure but no training
 	 */
-	static final File TENSORFLOW_GRAPH = new File(System.getProperty("user.dir") + "/data/models/final/v3/lstmGraphTF.pb");
+	private File getTensorflowGraphName() {
+		//TODO: check that java and python deal with numbers in the same way (avoid trailing zeros leading to incompatibility etc)
+		String experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length + ".pb";
+		String graphLocation = System.getProperty("user.dir") + "/data/models/final/v3/" + experimentName;
+		Log.d(graphLocation);
+		File TENSORFLOW_GRAPH = new File(graphLocation);
+		return TENSORFLOW_GRAPH;
+	}
 		
 	/**
 	 * Load the graph
@@ -719,7 +766,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	public byte[] checkGraph() throws IOException {
 		// graph obtained from running data-collection/build_graph/createLSTMGraphTF.py	
-		Path gp = Paths.get(TENSORFLOW_GRAPH.getAbsolutePath());
+		Path gp = Paths.get(getTensorflowGraphName().toURI());
 		if ( ! Files.exists(gp)) {
 			new FileNotFoundException("No "+gp+" better run data-collection/build_graph/createLSTMGraphTF.py");
 		}
@@ -734,7 +781,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws Exception
 	 */
 	public String sampleWord(String question) throws Exception {
-		String nextWord = "<ERROR>"; // TODO: shouldn't I get rid of this?
+		String nextWord = outOfVocab; // TODO: shouldn't I get rid of this?
 	    // load graph
 		Pair2<Graph, Session> graph_sess = loadModel(null);
 	    try {	    		
@@ -823,9 +870,16 @@ public class LSTM implements IEgBotModel {
 			}
 			
 			// for each target word
+			int cntWordsScored = 0;
 			for (int i = 0; i < tArray.length; i++) {
-				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(instanceArray));
-					Tensor<?> target = Tensors.create(wordsIntoFeatureVector(tArray[i]))) {
+				float[][] inputVector = wordsIntoInputVector(instanceArray);
+				float[][] featureVector = wordsIntoFeatureVector(tArray[i]);
+				double sum = 0;
+				for (int j = 0; j < featureVector[0].length; j++) {
+					sum += featureVector[0][j];
+				} 
+				try (Tensor<?> input = Tensors.create(inputVector);
+					Tensor<?> target = Tensors.create(featureVector)) {
 					List<Tensor<?>> outputs = sess.runner()
 							.feed("input", input)
 							.feed("target", target)
@@ -836,8 +890,8 @@ public class LSTM implements IEgBotModel {
 					// copy output tensors to array
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
-					boolean[] output2Array = new boolean[1];
-					outputs.get(1).copyTo(output2Array);
+//					boolean[] output2Array = new boolean[1];
+//					outputs.get(1).copyTo(output2Array);
 					closeTensors(outputs); // free memory
 					// find out the position of the target word in the vocab
 					int targetPos = getKeyByValue(vocab,tArray[i]);
@@ -845,14 +899,29 @@ public class LSTM implements IEgBotModel {
 					float probWord = outputArray[0][targetPos];
 					// add the log prob to the score
 					score += Math.log(probWord);
+					
+					// TODO why is the model saying 0 prob? Perhaps some training issue with out-of-vocab?
+					// HACK just workaround the 0s -- (which means answers with lots of out-of-vocab may get an advantage)
+					// -- though the counter means its not an obvious advantage
+					if (probWord <= 0) {
+						// FIXME :(
+						continue;
+					}
+					
+					cntWordsScored++;
 				}
 				
 				//shift questionArray to include the next target word at the end so as to allow us to generate the next word after that
 				System.arraycopy(instanceArray, 1, instanceArray, 0, instanceArray.length-1);
 				instanceArray[seq_length-1] = tArray[i];
 			}
+			// this is a hack that covers when all of the words are out of vocab 
+			if (cntWordsScored == 0) {
+				Log.d(q+" "+t);
+				return Double.NEGATIVE_INFINITY;
+			}
 			// avg the score and then return it
-			return score/tArray.length; 
+			return score/cntWordsScored; 
 	    }
 	}	
 
@@ -1037,7 +1106,7 @@ public class LSTM implements IEgBotModel {
 	 * @throws Exception
 	 */
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
-		String answer = "<ERROR>";
+		String answer = outOfVocab;
 
 	    // load graph
 		Pair2<Graph, Session> gs = loadModel(null);
@@ -1061,7 +1130,7 @@ public class LSTM implements IEgBotModel {
 			
 			// we generate as many words as we decided to expect the answer to have
 			for (int i = 0; i < expectedAnswerLength; i++) {			
-				String nextWord = "<ERROR>";
+				String nextWord = outOfVocab;
 				
 				// run graph with given input and fetch output
 				try (Tensor<?> input = Tensors.create(wordsIntoInputVector(questionArray))) {
