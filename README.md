@@ -56,7 +56,7 @@ e.g.
 -cuda 9.0
 -cudnn 7.0
 -install required python packages listed in data-collection/train-lstm-requirements.txt using pip
-
+-After installing cudnn , DO THIS : sudo ldconfig /usr/local/cuda/lib64
 
 ### Test your setup
 
