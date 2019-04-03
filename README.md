@@ -1,6 +1,5 @@
-TODO - please add notes here as you go
 
-# Welcome to the Example Generator Project
+# Welcome to the EgBot Example Generator Project
 
 Code structure: follows the Good-Loop standard setup. Which is a js/react UI, and a Java server.
 
@@ -50,6 +49,7 @@ e.g.
 ## Training Models (Optional, recommended using default trained model found in data/models/final/v1)
 
 ### Requirements
+
 python 3.5
 pip 18.0                   
 cuda 8.0
