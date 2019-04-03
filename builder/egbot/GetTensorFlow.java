@@ -9,6 +9,14 @@ import org.tensorflow.TensorFlow;
 import com.winterwell.bob.BuildTask;
 import com.winterwell.bob.tasks.MavenDependencyTask;
 
+/**
+ * 
+ * ??
+ * And relationship to {@link BuildEgBotJava}
+ * 
+ * @author Irina
+ *
+ */
 public class GetTensorFlow extends BuildTask {
 
 	public static void main(String[] args) throws Exception {

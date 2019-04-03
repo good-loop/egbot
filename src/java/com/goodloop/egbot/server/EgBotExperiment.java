@@ -33,7 +33,7 @@ public class EgBotExperiment extends Experiment<EgBotData, IEgBotModel, EgBotRes
 class EgBotResults {
 	
 	/**
-	 * See {@link QuantModelEvaluator}
+	 * See QuantModelEvaluator
 	 */
 	MeanVar1D avgScore;
 	

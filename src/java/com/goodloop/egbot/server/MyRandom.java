@@ -2,6 +2,13 @@ package com.goodloop.egbot.server;
 
 import java.util.Random;
 
+/**
+ * ??use cases are weak - maybe use something else
+ * 
+ * fixed seed random number generator
+ * @author Irina
+ * @testedby {@link MyRandomTest}
+ */
 public class MyRandom {
 	Random c;
 	
@@ -14,9 +21,4 @@ public class MyRandom {
 		return c;
 	}
 
-	public void setC(Random c) {
-		this.c = c;
-	}
-	
-	
 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,7 @@ public class QuantModelEvaluator {
 	 * @throws Exception
 	 */
 	public void evaluateModel(String eLabel) throws Exception {
+		final MyRandom counter = new MyRandom();
 		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20") || eLabel.equals("MSE-100")) {
 			evaluateModelTinyData();
 			return;
@@ -192,13 +194,13 @@ public class QuantModelEvaluator {
 				// adding correct answer
 				answers.add(target);
 				
-				// probabilistic counter to determine a random selection of 4 wrong answers from the set
-				MyRandom counter = new MyRandom();
+				// probabilistic counter to determine a random selection of 4 wrong answers from the set				
 				for (int j = 0; j < 4; j++) {
 					int wrongIdx = counter.getC().nextInt(evalSet.size()); 				
 					String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
 					answers.add(wrongAns);
-				}						
+				}				
+				Collections.shuffle(answers, counter.getC());				
 				// evaluate the model 
 				double score = scorePickBest(model, question, target, answers); // score will be 1 if correct guess, 0 if incorrect
 				assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
@@ -253,7 +255,9 @@ public class QuantModelEvaluator {
 	 */
 	public int scorePickBest(IEgBotModel model, String q, String t, ArrayList<String> a) throws IOException {
 		int bestAnsIdx = pickBest(model, q, a);
-		if (a.indexOf(t) == bestAnsIdx) return 1; 
+		int correct = a.indexOf(t);
+		assert correct != -1 : t+" vs "+a;
+		if (correct == bestAnsIdx) return 1; 
 		else return 0;
 	}
 	
