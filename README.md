@@ -50,9 +50,10 @@ e.g.
 
 ### Requirements
 
-python 3.5
-pip 18.0                   
-cuda 8.0
+python 3.5<br>
+pip 18.0<br>
+cuda 9.0<br>
 cudnn
+
 (install required python packages listed in data-collection/train-lstm-requirements.txt using pip)
 
