@@ -429,6 +429,11 @@ public class LSTM implements IEgBotModel {
 							.feed("target", targetTensor)
 							.addTarget("train_op")
 							.fetch("accuracy") // training accuracy
+							.fetch("loss_op") // loss
+							.fetch("output") // prediction
+							.fetch("logits") // logits
+							.fetch("words") // words
+							.fetch("outs") // words
 							.run();
 					sessRunCount++;
 					//Log.d("sessRunCount: ",sessRunCount);
@@ -436,6 +441,37 @@ public class LSTM implements IEgBotModel {
 					Log.d("Test train-then-gen: ",generateMostLikely("what", 30));
 					
 					trainAccuracies.add(runner.get(0).floatValue()); // TODO: change this to be a sum? rather than a really long vector that we then avg							
+
+					// check loss values
+					Log.d("Loss: " + runner.get(1).floatValue());
+					
+					// check soft maxed logits TODO: this is not leading to a soft max result (it does not add up to 1)
+					float[][] outputArray = new float[1][vocab_size];
+					runner.get(2).copyTo(outputArray);
+					float[] output = outputArray[0];
+					//Log.d("Prediction (raw): " + Arrays.toString(output));
+					for (int idx=0;idx<output.length;idx++) {
+						if  (output[idx] > 0) {
+							System.out.println(output[idx]);
+						}
+					}
+					String nextWord = mostLikelyWord(outputArray);
+					Log.d("Next word: " + nextWord);
+					
+					// check logits are calculated properly
+					float[][] logitsArray = new float[1][vocab_size];
+					runner.get(3).copyTo(logitsArray);
+					float[] logits = logitsArray[0];
+					Log.d("Logits (raw): " + Arrays.toString(logits));
+					
+					// check words propagate well
+					float[][][] inpsArray = new float[seq_length][1][1];
+					runner.get(4).copyTo(inpsArray);
+					//float[][] inps = inpsArray[0];
+					//Log.d("Logits (raw): " + Arrays.toString(inpsArray));
+					for (int idx = 0; idx < inpsArray.length; idx++) {
+						Log.d(inpsArray[idx][0][0] + " = " + vocab.get((int)inpsArray[idx][0][0]));
+					}
 
 					// close tensors to save memory
 					closeTensors(runner);

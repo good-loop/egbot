@@ -33,14 +33,14 @@ public class EvaluationTest {
 	
 	// TEST LSTM
 	
-//	@Test
+	@Test
 	public void test20LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 1, 1);
+		new EvaluatePredictions().runModel(lstm, "MSE-20X", "MSE-20X", 1, 1);
 	}
 	
 	
-//	@Test
+	@Test
 	public void test100LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1);
@@ -67,7 +67,7 @@ public class EvaluationTest {
 		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 1, 1);
 	}
 	
-	@Test
+//	@Test
 	public void test100Markov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 	
 		new EvaluatePredictions().runModel(mm, "MSE-100", "MSE-20", 1, 1);
