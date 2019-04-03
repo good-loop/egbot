@@ -54,7 +54,7 @@ e.g.
 -python 3.5
 -pip 18.0                   
 -cuda 9.0
--cudnn 7.0
+-cudnn 7.0 <-- You will need an Nvidia developer login for this.  Either create one or use existing one
 -install required python packages listed in data-collection/train-lstm-requirements.txt using pip
 -After installing cudnn , DO THIS : sudo ldconfig /usr/local/cuda/lib64
 
