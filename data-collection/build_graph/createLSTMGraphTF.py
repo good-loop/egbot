@@ -64,7 +64,6 @@ def BiRNN(x, weights, biases):
 
 g = tf.get_default_graph()
 
-<<<<<<< Updated upstream
 #with g.device('/device:GPU:0'): // 03.04 IP: trying it out without the GPU because of this error "Cannot assign a device for operation Reshape: Operation was explicitly assigned to /device:GPU:0"
 logits = BiRNN(X, weights, biases)
 #prediction = tf.identity(logits, name='output')    
@@ -74,17 +73,6 @@ prediction = tf.nn.softmax(logits, name="output") # TODO: why don't we feed this
 loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y), name="loss_op")
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
 train_op = optimizer.minimize(loss_op, name="train_op")
-=======
-with g.device('/device:GPU:0'):
-    logits = tf.identity(BiRNN(X, weights, biases), name="logits")
-    #prediction = tf.identity(logits, name='output')    
-    prediction = tf.nn.softmax(logits, name="output")
-
-    # Define loss and optimizer
-    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=Y), name="loss_op")
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
-    train_op = optimizer.minimize(loss_op, name="train_op")
->>>>>>> Stashed changes
 
 # Evaluate model (with test logits, for dropout to be disabled)
 correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1), name="correct_pred")
