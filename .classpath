@@ -125,6 +125,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/code.sens"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/flexi-gson"/>
 	<classpathentry kind="lib" path="dependencies/tensorflow.jar"/>
-	<classpathentry kind="lib" path="dependencies/libtensorflow_jni_gpu-1.12.0.jar"/>
+	<classpathentry kind="lib" path="/home/daniel/winterwell/egbot/dependencies/libtensorflow_jni_gpu-1.12.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

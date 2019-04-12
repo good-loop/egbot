@@ -23,6 +23,7 @@ https://zenodo.org/communities/egbot?page=1&size=20
 
 ### Requirements
 
+* nvidia-driver-384 OR nvidia-driver-390
 * python 3.5 -- e.g. add this to .bashrc to avoid Python 2
 	alias python='python3.5'
 * pip3 8.1
