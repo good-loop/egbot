@@ -46,7 +46,8 @@ def RNN(x, weights, biases):
 
     # Generate a seq_length-element sequence of inputs
     # (eg. [had] [a] [general] -> [20] [6] [33])
-    x = tf.split(x,seq_length,1)
+    x = tf.split(x, seq_length, 1)
+    words = tf.identity(x, name="words")
 
     # 2-layer LSTM, each layer has num_hidden units.
     # Average Accuracy= 95.20% at 50k iter
@@ -64,12 +65,15 @@ def RNN(x, weights, biases):
     # we only want the last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
-pred = tf.identity(RNN(x, weights, biases), name="output");
+with g.device('/device:GPU:0'):
+    logits = tf.identity(BiRNN(X, weights, biases), name="logits")
+    #prediction = tf.identity(logits, name='output')    
+    prediction = tf.nn.softmax(logits, name="output")
 
-# Loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y), name="loss_op")
-optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-train_op = optimizer.minimize(loss_op, name="train_op")
+    # Define loss and optimizer
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=Y), name="loss_op")
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
+    train_op = optimizer.minimize(loss_op, name="train_op")
 
 # Model evaluation
 correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1), name="correct_pred")

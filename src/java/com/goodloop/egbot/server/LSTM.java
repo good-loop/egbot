@@ -429,6 +429,9 @@ public class LSTM implements IEgBotModel {
 							.fetch("accuracy") // training accuracy
 							.fetch("loss_op") // loss
 							.fetch("output") // prediction
+							.fetch("logits") // logits
+							.fetch("words") // words
+							.fetch("outs") // words
 							.run();
 					
 					// copy output tensors to array
@@ -491,6 +494,37 @@ public class LSTM implements IEgBotModel {
 //					for (int idx = 0; idx < inpsArray.length; idx++) {
 //						Log.d(inpsArray[idx][0][0] + " = " + vocab.get((int)inpsArray[idx][0][0]));
 //					}
+
+					// check loss values
+					Log.d("Loss: " + runner.get(1).floatValue());
+					
+					// check soft maxed logits TODO: this is not leading to a soft max result (it does not add up to 1)
+					float[][] smlogitsArray = new float[1][vocab_size];
+					runner.get(2).copyTo(smlogitsArray);
+					float[] smlogits = smlogitsArray[0];
+					//Log.d("Prediction (raw): " + Arrays.toString(output));
+					for (int idx=0;idx<smlogits.length;idx++) {
+						if  (smlogits[idx] > 0) {
+							System.out.println(smlogits[idx]);
+						}
+					}
+					String nextWord = mostLikelyWord(smlogitsArray);
+					Log.d("Next word: " + nextWord);
+					
+					// check logits are calculated properly
+					float[][] logitsArray = new float[1][vocab_size];
+					runner.get(3).copyTo(logitsArray);
+					float[] logits = logitsArray[0];
+					Log.d("Logits (raw): " + Arrays.toString(logits));
+					
+					// check words propagate well
+					float[][][] inpsArray = new float[seq_length][1][1];
+					runner.get(4).copyTo(inpsArray);
+					//float[][] inps = inpsArray[0];
+					//Log.d("Logits (raw): " + Arrays.toString(inpsArray));
+					for (int idx = 0; idx < inpsArray.length; idx++) {
+						Log.d(inpsArray[idx][0][0] + " = " + vocab.get((int)inpsArray[idx][0][0]));
+					}
 
 					// close tensors to save memory
 					closeTensors(runner);
