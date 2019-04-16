@@ -1,3 +1,8 @@
+#
+# training lstm with full MSE data (using a size-limited vocab)
+#
+# author: Irina
+
 from __future__ import print_function
 import numpy as np
 import tensorflow as tf
@@ -22,12 +27,12 @@ logs_path = '/tmp/tensorflow/rnn_words'
 writer = tf.summary.FileWriter(logs_path)
 
 # Vocabulary size limit
-vocabLimit = 100
+vocabLimit = 100000
 
 # Training files
 datapath = '/home/irina/winterwell/egbot/data/build/slim/';
 file_list = []
-for i in [1]: #,2,3,4,5,6,7,8]:
+for i in [1,2,3,4,5,6,7,8]:
     file_list.append(datapath + 'MathStackExchangeAPI_Part_' + str(i) + '.json')
 print("List of files to extract: ", file_list)
 
@@ -44,7 +49,7 @@ def processJSONFile(data):
     qa = ""
     for elem in data:
         qa += elem["question"] + " " + elem["answer"] + " "
-    return qa.strip()
+    return str(qa.strip())
 
 def build_vocab():
     for trainFile in file_list:
@@ -67,27 +72,28 @@ print("Trimmed vocab size: " + str(vocab_size))
 vocab = dict()
 for idx, word in enumerate(vocabCount.keys()):
     vocab[word] = idx
+vocab["<UNKNOWN>"] = idx + 1
 reverse_vocab = dict(zip(vocab.values(), vocab.keys())) # useful for reverse look-up
 
 # Parameters
-learning_rate = 0.001 
+learning_rate = 0.01 
 training_iters = 500
-display_step = 1000 
+display_step = 5
 n_input = 3 # sequence length
 
 # number of units in RNN cell
-n_hidden = 512
+n_hidden = 256
 
 # tf Graph input
 x = tf.placeholder("float", [None, n_input, 1])
-y = tf.placeholder("float", [None, vocab_size])
+y = tf.placeholder("float", [None, vocab_size+1])
 
 # RNN output node weights and biases
 weights = {
-    'out': tf.Variable(tf.random_normal([n_hidden, vocab_size]))
+    'out': tf.Variable(tf.random_normal([n_hidden, vocab_size+1]))
 }
 biases = {
-    'out': tf.Variable(tf.random_normal([vocab_size]))
+    'out': tf.Variable(tf.random_normal([vocab_size+1]))
 }
 
 def RNN(x, weights, biases):
@@ -109,7 +115,7 @@ def RNN(x, weights, biases):
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
 g = tf.get_default_graph() 
-with g.device('/device:GPU:0'):
+with g.device('/device:CPU:0'):
     pred = RNN(x, weights, biases)
 
     # Loss and optimizer
@@ -122,6 +128,11 @@ with g.device('/device:GPU:0'):
 
 # Initializing the variables
 init = tf.global_variables_initializer()
+
+def dim(a):
+    if not type(a) == list:
+        return []
+    return [len(a)] + dim(a[0])
 
 # Launch the graph
 with tf.Session() as session:
@@ -143,32 +154,42 @@ with tf.Session() as session:
             if offset > (len(training_data)-end_offset):
                 offset = random.randint(0, n_input+1)
 
+            symbols_in_keys = []
+            idx = 0
             for i in range(offset, offset+n_input):
                 if training_data[i] in vocab.keys(): # if the word appears in the vocab
-                    symbols_in_keys = vocab[ str(training_data[i])]
-                    symbols_in_keys = np.reshape(np.array(symbols_in_keys), [-1, n_input, 1])
+                    symbols_in_keys.append(vocab[ str(training_data[i])])
+                else:
+                    symbols_in_keys.append(vocab["<UNKNOWN>"])
+            symbols_in_keys = np.reshape(np.array(symbols_in_keys), [-1, n_input, 1])
 
-                    symbols_out_onehot = np.zeros([vocab_size], dtype=float)
-                    symbols_out_onehot[vocab[str(training_data[offset+n_input])]] = 1.0
-                    symbols_out_onehot = np.reshape(symbols_out_onehot,[1,-1])
-
-                    _, acc, loss, onehot_pred = session.run([optimizer, accuracy, cost, pred], \
-                                                            feed_dict={x: symbols_in_keys, y: symbols_out_onehot})
-                    loss_total += loss
-                    acc_total += acc
-                    if (step+1) % display_step == 0:
-                        print("Iter= " + str(step+1) + ", Average Loss= " + \
-                            "{:.6f}".format(loss_total/display_step) + ", Average Accuracy= " + \
-                            "{:.2f}%".format(100*acc_total/display_step))
-                        acc_total = 0
-                        loss_total = 0
-                        symbols_in = [training_data[i] for i in range(offset, offset + n_input)]
-                        symbols_out = training_data[offset + n_input]
-                        symbols_out_pred = reverse_vocab[int(tf.argmax(onehot_pred, 1).eval())]
-                        print("%s - [%s] vs [%s]" % (symbols_in,symbols_out,symbols_out_pred))
-                    step += 1
-                    offset += (n_input+1)
-    print("Optimization Finished!")
+            symbols_out_onehot = np.zeros([vocab_size+1], dtype=float)
+            if training_data[offset+n_input] in vocab.keys():
+                targetLoc = vocab[training_data[offset+n_input]]
+                symbols_out_onehot[targetLoc] = 1.0
+            else:
+                symbols_out_onehot[vocab["<UNKNOWN>"]] = 1.0
+            symbols_out_onehot = np.reshape(symbols_out_onehot,[1,-1])
+            
+            _, acc, loss, onehot_pred = session.run([optimizer, accuracy, cost, pred], \
+                                                    feed_dict={x: symbols_in_keys, y: symbols_out_onehot})
+            loss_total += loss
+            acc_total += acc
+            if (step+1) % display_step == 0:
+                print("Iter= " + str(step+1) + ", Average Loss= " + \
+                    "{:.6f}".format(loss_total/display_step) + ", Average Accuracy= " + \
+                    "{:.2f}%".format(100*acc_total/display_step))
+                print("Elapsed time: ", elapsed(time.time() - start_time))
+                print()
+                acc_total = 0
+                loss_total = 0
+                symbols_in = [training_data[i] for i in range(offset, offset + n_input)]
+                symbols_out = training_data[offset + n_input]
+                symbols_out_pred = reverse_vocab[int(tf.argmax(onehot_pred, 1).eval())]
+                print("%s - [%s] vs [%s]" % (symbols_in,symbols_out,symbols_out_pred))
+            step += 1
+            offset += (n_input+1)
+    print("\nOptimization Finished!")
     print("Elapsed time: ", elapsed(time.time() - start_time))
     print("Run on command line.")
     print("\ttensorboard --logdir=%s" % (logs_path))
