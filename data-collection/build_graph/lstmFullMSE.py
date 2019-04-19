@@ -1,4 +1,3 @@
-#
 # training lstm with full MSE data (using a size-limited vocab)
 #
 # author: Irina
@@ -13,9 +12,11 @@ import time
 import json
 import os
 import nltk
+
+nltk.download('punkt') # needs a download of nltk lib to use tokeniser
+
 #import spacy
 #nlp = spacy.load('en')
-nltk.download('punkt') # needs a download of nltk lib to use tokeniser
 
 start_time = time.time()
 def elapsed(sec):
@@ -55,12 +56,20 @@ def read_data(fname):
 
 def processJSONFile(data):
     qa = ""
+    # concatenate question and answer
     for elem in data:
         qa += elem["question"] + " " + elem["answer"] + " "
-    
-    text = str(qa.strip())
+
+    # ensure correct encoding
+    qa = str(bytes(qa, encoding='utf-8'),encoding="ascii",errors='ignore')
+
+    # remove white leading/trailing white spaces and lowercase it
+    text = qa.strip().lower()
     print("Tokenising...")
+
+    # tokenise it
     training_data = nltk.word_tokenize(text)
+
     print("Finished tokenising")
     return training_data
 
@@ -92,15 +101,20 @@ reverse_vocab = dict(zip(vocab.values(), vocab.keys())) # useful for reverse loo
 
 # Parameters
 learning_rate = 0.0001 
-training_iters = 500000
-display_step = 1000
-n_input = 30 # sequence length
+training_iters = 500
+#training_iters = 500000
+display_step = 100
+seq_length = 30
 
 # number of units in RNN cell
 n_hidden = 512
 
+# Experiment
+experimentName = "lstmPythonGraphTF_vocab=" + str(vocab_size) + "_numHidden=" + str(n_hidden) + "_seqLength=" + str(seq_length) + "_trainingIters=" + str(training_iters) + ".pb";
+experimentGraphFile = '../../data/models/final/v3/'+experimentName;
+
 # tf Graph input
-x = tf.placeholder("float", [None, n_input, 1])
+x = tf.placeholder("float", [None, seq_length, 1])
 y = tf.placeholder("float", [None, vocab_size+2])
 
 # RNN output node weights and biases
@@ -112,12 +126,12 @@ biases = {
 }
 
 def RNN(x, weights, biases):
-    # reshape to [1, n_input]
-    x = tf.reshape(x, [-1, n_input])
+    # reshape to [1, seq_length]
+    x = tf.reshape(x, [-1, seq_length])
 
-    # Generate a n_input-element sequence of inputs
+    # Generate a seq_length-element sequence of inputs
     # (eg. [What] [if] [we] -> [20] [6] [33])
-    x = tf.split(x,n_input,1)
+    x = tf.split(x,seq_length,1)
 
     # 2-layer LSTM, each layer has n_hidden units.
     rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(n_hidden),rnn.BasicLSTMCell(n_hidden)])
@@ -125,7 +139,7 @@ def RNN(x, weights, biases):
     # generate prediction
     outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
 
-    # there are n_input outputs but
+    # there are seq_length outputs but
     # we only want the last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
@@ -159,7 +173,7 @@ def checkIfValidWord(idx, training_data):
 with tf.Session() as session:
     session.run(init)
     step = 0
-    #    pos = random.randint(0,n_input+1)
+    #    pos = random.randint(0,seq_length+1)
     acc_total = 0
     loss_total = 0
 
@@ -172,19 +186,19 @@ with tf.Session() as session:
         print("Starting training iteration...")
         while step < training_iters:
             pos = 0        
-            while pos != len(training_data)-n_input:        
+            while pos != len(training_data)-seq_length:        
                 symbols_in_keys = []
-                if pos < n_input-1:
-                    for i in range(0,n_input-pos-1):
+                if pos < seq_length-1:
+                    for i in range(0,seq_length-pos-1):
                         symbols_in_keys.append(vocab["<START>"])
                     loc = 0
-                    for idx in range(n_input-pos-1,n_input):
+                    for idx in range(seq_length-pos-1,seq_length):
                         symbols_in_keys.append(checkIfValidWord(idx, training_data))
                         loc += 1
                 else:
-                    for idx in range(pos-n_input+1,pos+1):
+                    for idx in range(pos-seq_length+1,pos+1):
                         symbols_in_keys.append(checkIfValidWord(idx, training_data))
-                symbols_in_keys = np.reshape(np.array(symbols_in_keys), [-1, n_input, 1])
+                symbols_in_keys = np.reshape(np.array(symbols_in_keys), [-1, seq_length, 1])
                 symbols_out_onehot = np.zeros([vocab_size+2], dtype=float)
                 symbols_out_onehot[checkIfValidWord(pos+1, training_data)] = 1.0
                 symbols_out_onehot = np.reshape(symbols_out_onehot,[1,-1])
@@ -201,8 +215,8 @@ with tf.Session() as session:
                     print()
                     acc_total = 0
                     loss_total = 0
-                    symbols_in = [training_data[i] for i in range(pos, pos + n_input)]
-                    symbols_out = training_data[pos + n_input]
+                    symbols_in = [training_data[i] for i in range(pos, pos + seq_length)]
+                    symbols_out = training_data[pos + seq_length]
                     symbols_out_pred = reverse_vocab[int(tf.argmax(onehot_pred, 1).eval())]
                     print("%s - [%s] vs [%s]" % (symbols_in,symbols_out,symbols_out_pred))
                 step += 1
@@ -212,23 +226,23 @@ with tf.Session() as session:
     print("Run on command line.")
     print("\ttensorboard --logdir=%s" % (logs_path))
     print("Point your browser to: http://localhost:6006/")
-    while True:
-        prompt = "%s words: " % n_input
+    for i in range(3):
+        prompt = "%s words: " % seq_length
         sentence = input(prompt)
         sentence = sentence.strip()
         words = sentence.split(' ')
         symbols_in_keys = []
-        if len(words) < n_input:
-            for i in range(0,n_input-1):
+        if len(words) < seq_length:
+            for i in range(0,seq_length-1):
                 symbols_in_keys.append(vocab["<START>"])
         for i in range(len(words)):
             symbols_in_keys.append(vocab[str(words[i])])
-        if len(words) > n_input:
-            for i in range(len(words)-n_input,len(words)):
+        if len(words) > seq_length:
+            for i in range(len(words)-seq_length,len(words)):
                 symbols_in_keys.append(vocab[str(words[i])])
         try:
-            for i in range(32):
-                keys = np.reshape(np.array(symbols_in_keys), [-1, n_input, 1])
+            for i in range(seq_length):
+                keys = np.reshape(np.array(symbols_in_keys), [-1, seq_length, 1])
                 onehot_pred = session.run(pred, feed_dict={x: keys})
                 onehot_pred_index = int(tf.argmax(onehot_pred, 1).eval())
                 sentence = "%s %s" % (sentence,reverse_vocab[onehot_pred_index])
@@ -238,3 +252,11 @@ with tf.Session() as session:
         except:
             print("Word not in vocab")
 
+# Creating a tf.train.Saver adds operations to the graph to save and
+# restore variables from checkpoints.
+saver_def = tf.train.Saver().as_saver_def()
+
+with open(experimentGraphFile, 'wb') as f:
+  f.write(tf.get_default_graph().as_graph_def().SerializeToString())
+
+print("\nI saved the graph here for you: " + os.path.abspath(experimentGraphFile))
