@@ -113,9 +113,9 @@ const apath = () => {
 
 const QuestionForm = () => {
 	// talking to the online servlet by default so as to allow running the app locally without an ES setup
-	//let askServlet = 'https://egbot.good-loop.com/ask';
-	let askServlet = 'http://local.egbot.com/ask';
-	notifyUser("Using server " + askServlet);
+	let askServlet = 'https://egbot.good-loop.com/ask';
+	//let askServlet = 'http://local.egbot.com/ask';
+	//notifyUser("Using server " + askServlet);
 
 	const onEnterPress = (e) => {
 		if(e.keyCode === 13 && e.shiftKey === false) {
@@ -133,13 +133,6 @@ const QuestionForm = () => {
 				label=""
 				rows="3"
 				onKeyDown={onEnterPress}
-			/>
-			<PropControl 
-				path={qpath} prop='m'
-				type="radio" 
-				label="Choose the model (optional):"
-				options={['Markov','LSTM']}
-				dflt="Markov"
 			/>
 			<div className="btn-group" role="group" aria-label="">
 				<Misc.SubmitButton path={qpath} className="btn btn-primary question-button" url={askServlet} responsePath={apath()}>Ask</Misc.SubmitButton>
