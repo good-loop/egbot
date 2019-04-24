@@ -1,0 +1,62 @@
+[
+    {
+        "question": "What is Boolean Algebra?",
+        "answer": "Boolean algebra is the branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0 respectively. Instead of elementary algebra where the values of the variables are numbers, and the prime operations are addition and multiplication, the main operations of Boolean algebra are the conjunction and denoted as ∧, the disjunction or denoted as ∨, and the negation not denoted as ¬. It is thus a formalism for describing logical relations in the same way that elementary algebra describes numeric relations."
+    },
+    {
+        "question": "What are atoms (propositional variables) in Boolean Algebra?",
+        "answer": "In Boolean Algebra, atoms (propositional variables) are variables which can either be true or false. Propositional variables are the basic building-blocks of propositional formulas, used in propositional logic and higher logics. Formulas in logic are typically built up recursively from some propositional variables, some number of logical connectives, and some logical quantifiers. Propositional variables are the atomic formulas of propositional logic."
+    },
+    {
+        "question": "What is the product rule of probability?",
+        "answer": "In probability theory, the product rule permits the calculation of any member of the joint distribution of a set of random variables using only conditional probabilities. The rule is useful in the study of Bayesian networks, which describe a probability distribution in terms of conditional probabilities. "
+    },
+    {
+        "question": "Give me an example of a conditional probability problem.",
+        "answer": "A bag contains red and blue marbles. Two marbles are drawn without replacement. The probability of selecting a red marble and then a blue marble is 0.28. The probability of selecting a red marble on the first draw is 0.5. What is the probability of selecting a blue marble on the second draw, given that the first marble drawn was red?"
+    },
+    {
+        "question": "What is a Bayesian network?",
+        "answer": "Bayesian network is a probabilistic graphical model (a type of statistical model) that represents a set of variables and their conditional dependencies via a directed acyclic graph (DAG). Bayesian networks are ideal for taking an event that occurred and predicting the likelihood that any one of several possible known causes was the contributing factor. For example, a Bayesian network could represent the probabilistic relationships between diseases and symptoms. Given symptoms, the network can be used to compute the probabilities of the presence of various diseases. "
+    },
+    {
+        "question": "How do you calculate variance in probability theory?",
+        "answer": "To calculate the variance follow these steps. First, work out the Mean (the simple average of the numbers). Then for each number: subtract the Mean and square the result (the squared difference). Then work out the average of those squared differences."
+    },
+    {
+        "question": "What’s the difference between joint probability and conditional probability?",
+        "answer": "Broadly speaking, joint probability is the probability of two things* happening together: e.g., the probability that I wash my car, and it rains. Conditional probability is the probability of one thing happening, given that the other thing happens: e.g., the probability that, given that I wash my car, it rains. "
+    },
+    {
+        "question": "Give an example of Markov Chain in probability theory.",
+        "answer": "A game of snakes and ladders or any other game whose moves are determined entirely by dice is a Markov chain, indeed, an absorbing Markov chain. This is in contrast to card games such as blackjack, where the cards represent a 'memory' of the past moves. To see the difference, consider the probability for a certain event in the game. In the above-mentioned dice games, the only thing that matters is the current state of the board. The next state of the board depends on the current state, and the next roll of the dice. It doesn't depend on how things got to their current state. In a game such as blackjack, a player can gain an advantage by remembering which cards have already been shown (and hence which cards are no longer in the deck), so the next state (or hand) of the game is not independent of the past states. "
+    },
+    {
+        "question": "Give an example of a probability paradox.",
+        "answer": "Take for example Simpsons Paradox which happens when you compare a population with labeled subpopulations with another population (or the same at a different time), the two populations will extremely likely have different proportions of their subpopulations. Consider a very simple example. You've got girls and boys. The girls have, on average, longer hair than the boys do, and there is an average for the school somewhere in between. I.e. average boys' hair's length (ABHL)≤average student's hair length (ASHL)≤average girls' hair's length (AGHL). Now, a boy shows up with hair longer than ABHL, but shorter than ASHL. Presto: AGHL is the same. The boys have, on average, longer hair. Though no subgroup has shorter hair, ASHL has fallen! This is how it goes with Simpson's paradox: the groups have averages that go in one direction, while the overall average goes in the other. Sometimes it's because members of the population leave or join, sometimes it's due to shifts in counts within the sub-groups. But it's always because the counts in subgroups differ between the two populations."
+    },
+    {
+        "question": "What is the probability density function?",
+        "answer": "The probability density function, or density of a continuous random variable, is a function whose value at any given sample (or point) in the sample space (the set of possible values taken by the random variable) can be interpreted as providing a relative likelihood that the value of the random variable would equal that sample. In other words, while the absolute likelihood for a continuous random variable to take on any particular value is 0 (since there are an infinite set of possible values to begin with), the value of the PDF at two different samples can be used to infer, in any particular draw of the random variable, how much more likely it is that the random variable would equal one sample compared to the other sample. "
+    },
+    {
+        "question": "Give me an example of binomial distribution.",
+        "answer": "The binomial distribution model is a probability model that is used when there are two possible outcomes. For example, adults with allergies might report relief with medication or not. The two outcomes are often labeled success and failure with success indicating the presence of the outcome of interest. "
+    },
+    {
+        "question": "What is a continuous probability distribution?",
+        "answer": "A continuous distribution describes the probabilities of the possible values of a continuous random variable. A continuous random variable is a random variable with a set of possible values (known as the range) that is infinite and uncountable. Probabilities of continuous random variables (X) are defined as the area under the curve of its PDF. Thus, only ranges of values can have a nonzero probability. The probability that a continuous random variable equals some value is always zero. "
+    },
+    {
+        "question": "Give me an example for Bayesian parameter estimation.",
+        "answer": "Take for example picking a card from a pack of traditional playing cards. There are 52 cards in the pack, 26 of them are red and 26 are black. What is the probability of the card being a 4 given that we know the card is red? To convert this into the math symbols that we see above we can say that event A is the event that the card picked is a 4 and event B is the card being red. Hence, P(A|B) in the equation above is P(4|red) in our example, and this is what we want to calculate. We previously worked out that this probability is equal to 1/13 (there 26 red cards and 2 of those are 4's) but let’s calculate this using Bayes’ theorem. We need to find the probabilities for the terms on the right hand side. They are: P(B|A) = P(red|4) = 1/2; P(A) = P(4) = 4/52 = 1/13; P(B) = P(red) = 1/2; When we substitute these numbers into the equation for Bayes’ theorem above we get 1/13, which is the answer that we were expecting."
+    },
+    {
+        "question": "Give an example of Poisson distribution.",
+        "answer": "A Poisson distribution applies whenever you count events occurring per unit time or incidences per unit time, length or area, etc. For example, you can count and record: (1) the number of accidents per day in a city - with the help of a police data base (2) number of complaints received in an automobile service center per day (3) number of defects per square meter of cloth roll manufactured in a textile factory. The quantity recorded are then the possible values of what is called a Poisson random variable. The possible values for all the examples given would be 0, 1, 2, etc., and it is possible to compute different probabilities of the random variable taking on different values, using standard formula."
+    },
+    {
+        "question": "Give me an example of Central Limit Theorem being used.",
+        "answer": "One example is that of an investor that's interested in estimating the return of ABC stock market index that is comprised of 100,000 stocks. Due to the large size of the index, the investor is unable to analyze each stock independently and instead chooses to use random sampling to get an estimate of the overall return of the index. The investor picks random samples of the stocks, with each sample comprising at least 30 stocks. The samples must be random, and any previously selected samples must be replaced in subsequent samples to avoid bias. If the first sample produces an average return of 7.5%, the next sample may produce an average return of 7.8%. With the nature of randomized sampling, each sample will produce a different result. As you increase the size of the sample size with each sample you pick, the sample means will start forming their own distributions. The distribution of the sample means will move towards normal as the value of n increases. The average return of the stocks in the sample index estimates the return of the whole index of 100,000 stocks, and the average return is normally distributed."
+    }
+]   
