@@ -49,7 +49,9 @@ public class AskServlet implements IServlet {
 		List relatedAs = findRelatedAnswer(relatedQs);
 		 
 		//Object generatedAnswer = generateAnswer(new MarkovModel(), q, "MSE-20", 100, 1);
-		Object generatedAnswer = generateAnswer(model, q, "MSE-20", 100, 1); 
+		//Object generatedAnswer = generateAnswer(model, q, "MSE-20", 100, 1); 
+		// TODO: temporary model for Paulius to use
+		Object generatedAnswer = new DummyModel().getAnswer(q);
 
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
