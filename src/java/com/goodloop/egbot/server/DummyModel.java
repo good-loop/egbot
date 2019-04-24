@@ -43,7 +43,7 @@ import com.winterwell.utils.log.Log;
 
 public class DummyModel implements IEgBotModel, IHasDesc, ModularXML {
 	// location of Paulius' data set
-	String filepath = "/home/irina/winterwell/egbot/data/test_input/pauliusSample.json";
+	String filepath = System.getProperty("user.dir") + "/data/test_input/pauliusSample.json";
 	// question-answer pairs in the data set
 	List qas = new ArrayList();
 	// pattern for removing punctuation
