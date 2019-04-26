@@ -58,5 +58,13 @@
     {
         "question": "Give me an example of Central Limit Theorem being used.",
         "answer": "One example is that of an investor that's interested in estimating the return of ABC stock market index that is comprised of 100,000 stocks. Due to the large size of the index, the investor is unable to analyze each stock independently and instead chooses to use random sampling to get an estimate of the overall return of the index. The investor picks random samples of the stocks, with each sample comprising at least 30 stocks. The samples must be random, and any previously selected samples must be replaced in subsequent samples to avoid bias. If the first sample produces an average return of 7.5%, the next sample may produce an average return of 7.8%. With the nature of randomized sampling, each sample will produce a different result. As you increase the size of the sample size with each sample you pick, the sample means will start forming their own distributions. The distribution of the sample means will move towards normal as the value of n increases. The average return of the stocks in the sample index estimates the return of the whole index of 100,000 stocks, and the average return is normally distributed."
+    },
+    {
+        "question": "elementary algebra",
+        "answer":"Equation to solve: 12 \n Subtract 4 from both sides: 2x+4-4=12-4 \n This simplifies to: 2x=8 \n Divide both sides by 2: 2x/2=8/2 \n This simplifies to the solution x=4"
+    },
+    {
+        "question":"limit calculus",
+        "answer":"We know that the first thing that we should try to do is simply plug in the value and see if we can compute the limit. \n lim(x->2) (8-3x+12x^2) = 8 - 3(2) + 12(4) = 50"
     }
 ]   
