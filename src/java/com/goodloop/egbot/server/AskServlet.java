@@ -48,11 +48,12 @@ public class AskServlet implements IServlet {
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
 		 
-		// when we want it to spit out a generated answer from a trained model
+		// when we want it to spit out from a trained model
 		//Object generatedAnswer = generateAnswer(model, q, "MSE-20", 100, 1); 
 
 		// WARNING: below are temporary models for Paulius to use (the first does a lookup in his dataset, the second uses elastic's search on his dataset)
 		//Object generatedAnswer = new DummyModel().getAnswer(q);
+		Log.d("Looking for related answer in Paulius' dataset");
 		Object generatedAnswer = findRelatedPauliusAnswer(q);
 
 		ArrayMap data = new ArrayMap(
@@ -147,7 +148,7 @@ public class AskServlet implements IServlet {
 		Object rq = relatedQsES.get(0);
 		String question = SimpleJson.get(rq, "question");
 		String answer = SimpleJson.get(rq, "answer");
-		System.out.println(question +" "+ answer);
+		Log.d(question +" "+ answer);
 		
 		return answer;
 	}
