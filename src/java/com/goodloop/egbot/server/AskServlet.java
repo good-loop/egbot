@@ -48,10 +48,12 @@ public class AskServlet implements IServlet {
 		List relatedQs = findRelatedQuestion(q);
 		List relatedAs = findRelatedAnswer(relatedQs);
 		 
-		//Object generatedAnswer = generateAnswer(new MarkovModel(), q, "MSE-20", 100, 1);
+		// when we want it to spit out a generated answer from a trained model
 		//Object generatedAnswer = generateAnswer(model, q, "MSE-20", 100, 1); 
-		// TODO: temporary model for Paulius to use
-		Object generatedAnswer = new DummyModel().getAnswer(q);
+
+		// WARNING: below are temporary models for Paulius to use (the first does a lookup in his dataset, the second uses elastic's search on his dataset)
+		//Object generatedAnswer = new DummyModel().getAnswer(q);
+		Object generatedAnswer = findRelatedPauliusAnswer(q);
 
 		ArrayMap data = new ArrayMap(
 			"relatedQs", relatedQs,
@@ -132,6 +134,24 @@ public class AskServlet implements IServlet {
 		return relatedQs;
 	}
 
+	/**
+	 * search ES and find the answer of a similar question in Paulius' dataset
+	 * @param q 
+	 * @return answered questions
+	 */
+	private String findRelatedPauliusAnswer(String q) {
+		// By Analogy to previous Q
+		// Find related Qs
+		List relatedQsES = new RelatedPauliusAnswer().run(q);
+		List relatedQs = new ArrayList();
+		Object rq = relatedQsES.get(0);
+		String question = SimpleJson.get(rq, "question");
+		String answer = SimpleJson.get(rq, "answer");
+		System.out.println(question +" "+ answer);
+		
+		return answer;
+	}
+	
 	/**
 	 * filter for answers that were accepted
 	 * @param q 
