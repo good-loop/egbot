@@ -145,10 +145,16 @@ public class AskServlet implements IServlet {
 		// Find related Qs
 		List relatedQsES = new RelatedPauliusAnswer().run(q);
 		List relatedQs = new ArrayList();
-		Object rq = relatedQsES.get(0);
-		String question = SimpleJson.get(rq, "question");
-		String answer = SimpleJson.get(rq, "answer");
-		Log.d(question +" "+ answer);
+		String answer;
+		if (relatedQsES!=null &&  ! relatedQsES.isEmpty()) {
+			Object rq = relatedQsES.get(0);
+			String question = SimpleJson.get(rq, "question");
+			answer = SimpleJson.get(rq, "answer");
+			Log.d(question +" "+ answer);
+		}
+		else {
+			answer = failAnswer;
+		}
 		
 		return answer;
 	}
