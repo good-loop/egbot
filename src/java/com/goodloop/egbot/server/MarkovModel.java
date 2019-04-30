@@ -293,7 +293,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	/**
 	 * initialise any model parameters to prepare for training
 	 */
-	public void init(List<File> files) throws IOException {
+	public void init(List<File> files, int num_epochs) throws IOException {
 	}
 	
 	@Override

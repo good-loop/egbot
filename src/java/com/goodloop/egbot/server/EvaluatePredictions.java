@@ -42,11 +42,11 @@ public class EvaluatePredictions {
 			
 		// Markov 
 		MarkovModel mm = new MarkovModel();		
-		runModel(mm, "MSE-20", "MSE-20", 100, 1);		
+		runModel(mm, "MSE-20", "MSE-20", 100, 1, 5);		
 				
 		// LSTM 
 		LSTM lstm = new LSTM();				
-		runModel(lstm, "MSE-20", "MSE-20", 100, 1);		
+		runModel(lstm, "MSE-20", "MSE-20", 100, 1, 5);		
 	}
 	
 	/**
@@ -60,7 +60,7 @@ public class EvaluatePredictions {
 	 * @param eSplit percentage of train split (e.g. 2 for 1 of 2, 1 etc)
 	 * @throws Exception
 	 */
-	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter) throws Exception {
+	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter, int num_epoch) throws Exception {
 		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		modelDesc.put("train", tLabel);
@@ -101,12 +101,11 @@ public class EvaluatePredictions {
 		
 		// and we set the tag to know which filter was used
 		modelDesc.put("tFilter", tFilter);
-		
-		
-		modelDesc.put("eFilter", eFilter); // TODO: not ideal because this should be part of the desc of the experiment, not the model -- but we're leaving it like this for now
+		modelDesc.put("eFilter", eFilter); // TODO: this is not ideal because this should be part of the desc of the experiment, not the model -- but we're leaving it like this for now
+		modelDesc.put("num_epoch", num_epoch);
 
 		// set up experiment
-		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, tLabel);
+		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, tLabel, num_epoch);
 		
 		// TEST
 		
@@ -152,7 +151,7 @@ public class EvaluatePredictions {
 	 * @throws IOException
 	 */
 	public EgBotExperiment trainExp(IEgBotModel model, Desc<IEgBotModel> modelDesc, 
-			IFilter<Integer> trainFilter, List<File> files, String trainLabel) throws IOException 
+			IFilter<Integer> trainFilter, List<File> files, String trainLabel, int num_epoch) throws IOException 
 	{
 		// set up new experiment
 		EgBotExperiment experiment = new EgBotExperiment();
@@ -167,6 +166,7 @@ public class EvaluatePredictions {
 		Desc trainDataDesc = new Desc(trainLabel, EgBotData.class);
 		trainDataDesc.put("use", "train");		
 		experiment.setTrainData(trainData, trainDataDesc);
+		experiment.setNumEpoch(num_epoch);
 		
 		// trained or just load pre-trained -- this can modify experiment's model ref
 		EgBotDataLoader.train(experiment);		

@@ -52,8 +52,9 @@ public interface IEgBotModel extends ITrainable.Unsupervised<Map>, IHasDesc {
 
 	/**
 	 * initialise any model parameters to prepare for training
+	 * @param num_epoch 
 	 */
-	void init(List<File> files) throws IOException;
+	void init(List<File> files, int num_epoch) throws IOException;
 
 	/** 
 	 * used once training finished on all egbot files

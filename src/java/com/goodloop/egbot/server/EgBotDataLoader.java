@@ -80,7 +80,7 @@ public class EgBotDataLoader {
 		
 		switch (dataLabel) {
     		case "MSE-part1":
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_Part_1.json")); // 100 MSE q&a pairs
+        		files = loadMSE("MathStackExchangeAPI_Part_1"); // MSE part 1/8 file
         		break;
     		case "MSE-part2":
         		files = loadMSE("MathStackExchangeAPI_Part_2"); // load MSE data that starts with this string (aka only first part of egbot data)
@@ -88,33 +88,18 @@ public class EgBotDataLoader {
         	case "MSE-full":
         		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
             	break;
-        	case "MSE-full-trial":
-        		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
-            	break;
-        	case "MSE-full-old":
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/test.json")); // todo: remove this 
+        	case "statsBookJSON":
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/statsBookJSON.json")); // todo: remove this 
+        		break;
+        	case "pauliusSample":
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/pauliusSample.json")); // todo: remove this 
         		break;
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
-        	case "MSE-20X": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
-        		break;
-        	case "MSE-X100": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_1.json")); // 100 MSE q&a pairs
-        		break;
         	case "MSE-100": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
-        		break;
-        	case "MSE-100-trial": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
-        		break;
-        	case "MSE-X20": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/xtiny.json")); // 20 pre-selected MSE q&a pairs
-        		break;
-        	case "paul-20": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json")); // paulius' 20 questions (TODO: needs answers, currently has dummy ones)
-        		break;        
+        		break;    
 		}
 		// always have the same ordering
 		Collections.sort(files);
@@ -215,7 +200,8 @@ public class EgBotDataLoader {
 	public static void train(Experiment e) throws IOException {
 		EgBotData trainData = (EgBotData) e.getTrainData();
 		IEgBotModel model = (IEgBotModel) e.getModel();
-
+		int num_epoch = e.getNumEpoch();
+		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		// Do we have a pre-trained version?
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
@@ -229,7 +215,7 @@ public class EgBotDataLoader {
 			model.setLoadSuccessFlag(true);
 		}
 
-		// call load
+		// call load (not terribly useful since we've already checked whether it's worth loading it) TODO: implement re-loading training (so that we can train in stages and can start/stop it at will); it would mean remembering point where it left off in the dataset;
 		//model.load();
 
 		// already done?
@@ -241,10 +227,10 @@ public class EgBotDataLoader {
 		Log.i("Starting training ...");
 		
 		// init model (vocab etc)
-		model.init(trainData.files);
+		model.init(trainData.files, num_epoch);
 							
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		
+		 
 		for(File file : trainData.files) {
 			Log.i("File: "+file+"...");
 	

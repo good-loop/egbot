@@ -1,6 +1,7 @@
 package com.goodloop.egbot.server;
 
 import java.io.File;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -33,50 +34,62 @@ public class EvaluationTest {
 	
 	// TEST LSTM
 	
-	@Test
-	public void test20LTSM() throws Exception {
+//	@Test
+	public void testPauliusSampleLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-20X", "MSE-20X", 1, 1);
+		new EvaluatePredictions().runModel(lstm, "pauliusSample", "pauliusSample", 1, 1, 1);
 	}
 	
+	
+//	@Test
+	public void test20LTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 1, 1, 1);
+	}
 	
 //	@Test
 	public void test100LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1);
+		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1, 1);
 	}
 	
-//	@Test
+	@Test
 	public void testFullLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-full", "MSE-full", 100, 100);
+		new EvaluatePredictions().runModel(lstm, "MSE-full", "MSE-full", 100, 100, 5);
 	}
 	
 //	@Test
 	public void testFullTrialLTSM() throws Exception { // MSE-full-trial AKA the old trained-model
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-full-trial", "MSE-20", 100, 100);
+		new EvaluatePredictions().runModel(lstm, "MSE-full-trial", "MSE-20", 100, 100, 5);
 	}
 
 	
 	// TEST MARKOV
 	
 //	@Test
+	public void testPauliusSampleMarkov() throws Exception {
+		MarkovModel mm = new MarkovModel();						
+		new EvaluatePredictions().runModel(mm, "pauliusSample", "pauliusSample", 1, 1, 5);
+	}
+	
+//	@Test
 	public void test20Markov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 	
-		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 1, 1);
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 1, 1, 5);
 	}
 	
 //	@Test
 	public void test100Markov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 	
-		new EvaluatePredictions().runModel(mm, "MSE-100", "MSE-20", 1, 1);
+		new EvaluatePredictions().runModel(mm, "MSE-100", "MSE-20", 1, 1, 5);
 	}
 	
 //	@Test
 	public void testFullMarkov() throws Exception {
 		MarkovModel mm = new MarkovModel(); 	
-		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-full", 100, 100);
+		new EvaluatePredictions().runModel(mm, "MSE-full", "MSE-full", 100, 100, 5);
 	}
 
 	/**
@@ -86,11 +99,11 @@ public class EvaluationTest {
 //	@Test
 	public void testSameMarkovRunTwice() throws Exception {
 		MarkovModel mm = new MarkovModel(); 
-		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1);
+		new EvaluatePredictions().runModel(mm, "MSE-20", "MSE-20", 100, 1, 5);
 		assert mm.trainSuccessFlag;
 		
 		MarkovModel mm2 = new MarkovModel(); 
-		new EvaluatePredictions().runModel(mm2, "MSE-20", "MSE-20", 100, 1);
+		new EvaluatePredictions().runModel(mm2, "MSE-20", "MSE-20", 100, 1, 5);
 		assert mm2.loadSuccessFlag;
 	}
 

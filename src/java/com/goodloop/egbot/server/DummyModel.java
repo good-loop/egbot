@@ -148,12 +148,6 @@ public class DummyModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 
 	@Override
-	public void init(List<File> files) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void setTrainSuccessFlag(boolean b) {
 		// TODO Auto-generated method stub
 		
@@ -161,6 +155,12 @@ public class DummyModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	@Override
 	public void setLoadSuccessFlag(boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void init(List<File> files, int num_epoch) throws IOException {
 		// TODO Auto-generated method stub
 		
 	}
