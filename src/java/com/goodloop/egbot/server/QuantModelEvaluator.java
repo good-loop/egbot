@@ -47,6 +47,9 @@ public class QuantModelEvaluator {
 	 * @throws Exception
 	 */
 	public void evaluateModelTinyData()	throws Exception {
+		//DEBUGGING
+		int oddCount = 0; // count of how many times we're getting -Inf score
+		
 		MeanVar1D avgScore = new MeanVar1D();
 		IEgBotModel model = experiment.getModel();
 		assert model != null;
@@ -110,15 +113,19 @@ public class QuantModelEvaluator {
 				answers.add(wrongAns);
 			}						
 			double score = scorePickBest(model, question, target, answers); // score will be 1 if correct guess, 0 if incorrect
+			if (!MathUtils.isFinite(score))
+				oddCount += 1;
 			assert MathUtils.isFinite(score) : score+" from Q: "+question+" answer: "+target;
-			avgScore.train1(score);
+			avgScore.train1(score);	
 				
 			// log update
 			if(i%10==0) Log.i(MessageFormat.format("Avg score after {0} evaluation examples: {1}\n", i, avgScore.getMean()));	
 		}
 		// save final score
 		saveToFile(avgScore);
-		Log.i(MessageFormat.format("Percent of correct guesses: {0}", avgScore.getMean()));
+		Log.i(MessageFormat.format("Percent of correct guesses: {0}", avgScore.getMean()*100));
+		// DEBUGGING -Inf score
+		Log.i(MessageFormat.format("Count of -Inf scores out of total: {0}/{1}\n", oddCount, avgScore.getCount()));	
 }
 
 	/**
@@ -133,7 +140,9 @@ public class QuantModelEvaluator {
 	 */
 	public void evaluateModel(String eLabel) throws Exception {
 		final MyRandom counter = new MyRandom();
-		if(eLabel.equals("MSE-20") || eLabel.equals("MSE-X20") || eLabel.equals("MSE-20X") || eLabel.equals("MSE-100")) {
+		
+		// if eval set is too small, don't do random selection of wrong answers (**Needed: because the way the set up the quant evaluateModel requires at least 100 data points to be wasted, but for example the "MSE-20" data set only has 20 q&a pairs so it requires something different)
+		if(eLabel.equals("MSE-20") || eLabel.equals("pauliusSample") || eLabel.equals("statsBookJSON") || eLabel.equals("MSE-100")) {
 			evaluateModelTinyData();
 			return;
 		}
@@ -169,10 +178,10 @@ public class QuantModelEvaluator {
 				if ( ! testData.filter.accept(c) ) {
 					continue;
 				}						
-				// TODO: is this the right approach to have? we do basically throw away 100 data points 
+				// NB: we do basically throw away 100 data points 
 				// (since we don't evaluate them as target answers) 
 				// for small eval data sets, it really doesn't make sense
-				// one solution could be that we wrap back, using the last data points eval the beginning? 
+				// TODO: one solution could be that we wrap back, using the last data points eval the beginning? 
 				
 				int evalSize = evalSet.size();
 				int count = avgScore.getCount();
@@ -215,16 +224,12 @@ public class QuantModelEvaluator {
 				tempSet.add(qa);
 				tempSet.remove(0);
 				evalSet = tempSet;
-			} 
-			
-			// TODO: wrap back here?
-						
+			} 						
 			jr.close();
 		}
-
 		// save final score
 		saveToFile(avgScore);
-		Log.i(MessageFormat.format("Percent of correct guesses: {0}", avgScore.getMean()));
+		Log.i(MessageFormat.format("Percent of correct guesses: {0}", avgScore.getMean()*100));
 	}
 
 	/**
