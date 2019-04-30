@@ -78,9 +78,11 @@ public class LSTM implements IEgBotModel {
 	
 	private static final String LOGTAG = "LSTM";
 	private static final String outOfVocab = "<ERROR>";
+	private static final double threshold = 0.00000000001;
 	// model guts
 	List<Tensor<?>> model;
-	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot");
+	// we're setting a hard-coded version (in this case v1) to track when we change model outputs, Depot (and thus we) will know
+	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot").setVersion(1);
 	private Desc<Tensor> cpdesc;
 	private Desc<String> vocabdesc;
 	
@@ -938,13 +940,14 @@ public class LSTM implements IEgBotModel {
 					// find out the position of the target word in the vocab
 					int targetPos = getKeyByValue(vocab,tArray[i]);
 					// find out the prob of that word, as returned from the model
-					float probWord = outputArray[0][targetPos];
+					double probWord = outputArray[0][targetPos];
 					
-					//check whether the prob is > 0
-					//assert MathUtils.lessThan(0, probWord) : "probWord: "+probWord;					
+					// we need to handle instance when the probability is 0 (it replaces it with the threshold value, which is something like 10 to the power of -11, aka a really small number, smaller than any expected probability to come out of tf)
+					if(probWord <= threshold)
+						probWord = threshold; 
 
 					// add the prob to the score
-					score += probWord;//-Math.log(probWord);
+					score += Math.log(probWord);
 					
 					cntWordsScored++;
 				}
