@@ -293,7 +293,7 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	/**
 	 * initialise any model parameters to prepare for training
 	 */
-	public void init(List<File> files, int num_epochs) throws IOException {
+	public void init(List<File> files, int num_epochs, String preprocessing, String wordEmbed) throws IOException {
 	}
 	
 	@Override
@@ -334,6 +334,11 @@ public class MarkovModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	public Desc<IEgBotModel> getDesc() {
 		return mmDesc;
+	}
+
+	@Override
+	public String getModelConfig() {
+		return ""; // only needed for lstm for extra config details
 	}
 }
 

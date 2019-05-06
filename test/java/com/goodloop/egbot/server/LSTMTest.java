@@ -50,7 +50,7 @@ public class LSTMTest {
 		
 		System.out.println("Loading model ...");
 		LSTM lstm = new LSTM();
-		lstm.init(EgBotDataLoader.setupTiny(), 5);
+		lstm.init(EgBotDataLoader.setupTiny(), 5, "None", "vocabPos");
 		lstm.load(); 
 		
 		System.out.println("Generating answer ...");

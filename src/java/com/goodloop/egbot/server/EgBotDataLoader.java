@@ -28,7 +28,6 @@ import com.winterwell.utils.log.Log;
 public class EgBotDataLoader {
 	List<File> files;
 	RateCounter rate;
-	String evalName;
 	
 	/**
 	 * finds egbot files in preparation for data loading
@@ -201,7 +200,9 @@ public class EgBotDataLoader {
 		EgBotData trainData = (EgBotData) e.getTrainData();
 		IEgBotModel model = (IEgBotModel) e.getModel();
 		int num_epoch = e.getNumEpoch();
-		
+		String preprocessing = e.getPreprocessing();
+		String wordEmbedMethod = e.getWordEmbedMethod();
+
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		// Do we have a pre-trained version?
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
@@ -227,7 +228,7 @@ public class EgBotDataLoader {
 		Log.i("Starting training ...");
 		
 		// init model (vocab etc)
-		model.init(trainData.files, num_epoch);
+		model.init(trainData.files, num_epoch, preprocessing, wordEmbedMethod);
 							
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
 		 
@@ -268,8 +269,9 @@ public class EgBotDataLoader {
 		Depot.getDefault().flush();
 	}
 
-	public String getEvalName() {
-		return evalName;
+	// basic preprocessing method, just lowercase strings
+	public static String lower(String q_a) {
+		return q_a.toLowerCase();
 	}
 	
 }

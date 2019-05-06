@@ -160,9 +160,15 @@ public class DummyModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 
 	@Override
-	public void init(List<File> files, int num_epoch) throws IOException {
+	public void init(List<File> files, int num_epoch, String preprocessing, String wordEmbedMethod) throws IOException {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String getModelConfig() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
 

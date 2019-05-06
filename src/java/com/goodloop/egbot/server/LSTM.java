@@ -78,11 +78,10 @@ public class LSTM implements IEgBotModel {
 	
 	private static final String LOGTAG = "LSTM";
 	private static final String outOfVocab = "<ERROR>";
-	private static final double threshold = 0.00000000001;
+	private static final double threshold = Math.pow(10.0,-11);
 	// model guts
 	List<Tensor<?>> model;
-	// we're setting a hard-coded version (in this case v1) to track when we change model outputs, Depot (and thus we) will know
-	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot").setVersion(1);
+
 	private Desc<Tensor> cpdesc;
 	private Desc<String> vocabdesc;
 	
@@ -91,11 +90,11 @@ public class LSTM implements IEgBotModel {
 
 	// vocab
 	HashMap<Integer, String> vocab;	
-	int idealVocabSize;
+	final int idealVocabSize = 10000;
 	int vocab_size;
 	
 	// training parameters	
-	int seq_length;
+	final int seq_length = 30;
 	/**
 	 * total training epochs to do. 
 	 */
@@ -103,13 +102,31 @@ public class LSTM implements IEgBotModel {
 	/**
 	 * number of hidden layers
 	 */
-	final int num_hidden = 512; // hack to set the no of layers and load the right graph, if it's not set to final for some reason it changes (although I haven't been able to find out why)
+	final int num_hidden = 256; // set the no of layers (means that it loads the right graph), if it's not set to final for some reason it changes (although I haven't been able to find out why)
+	/*
+	 * model config -- useful to know which graph to load
+	 */
+	final String modelType = "twoLayerLSTM:0";
+	final String activation1 ="relu:0";
+	final String activation2 = "softmax:0";
 		
 	// stats tracking
 	ArrayList<Float> trainAccuracies;
 	int sessRunCount;
 	int questionCount;
 	long lStartTime;
+
+	// we're setting a hard-coded version (in this case v1) to track when we change model outputs, Depot (and thus we) will know
+	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("LSTM", LSTM.class).setTag("egbot").setVersion(0);
+	
+	// indicates what type of preprocessing to do
+	private String preprocessing;
+	
+	// indicates what type of word embeddings to use (TODO: implement pca/glove alternative methods, currently just uses randomly assigned number which is the location in the vocab)
+	private String wordEmbedMethod;
+	
+	String experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length 
+			+ "_modelType=" + modelType + "_activation1=" + activation1 + "_activation2=" + activation2 + ".pb";
 	
 	/**
 	 * default constructor
@@ -124,20 +141,20 @@ public class LSTM implements IEgBotModel {
 	/**
 	 * initialise any model parameters to prepare for training
 	 */
-	public void init(List<File> files, int epochs) throws IOException {
+	public void init(List<File> files, int epochs, String preprocess, String wordEmbed) throws IOException {
 		// training parameters
 		num_epochs = epochs;
-		seq_length = 30;
-		idealVocabSize = 10000;
 		sessRunCount = 0;
 		questionCount = 0;
+		preprocessing = preprocess;
+		wordEmbedMethod = wordEmbed;
 		lStartTime = System.nanoTime();	
 		loadVocab(files);
 	}
 	
-	public void setSeq_length(int seq_length) {
-		this.seq_length = seq_length;
-	}
+//	public void setSeq_length(int seq_length) {
+//		this.seq_length = seq_length;
+//	}
 
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
@@ -305,12 +322,13 @@ public class LSTM implements IEgBotModel {
 		File vocabFile = vocabPathToDepot();
         // checks to see if it finds the vocab file
 	    final boolean checkpointExists = vocabFile.exists();
-	    if( ! checkpointExists) {
+	    if( ! checkpointExists ) {
 	    	Log.d("Warning: Couldn't find vocab file");
 	    	// train and save to file
 	    	// NB: we then promptly load from file below, which is a tiny bit inefficient, but tiny. 
 	    	loadVocab2_trainVocabAndSave(files); 
 	    }
+		Log.d("Found vocab file: ", vocabFile.getAbsolutePath());	    
         try(BufferedReader br = new BufferedReader(new FileReader(vocabFile))) {
             for(String word; (word = br.readLine()) != null; ) {
     			vocab.put(vocabIdx, word);
@@ -413,7 +431,8 @@ public class LSTM implements IEgBotModel {
 			        System.out.println("Rate (training iter/ sec): " + (float)sessRunCount/ ((float)output / 1000000000));
 			        
 			        // run training operation (and print debug data)
-					trainEach2_epoch_tf_debug(sess, instanceArray, target);
+					//trainEach2_epoch_tf_debug(sess, instanceArray, target);
+					trainEach2_epoch_tf(sess, instanceArray, target);
 				}
 				else // run training operation
 					trainEach2_epoch_tf(sess, instanceArray, target);
@@ -467,10 +486,11 @@ public class LSTM implements IEgBotModel {
 					// set training operation to run
 					.addTarget("train_op")
 					// fetch outputs
-					.fetch("logits") // logits
+					.fetch("twoLayerLSTM") // logits
 					.fetch("words") // input vector   
 					.fetch("relu") // relu activation layer
-					.fetch("output") // sigmoid activation layer
+					.fetch("softmax") // softmax activation layer
+					.fetch("output") // final outputs 
 					.fetch("accuracy") // training accuracy
 					.fetch("loss_op") // loss
 					.run();
@@ -518,18 +538,23 @@ public class LSTM implements IEgBotModel {
 			runner.get(2).copyTo(reluArray);
 			float[] relu = reluArray[0];
 			
-			// check sigmoid outputs
+			// check softmax outputs
 			float[][] softArray = new float[1][vocab_size];
 			runner.get(3).copyTo(softArray);
 			float[] soft = softArray[0];			
 			
+			// check final outputs 
+			float[][] outputsArray = new float[1][vocab_size];
+			runner.get(4).copyTo(outputsArray);
+			float[] outputs = outputsArray[0];	
+			
 			// check training accuracy
-			float modelTrainAcc = runner.get(4).floatValue();
+			float modelTrainAcc = runner.get(5).floatValue();
 			Log.d("Training accuracy: ", modelTrainAcc);
 			trainAccuracies.add(probWord); // this is to verify the model's train acc; TODO: change this to be a sum? rather than a really long vector that we then avg
 			
 			// check loss 
-			Log.d("Loss: " + runner.get(5).floatValue());
+			Log.d("Loss: " + runner.get(6).floatValue());
 		
 			// how far are we in training?
 			sessRunCount++;
@@ -644,7 +669,7 @@ public class LSTM implements IEgBotModel {
 	 */
 	private String mostLikelyWord(float[][] vector) {
 		String word = outOfVocab;
-		String[] vocabArray = vocab.values().toArray(new String[0]);
+		//String[] vocabArray = vocab.values().toArray(new String[0]);
 
 		// find word with highest probability
 		float max = vector[0][0];
@@ -795,9 +820,11 @@ public class LSTM implements IEgBotModel {
 	/**
 	 * returns the file that contains a blank untrained graph -- structure but no training
 	 */
-	private File getTensorflowGraphName() {
-		//TODO: check that java and python deal with numbers in the same way (avoid trailing zeros leading to incompatibility etc)
-		String experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length + ".pb";
+	public File getTensorflowGraphName() {
+		// !TODO: undo this
+		experimentName = "lstmGraphTF.pb";
+		//experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length 
+		//	+ "_modelType=" + modelType + "_activation1=" + activation1 + "_activation2=" + activation2 + ".pb";
 		String graphLocation = System.getProperty("user.dir") + "/data/models/final/v3/" + experimentName;
 		Log.d(graphLocation);
 		File TENSORFLOW_GRAPH = new File(graphLocation);
@@ -934,18 +961,20 @@ public class LSTM implements IEgBotModel {
 					float[][] outputArray = new float[1][vocab_size];
 					outputs.get(0).copyTo(outputArray);
 					closeTensors(outputs); // free memory
-
-					String nextWord = mostLikelyWord(outputArray);					
+					
+					// sanity check that there is at least one value above 0
+					String nextWord = mostLikelyWord(outputArray);
+					//Log.d("Most likely word in output: ",nextWord);			
 					
 					// find out the position of the target word in the vocab
 					int targetPos = getKeyByValue(vocab,tArray[i]);
 					// find out the prob of that word, as returned from the model
 					double probWord = outputArray[0][targetPos];
 					
-					// we need to handle instance when the probability is 0 (it replaces it with the threshold value, which is something like 10 to the power of -11, aka a really small number, smaller than any expected probability to come out of tf)
+					// this handles instances when the probability is 0 (it replaces it with the threshold value, which is something like 10 to the power of -11, aka a really small number, smaller than any expected probability to come out of tf)
 					if(probWord <= threshold)
 						probWord = threshold; 
-
+					
 					// add the prob to the score
 					score += Math.log(probWord);
 					
@@ -1118,6 +1147,13 @@ public class LSTM implements IEgBotModel {
 		String answer_body = (String) qa.get("answer");
 		// Simple combine of Q+A
 		String q_a = question_body + " " + answer_body;
+		
+		// apply desired preprocessing function
+		switch(preprocessing) {
+			case "lower":
+				q_a = EgBotDataLoader.lower(q_a);			
+		    break;			  
+		}
 		// tokenise
 		String[] temp = EgBotDataLoader.tokenise(q_a);
 		
@@ -1227,5 +1263,10 @@ public class LSTM implements IEgBotModel {
 	public void setLoadSuccessFlag(boolean b) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String getModelConfig() { // needed for extra config details
+		return "seqLength=" + seq_length + "_modelType=" + modelType + "_activation1=" + activation1 + "_activation2=" + activation2 + "_numHidden=" + num_hidden;
 	}
 }

@@ -42,11 +42,11 @@ public class EvaluatePredictions {
 			
 		// Markov 
 		MarkovModel mm = new MarkovModel();		
-		runModel(mm, "MSE-20", "MSE-20", 100, 1, 5);		
+		runModel(mm, "MSE-20", "MSE-20", 100, 1, 5, "None", "vocabPos");		
 				
 		// LSTM 
 		LSTM lstm = new LSTM();				
-		runModel(lstm, "MSE-20", "MSE-20", 100, 1, 5);		
+		runModel(lstm, "MSE-20", "MSE-20", 100, 1, 5, "None", "vocabPos");	
 	}
 	
 	/**
@@ -60,9 +60,12 @@ public class EvaluatePredictions {
 	 * @param eSplit percentage of train split (e.g. 2 for 1 of 2, 1 etc)
 	 * @throws Exception
 	 */
-	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter, int num_epoch) throws Exception {
+	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter, int num_epoch, String preprocessing, String wordEmbedMethod) throws Exception {
 		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
+		
+		String modelConfig = model.getModelConfig(); 
+		modelDesc.put("modelConfig", model.getModelConfig());
 		modelDesc.put("train", tLabel);
 		
 		// refresh cache?
@@ -103,6 +106,8 @@ public class EvaluatePredictions {
 		modelDesc.put("tFilter", tFilter);
 		modelDesc.put("eFilter", eFilter); // TODO: this is not ideal because this should be part of the desc of the experiment, not the model -- but we're leaving it like this for now
 		modelDesc.put("num_epoch", num_epoch);
+		modelDesc.put("preprocessing", preprocessing);
+		modelDesc.put("wordEmbed", wordEmbedMethod);
 
 		// set up experiment
 		EgBotExperiment experiment = trainExp(model, modelDesc, trainFilter, files, tLabel, num_epoch);
