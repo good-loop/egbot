@@ -1,13 +1,15 @@
 
 # Welcome to the EgBot Example Generator Project
 
+A project to show that an autonomous machine can contribute to mathematical discussion by generating appropriate examples in such a way that human participants appreciate, respond to and extend its contributions.
+
 Code structure: follows the Good-Loop standard setup. Which is a js/react UI, and a Java server.
 
 ## Data
 
 See the [EgBot Maths Q&A blog post](https://platypusinnovation.blogspot.com/2018/10/egbot-maths-q-dataset.html)
 
-The data is collected by Irina from mathstackexchange using Python scripts in the data-collection folder.
+The data is collected by @zero_point from mathstackexchange using Python scripts in the data-collection folder.
 
 You are advised to get some snapshot data, rather than run these yourself.
 
