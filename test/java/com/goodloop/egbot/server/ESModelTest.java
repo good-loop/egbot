@@ -40,12 +40,16 @@ public class ESModelTest {
 	@Test
 	public void testScoreAnswer() throws Exception {
 		ESModel es = new ESModel();				
+		
 		// get data files
 		List<File> files = EgBotDataLoader.setup("pauliusSample");
+		
 		// init model
 		es.init(files, 0, "", "");
+		
 		// index data 
-		es.train1(data);
+		new EvaluatePredictions().runModel(es, "pauliusSample", "pauliusSample", 1, 1, 1, "None", "None");			
+		
 		// score question
 		 double score = es.scoreAnswer("Can you explain what a binomial distribution is?", "A binomial distribution model is a probability model and it is used when there are two possible outcomes");		
 	}
