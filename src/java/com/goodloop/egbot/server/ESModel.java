@@ -174,7 +174,7 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	 */
 	@Override
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
-		List relatedQAs = new RelatedESquestion().run(question);
+		List relatedQAs = new RelatedESquestion().run(question); //TODO: doesn't load the model correctly, it says 0 relatedQAs? (only runs correctly after training)
 		List relatedAs = new ArrayList();
 		
 		if (relatedQAs!=null &&  ! relatedQAs.isEmpty()) {

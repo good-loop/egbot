@@ -48,9 +48,9 @@ public class ESModelTest {
 		es.init(files, 0, "", "");
 		
 		// index data 
-		new EvaluatePredictions().runModel(es, "pauliusSample", "pauliusSample", 1, 1, 1, "None", "None");			
+		new EvaluatePredictions().runModel(es, "pauliusSample", "irinaSample", 1, 1, 1, "None", "None");			
 		
 		// score question
-		 double score = es.scoreAnswer("Can you explain what a binomial distribution is?", "A binomial distribution model is a probability model and it is used when there are two possible outcomes");		
+		// double score = es.scoreAnswer("Can you explain what a binomial distribution is?", "A binomial distribution model is a probability model and it is used when there are two possible outcomes");		
 	}
 }

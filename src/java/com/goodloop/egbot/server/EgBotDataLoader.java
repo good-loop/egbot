@@ -90,6 +90,9 @@ public class EgBotDataLoader {
         	case "statsBookJSON":
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/statsBookJSON.json")); // todo: remove this 
         		break;
+        	case "irinaSample":
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/irinaSample.json")); // todo: remove this 
+        		break;
         	case "pauliusSample":
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/pauliusSample.json")); // todo: remove this 
         		break;

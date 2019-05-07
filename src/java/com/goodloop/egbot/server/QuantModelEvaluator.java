@@ -106,7 +106,7 @@ public class QuantModelEvaluator {
 			MyRandom counter = new MyRandom();
 			for (int j = 0; j < 4; j++) {
 				int wrongIdx = i; 
-				while (wrongIdx == i) {
+				while (wrongIdx == i) { //TODO: they should all be unique (currently it only ensures it doesn't have target twice)
 					wrongIdx = counter.getC().nextInt(evalSet.size());
 				} 				
 				String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
@@ -142,7 +142,7 @@ public class QuantModelEvaluator {
 		final MyRandom counter = new MyRandom();
 		
 		// if eval set is too small, don't do random selection of wrong answers (**Needed: because the way the set up the quant evaluateModel requires at least 100 data points to be wasted, but for example the "MSE-20" data set only has 20 q&a pairs so it requires something different)
-		if(eLabel.equals("MSE-20") || eLabel.equals("pauliusSample") || eLabel.equals("statsBookJSON") || eLabel.equals("MSE-100")) {
+		if(eLabel.equals("MSE-20") || eLabel.equals("pauliusSample") || eLabel.equals("irinaSample") || eLabel.equals("statsBookJSON") || eLabel.equals("MSE-100")) {
 			evaluateModelTinyData();
 			return;
 		}

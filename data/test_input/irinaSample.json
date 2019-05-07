@@ -1,0 +1,22 @@
+[
+    {
+        "question": "Can you explain Boolean Algebra to me?",
+        "answer": "It is the branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0 respectively."
+    },
+    {
+        "question": "Can you give me an example of a paradox?",
+        "answer": "There is Simpsons Paradox is a phenomenon, in which a trend appears in several different groups of data but disappears or reverses when these groups are combined."
+    },  
+    {
+        "question": "What is a probability?",
+        "answer": "When we talk about probability, we usually want to express the expected outcome. So since on a large scale, a coin will probably land heads 50% of the time, and tails 50%. "
+    },    
+    {
+        "question": "Are joint probability and conditional probability the same thing?",
+        "answer": "They are very different. The conditional probability is the probability that A occurs given that you know that B occurs. If, for example A=B then this is 1. The joint probability is the probability that both occur. If for example A=B then this is P(A)."
+    },    
+    {
+        "question": "What is the difference between Bayesian networks and Graphical Models?",
+        "answer": "Bayesian Networks are also known as Graphical Models."
+    }
+]
