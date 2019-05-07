@@ -15,17 +15,22 @@ import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
 
+import com.goodloop.egbot.EgbotConfig;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.winterwell.depot.Depot;
 import com.winterwell.depot.Desc;
 import com.winterwell.depot.IHasDesc;
 import com.winterwell.depot.ModularXML;
+import com.winterwell.es.IESRouter;
+import com.winterwell.es.StdESRouter;
+import com.winterwell.es.client.ESConfig;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.ESHttpResponse;
 import com.winterwell.es.client.IndexRequestBuilder;
 import com.winterwell.es.client.SearchRequestBuilder;
 import com.winterwell.es.client.SearchResponse;
 import com.winterwell.es.client.admin.CreateIndexRequest;
+import com.winterwell.es.client.admin.DeleteIndexRequest;
 import com.winterwell.es.client.query.BoolQueryBuilder;
 import com.winterwell.es.client.query.ESQueryBuilder;
 import com.winterwell.es.client.query.ESQueryBuilders;
@@ -45,6 +50,7 @@ import com.winterwell.nlp.corpus.SimpleDocument;
 import com.winterwell.nlp.io.SitnStream;
 import com.winterwell.nlp.io.Tkn;
 import com.winterwell.nlp.io.WordAndPunctuationTokeniser;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.IFilter;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.TodoException;
@@ -52,28 +58,32 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.Pair2;
+import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 //import static org.elasticsearch.common.xcontent.XContentFactory.*;
 import com.winterwell.utils.web.SimpleJson;
+import com.winterwell.web.app.AMain;
+import com.winterwell.web.app.AppUtils;
 
 public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	// location of Paulius' data set
 	String filepath = System.getProperty("user.dir") + "/data/test_input/pauliusSample.json";
 	
-	final String indexName = "es-model";
-	final String indexType = "qa";
+	final static String indexName = "egbot.esquestion";
+	final static String indexType = "qa";
+	
+	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("ESModel", ESModel.class).setTag("egbot").setVersion(0);
+	boolean trainSuccessFlag;
 	
 	@Override
 	public void finishTraining() {
-		// TODO Auto-generated method stub
-		
+		trainSuccessFlag = true;		
 	}
 
 	@Override
 	public boolean isReady() {
-		// TODO Auto-generated method stub
-		return false;
+		return trainSuccessFlag;
 	}
 
 	@Override
@@ -84,8 +94,8 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	@Override
 	public Desc getDesc() {
-		// TODO Auto-generated method stub
-		return null;
+		assert desc != null;
+		return desc;
 	}
 
 	@Override
@@ -117,7 +127,14 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 		double score = queryES(bestTrainedA, (String) inputQA.get("id"));
 		
 //		look at the score of the result
+		System.out.println("Score: " + score);
+		
 //		delete inputQA
+		ESHttpClient client = new ESHttpClient();
+		
+		// !TODO: delete inputQA -- needs a method that can delete document by id
+//		DeleteIndexRequest preparedDeletion = client.admin().indices().prepareDelete(indexName);
+//		preparedDeletion.get().check();
 		
 		return score;
 	}
@@ -141,7 +158,9 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 		// get results
 		SearchResponse sr = s.get();
 		List<Map> hits = sr.getHits();
-		throw new TodoException();
+		Map hit = hits.get(0);
+		double score = (double) hit.get("_score");
+		return score;
 	}
 
 	@Override
@@ -155,21 +174,18 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	 */
 	@Override
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
-		List relatedQs = new RelatedQuestionFinder().run(question);
+		List relatedQAs = new RelatedESquestion().run(question);
 		List relatedAs = new ArrayList();
 		
-		for (int i=0; i<relatedQs.size(); i++) {
-			if (relatedQs!=null &&  ! relatedQs.isEmpty()) {
-				Object rq = relatedQs.get(i);
-				double noOfAnswers = SimpleJson.get(rq, "answer_count");
-				for (int j=0; j<noOfAnswers; j++) {
-					Object answer = SimpleJson.get(rq, "answers", j);	
-					boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
-					if (accepted) {
-						relatedAs.add(answer);
-						break;
-					}
-				}
+		if (relatedQAs!=null &&  ! relatedQAs.isEmpty()) {
+			int qaSize = relatedQAs.size();
+			for (int i=0; i<qaSize ; i++) {
+				Object rqa = relatedQAs.get(i);
+				Object answer = SimpleJson.get(rqa, "answer");
+				//Object answer = SimpleJson.get(rq, "answers", j);	
+				//boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
+				relatedAs.add(answer);
+				break;
 			}
 		}	
 		return (String) relatedAs.get(0);
@@ -183,9 +199,31 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	@Override
 	public void init(List<File> files, int num_epoch, String preprocessing, String wordEmbed) throws IOException {
+		ESConfig config = AppUtils.getConfig("egbot", ESConfig.class, null);
+
+		// config
+		ESConfig esc = ConfigFactory.get().getConfig(ESConfig.class);
+		// client
+		
+		ESHttpClient client = new ESHttpClient(esc);
+		Dep.setIfAbsent(ESHttpClient.class, client);
+		assert config != null;
+		// Is the config the IESRouter?
+		if (config instanceof IESRouter) {
+			Dep.setIfAbsent(IESRouter.class, (IESRouter) config);
+		} else {
+			// nope - use a default
+			Dep.setIfAbsent(IESRouter.class, new StdESRouter());
+		}
+		
 		// set up our client
-		ESHttpClient client = new ESHttpClient();
+		//ESHttpClient client = new ESHttpClient();
 		// preparing for an index
+		boolean indexExists = client.admin().indices().indexExists(indexName);
+		if (indexExists) {
+			DeleteIndexRequest preparedDeletion = client.admin().indices().prepareDelete(indexName);
+			preparedDeletion.get().check();
+		}
 		CreateIndexRequest preparedCreation = client.admin().indices().prepareCreate(indexName);
 		preparedCreation.get().check();
 	}
@@ -204,19 +242,27 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 
 	@Override
 	public String getModelConfig() {
-		// TODO Auto-generated method stub
-		return null;
+		return "";
 	}
 
 	@Override
 	public void train1(Map data) throws UnsupportedOperationException {
-		train1_doIt(data);
+		ListenableFuture<ESHttpResponse> f = train1_doIt(data);
+		ESHttpResponse response;
+		try {
+			response = f.get();
+		} catch (InterruptedException e) {
+			throw Utils.runtime(e);
+		} catch (ExecutionException e) {
+			throw Utils.runtime(e);
+		}
+		response.check();
 	}
 
 	private ListenableFuture<ESHttpResponse> train1_doIt(Map data) {
 		// actually index data 
 		ESHttpClient client = new ESHttpClient();
-		String qa = (String)data.get("question") + (String)data.get("answer");
+		String qa = (String)data.get("question") + " " + (String)data.get("answer");
 		assert ! data.containsKey("id") : data;
 		String hashedQA = StrUtils.md5(qa);
 		data.put("id", hashedQA);
@@ -226,7 +272,9 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 		
 		// adding the data
 		request.setBodyMap(data);
+		
 		return request.execute();
 	}
+	
 	
 }

@@ -65,7 +65,7 @@ public class EvaluatePredictions {
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		
 		String modelConfig = model.getModelConfig(); 
-		modelDesc.put("modelConfig", model.getModelConfig());
+		modelDesc.put("modelConfig", modelConfig);
 		modelDesc.put("train", tLabel);
 		
 		// refresh cache?
