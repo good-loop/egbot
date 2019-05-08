@@ -21,7 +21,7 @@ public class RelatedESquestion {
 		search.setDebug(true);
 		
 		// similarity
-		MoreLikeThisQueryBuilder esq = ESQueryBuilders.similar(q, Arrays.asList("question")); //TODO: do we want most similar to existing q or q+a?
+		MoreLikeThisQueryBuilder esq = ESQueryBuilders.similar(q, Arrays.asList("question","answer")); //TODO: do we want most similar to existing q or q+a?
 		esq.setMinTermFreq(1);
 		esq.setMinDocFreq(1);
 		Object hasans = ESQueryBuilders.existsQuery("answers");

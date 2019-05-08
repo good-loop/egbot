@@ -106,12 +106,20 @@ public class QuantModelEvaluator {
 			MyRandom counter = new MyRandom();
 			for (int j = 0; j < 4; j++) {
 				int wrongIdx = i; 
-				while (wrongIdx == i) { //TODO: they should all be unique (currently it only ensures it doesn't have target twice)
-					wrongIdx = counter.getC().nextInt(evalSet.size());
-				} 				
 				String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
+				int attempts = 0; // counter to avoid infinite loop
+				while (wrongIdx == i || answers.indexOf(wrongAns)!=-1) { // they should all be unique (to avoid an answer array with the same answer four times + the right answer)
+					attempts++;
+					wrongIdx = counter.getC().nextInt(evalSet.size());			
+					wrongAns = (String) evalSet.get(wrongIdx).get("answer");
+					if(attempts>10*evalSet.size()) throw new Exception("Does the evaluation dataset have enough data points? I'm running out of 'wrong' answers to use in evaluation.");
+				}
 				answers.add(wrongAns);
-			}						
+			}	
+			String bestAns = model.generateMostLikely(question,0);
+			if(answers.indexOf(bestAns)==-1) {
+				answers.add(bestAns);				
+			} 
 			double score = scorePickBest(model, question, target, answers); // score will be 1 if correct guess, 0 if incorrect
 			if (!MathUtils.isFinite(score))
 				oddCount += 1;
@@ -205,9 +213,16 @@ public class QuantModelEvaluator {
 				
 				// probabilistic counter to determine a random selection of 4 wrong answers from the set				
 				for (int j = 0; j < 4; j++) {
-					int wrongIdx = counter.getC().nextInt(evalSet.size()); 				
+					int wrongIdx = j; 
 					String wrongAns = (String) evalSet.get(wrongIdx).get("answer");
-					answers.add(wrongAns);
+					int attempts = 0; // counter to avoid infinite loop
+					while (wrongIdx == j || answers.indexOf(wrongAns)!=-1) { // they should all be unique (to avoid an answer array with the same answer four times + the right answer)
+						attempts++;
+						wrongIdx = counter.getC().nextInt(evalSet.size());			
+						wrongAns = (String) evalSet.get(wrongIdx).get("answer");
+						if(attempts>evalSet.size()) throw new Exception("Does the evaluation dataset have enough data points? I'm running out of 'wrong' answers to use in evaluation.");
+					}
+					answers.add(wrongAns);		
 				}				
 				Collections.shuffle(answers, counter.getC());				
 				// evaluate the model 

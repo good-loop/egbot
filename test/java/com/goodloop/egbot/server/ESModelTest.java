@@ -36,10 +36,10 @@ public class ESModelTest {
 		// get data files
 		List<File> files = EgBotDataLoader.setup("pauliusSample");
 		
-		// init model
+		// init model (set up es and prepare for index)
 		es.init(files, 0, "", "");
 		
-		// index data 
+		// index data and evaluate
 		new EvaluatePredictions().runModel(es, "pauliusSample", "irinaSample", 1, 1, 1, "None", "None");			
 		
 		// score question

@@ -121,7 +121,7 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 		SearchRequestBuilder s = esjc.prepareSearch(indexName);
 		
 		// build and run es query
-		MoreLikeThisQueryBuilder sim = ESQueryBuilders.similar(bestTrainedA, Arrays.asList("answer"));
+		MoreLikeThisQueryBuilder sim = ESQueryBuilders.similar(bestTrainedA, Arrays.asList("question","answer"));
 		ESQueryBuilder tq = ESQueryBuilders.termQuery("id", inputQA_id);
 		BoolQueryBuilder q = ESQueryBuilders.boolQuery().must(tq).should(sim);
 		s.setQuery(q);
@@ -141,7 +141,7 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	}
 
 	/**
-	 * get the answer of the question that's most similar to our input question, based on elastic's similarity scoring
+	 * get the answer of the q&a that's most similar to our input question, based on elastic's similarity scoring
  	 * @param question, expectedAnswerLength
  	 * @returns most similar answer
 	 */
@@ -157,6 +157,7 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 				Object answer = SimpleJson.get(rqa, "answer");
 				//Object answer = SimpleJson.get(rq, "answers", j);	
 				//boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
+				// !TODO: update this to work with MSE data
 				relatedAs.add(answer);
 				break;
 			}

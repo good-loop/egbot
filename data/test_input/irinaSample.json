@@ -1,11 +1,11 @@
 [
     {
         "question": "Can you explain Boolean Algebra to me?",
-        "answer": "It is the branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0 respectively."
+        "answer": "Boolean algebra is the branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0 respectively. Instead of elementary algebra where the values of the variables are numbers, and the prime operations are addition and multiplication, the main operations of Boolean algebra are the conjunction and denoted as ∧, the disjunction or denoted as ∨, and the negation not denoted as ¬. It is thus a formalism for describing logical relations in the same way that elementary algebra describes numeric relations."
     },
     {
-        "question": "Can you give me an example of a paradox?",
-        "answer": "There is Simpsons Paradox is a phenomenon, in which a trend appears in several different groups of data but disappears or reverses when these groups are combined."
+        "question": "Can you give an example of a paradox?",
+        "answer": "Take for example Simpsons Paradox which happens when you compare a population with labeled subpopulations with another population (or the same at a different time), the two populations will extremely likely have different proportions of their subpopulations. Consider a very simple example. You've got girls and boys. The girls have, on average, longer hair than the boys do, and there is an average for the school somewhere in between. I.e. average boys' hair's length (ABHL)≤average student's hair length (ASHL)≤average girls' hair's length (AGHL). Now, a boy shows up with hair longer than ABHL, but shorter than ASHL. Presto: AGHL is the same. The boys have, on average, longer hair. Though no subgroup has shorter hair, ASHL has fallen! This is how it goes with Simpson's paradox: the groups have averages that go in one direction, while the overall average goes in the other. Sometimes it's because members of the population leave or join, sometimes it's due to shifts in counts within the sub-groups. But it's always because the counts in subgroups differ between the two populations."
     },  
     {
         "question": "What is a probability?",
@@ -13,10 +13,12 @@
     },    
     {
         "question": "Are joint probability and conditional probability the same thing?",
-        "answer": "They are very different. The conditional probability is the probability that A occurs given that you know that B occurs. If, for example A=B then this is 1. The joint probability is the probability that both occur. If for example A=B then this is P(A)."
+        "answer": "Broadly speaking, joint probability is the probability of two things* happening together: e.g., the probability that I wash my car, and it rains. Conditional probability is the probability of one thing happening, given that the other thing happens: e.g., the probability that, given that I wash my car, it rains. "
     },    
     {
         "question": "What is the difference between Bayesian networks and Graphical Models?",
-        "answer": "Bayesian Networks are also known as Graphical Models."
+        "answer": "Bayesian network is a probabilistic graphical model (a type of statistical model) that represents a set of variables and their conditional dependencies via a directed acyclic graph (DAG). Bayesian networks are ideal for taking an event that occurred and predicting the likelihood that any one of several possible known causes was the contributing factor. For example, a Bayesian network could represent the probabilistic relationships between diseases and symptoms. Given symptoms, the network can be used to compute the probabilities of the presence of various diseases. "    
     }
 ]
+
+
