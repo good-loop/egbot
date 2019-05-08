@@ -23,10 +23,12 @@ import com.winterwell.depot.IHasDesc;
 import com.winterwell.depot.ModularXML;
 import com.winterwell.es.IESRouter;
 import com.winterwell.es.StdESRouter;
+import com.winterwell.es.client.DeleteRequestBuilder;
 import com.winterwell.es.client.ESConfig;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.ESHttpResponse;
 import com.winterwell.es.client.IndexRequestBuilder;
+import com.winterwell.es.client.KRefresh;
 import com.winterwell.es.client.SearchRequestBuilder;
 import com.winterwell.es.client.SearchResponse;
 import com.winterwell.es.client.admin.CreateIndexRequest;
@@ -76,6 +78,176 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("ESModel", ESModel.class).setTag("egbot").setVersion(0);
 	boolean trainSuccessFlag;
 	
+	/**
+	 * get ES similarity score for the most likely answer and known possible answer 
+	 * @param question, possibleAnswer
+	 * @returns similarity score
+	 */
+	@Override
+	public double scoreAnswer(String question, String possibleAnswer) throws IOException {
+		// take question, get most likely ans; 
+		String bestTrainedA = generateMostLikely(question, 0);
+		
+		// compare most likely ans to possible ans 
+		Map inputQA = new ArrayMap<String, String>();
+		inputQA.put("question", question);
+		inputQA.put("answer", possibleAnswer);
+		
+		//index inputQA and return inputQA with added field id (which is the hashed q+a)
+		inputQA = train1_doIt(inputQA, true);
+				
+		//query ES with bestTrainedQA.answer and fixed ID (so it must return inputQA)
+		double score = queryES(bestTrainedA, (String) inputQA.get("id"));
+		
+		//look at the score of the result
+		System.out.println("Score: " + score);
+		
+		//delete inputQA
+		ESHttpClient client = new ESHttpClient();
+		DeleteRequestBuilder preparedDeletion = client.prepareDelete(indexName, indexType, (String)inputQA.get("id"));
+		preparedDeletion.get().check();
+		
+		return score;
+	}
+
+	/**
+	 * ask ES for the similarity score
+	 * @param bestTrainedA
+	 * @return similarity between bestTrainedA and possibleAnswer (which has been stored as inputQA)
+	 */
+	private double queryES(String bestTrainedA, String inputQA_id) {
+		Utils.check4null(bestTrainedA, inputQA_id);
+		ESHttpClient esjc = new ESHttpClient();		
+		SearchRequestBuilder s = esjc.prepareSearch(indexName);
+		
+		// build and run es query
+		MoreLikeThisQueryBuilder sim = ESQueryBuilders.similar(bestTrainedA, Arrays.asList("answer"));
+		ESQueryBuilder tq = ESQueryBuilders.termQuery("id", inputQA_id);
+		BoolQueryBuilder q = ESQueryBuilders.boolQuery().must(tq).should(sim);
+		s.setQuery(q);
+		
+		// get results
+		SearchResponse sr = s.get();
+		List<Map> hits = sr.getHits();
+		if(!hits.isEmpty()) {
+			Map hit = hits.get(0);
+			double score = (double) hit.get("_score");
+			return score;
+		}			
+		else {
+			Log.d("Couldn't get results for this query: " + q.toString()); 
+			throw new IndexOutOfBoundsException(); 
+		}
+	}
+
+	/**
+	 * get the answer of the question that's most similar to our input question, based on elastic's similarity scoring
+ 	 * @param question, expectedAnswerLength
+ 	 * @returns most similar answer
+	 */
+	@Override
+	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
+		List relatedQAs = new RelatedESquestion().run(question);
+		List relatedAs = new ArrayList();
+		
+		if (relatedQAs!=null &&  ! relatedQAs.isEmpty()) {
+			int qaSize = relatedQAs.size();
+			for (int i=0; i<qaSize ; i++) {
+				Object rqa = relatedQAs.get(i);
+				Object answer = SimpleJson.get(rqa, "answer");
+				//Object answer = SimpleJson.get(rq, "answers", j);	
+				//boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
+				relatedAs.add(answer);
+				break;
+			}
+		}	
+		return (String) relatedAs.get(0);
+	}
+
+	/**
+	 * initialise the model by setting up ES and preparing for an index
+	 */
+	@Override
+	public void init(List<File> files, int num_epoch, String preprocessing, String wordEmbed) throws IOException {
+		// set up es config
+		ESConfig config = AppUtils.getConfig("egbot", ESConfig.class, null);
+		ESConfig esc = ConfigFactory.get().getConfig(ESConfig.class);
+
+		// set up our client
+		ESHttpClient client = new ESHttpClient(esc);
+		Dep.setIfAbsent(ESHttpClient.class, client);
+		assert config != null;
+		// Is the config the IESRouter?
+		if (config instanceof IESRouter) {
+			Dep.setIfAbsent(IESRouter.class, (IESRouter) config);
+		} else {
+			// nope - use a default
+			Dep.setIfAbsent(IESRouter.class, new StdESRouter());
+		}
+
+		// preparing for an index
+		boolean indexExists = client.admin().indices().indexExists(indexName);
+		if (!indexExists) {
+			CreateIndexRequest preparedCreation = client.admin().indices().prepareCreate(indexName);
+			preparedCreation.get().check();
+		}		
+	}
+
+	/**
+	 * index the training data 
+	 * @param data
+	 */
+	@Override
+	public void train1(Map data) throws UnsupportedOperationException {
+		train1_doIt(data, false);		
+	}
+
+	/**
+	 * index the training data, with an option to say whether ES should do a forced re-index (if true, it ensures document changes appear in search results immediately)
+	 * @param data, forceReindex
+	 * @return q+a data with added field id (useful for ES indexing and search)
+	 */
+	private Map train1_doIt(Map data, boolean forceReindex) {
+		// actually index data 
+		ESHttpClient client = new ESHttpClient();
+		String qa = (String)data.get("question") + " " + (String)data.get("answer");
+		assert ! data.containsKey("id") : data;
+		String hashedQA = StrUtils.md5(qa);
+		data.put("id", hashedQA);
+		
+		// create the index
+		IndexRequestBuilder request = client.prepareIndex(indexName, indexType, hashedQA);
+		
+		// adding the data
+		request.setBodyMap(data);
+		if (forceReindex) 
+			request.setRefresh(KRefresh.TRUE);
+		
+		// get the response
+		ListenableFuture<ESHttpResponse> f = request.execute();
+		ESHttpResponse response;
+		try {
+			response = f.get();
+		} catch (InterruptedException e) {
+			throw Utils.runtime(e);
+		} catch (ExecutionException e) {
+			throw Utils.runtime(e);
+		}
+		response.check();
+		
+		Map<String, Object> r = response.getJsonMap(); // TODO was q-a known already? is so (which shouldnt happen for our experiments) dont delete on clean up
+		
+		return data;
+	}
+	
+	/**
+	 * random sample (not useful here)
+	 */
+	@Override
+	public String sample(String question, int expectedAnswerLength) throws IOException {
+		return null;
+	}
+	
 	@Override
 	public void finishTraining() {
 		trainSuccessFlag = true;		
@@ -97,137 +269,7 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 		assert desc != null;
 		return desc;
 	}
-
-	@Override
-	public double scoreAnswer(String question, String possibleAnswer) throws IOException {
-		// take question, get most likely ans; 
-//		bestTrainedQA = queryES with question	(call to generateMostLikely)
-		String bestTrainedA = generateMostLikely(question, 0);
-		
-		// compare most likely ans to possible ans 
-//		inputQA = question + possibleAnswer;
-		Map inputQA = new ArrayMap<String, String>();
-		inputQA.put("question", question);
-		inputQA.put("answer", possibleAnswer);
-		
-//		index inputQA;
-		ListenableFuture<ESHttpResponse> f = train1_doIt(inputQA);
-		ESHttpResponse response;
-		try {
-			response = f.get();
-		} catch (InterruptedException e) {
-			throw Utils.runtime(e);
-		} catch (ExecutionException e) {
-			throw Utils.runtime(e);
-		}
-		response.check();
-		Map<String, Object> r = response.getJsonMap(); // TODO was q-a known already? is so (which shouldnt happen for our experiments) dont delete on clean up
-		
-//		query ES with bestTrainedQA.answer and fixed ID (so it must return inputQA)
-		double score = queryES(bestTrainedA, (String) inputQA.get("id"));
-		
-//		look at the score of the result
-		System.out.println("Score: " + score);
-		
-//		delete inputQA
-		ESHttpClient client = new ESHttpClient();
-		
-		// !TODO: delete inputQA -- needs a method that can delete document by id
-//		DeleteIndexRequest preparedDeletion = client.admin().indices().prepareDelete(indexName);
-//		preparedDeletion.get().check();
-		
-		return score;
-	}
-
-	/**
-	 * 
-	 * @param bestTrainedA
-	 * @return similarity between bestTrainedA and possibleAnswer (which has been stored as inputQA)
-	 */
-	private double queryES(String bestTrainedA, String inputQA_id) {
-		Utils.check4null(bestTrainedA, inputQA_id);
-		ESHttpClient esjc = new ESHttpClient();		
-		SearchRequestBuilder s = esjc.prepareSearch(indexName);
-		
-		// build and run es query
-		MoreLikeThisQueryBuilder sim = ESQueryBuilders.similar(bestTrainedA, Arrays.asList("answer"));
-		ESQueryBuilder tq = ESQueryBuilders.termQuery("id", inputQA_id);
-		BoolQueryBuilder q = ESQueryBuilders.boolQuery().must(tq).should(sim);
-		s.setQuery(q);
-		
-		// get results
-		SearchResponse sr = s.get();
-		List<Map> hits = sr.getHits();
-		Map hit = hits.get(0);
-		double score = (double) hit.get("_score");
-		return score;
-	}
-
-	@Override
-	public String sample(String question, int expectedAnswerLength) throws IOException {
-		// use question as query and fetch most similar question from train
-		return null;
-	}
-
-	/*
-	 * get the answer of the question that's most similar to our input question, based on elastic's similarity scoring
-	 */
-	@Override
-	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
-		List relatedQAs = new RelatedESquestion().run(question); //TODO: doesn't load the model correctly, it says 0 relatedQAs? (only runs correctly after training)
-		List relatedAs = new ArrayList();
-		
-		if (relatedQAs!=null &&  ! relatedQAs.isEmpty()) {
-			int qaSize = relatedQAs.size();
-			for (int i=0; i<qaSize ; i++) {
-				Object rqa = relatedQAs.get(i);
-				Object answer = SimpleJson.get(rqa, "answer");
-				//Object answer = SimpleJson.get(rq, "answers", j);	
-				//boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
-				relatedAs.add(answer);
-				break;
-			}
-		}	
-		return (String) relatedAs.get(0);
-	}
-
-	@Override
-	public void load() throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
 	
-	@Override
-	public void init(List<File> files, int num_epoch, String preprocessing, String wordEmbed) throws IOException {
-		ESConfig config = AppUtils.getConfig("egbot", ESConfig.class, null);
-
-		// config
-		ESConfig esc = ConfigFactory.get().getConfig(ESConfig.class);
-		// client
-		
-		ESHttpClient client = new ESHttpClient(esc);
-		Dep.setIfAbsent(ESHttpClient.class, client);
-		assert config != null;
-		// Is the config the IESRouter?
-		if (config instanceof IESRouter) {
-			Dep.setIfAbsent(IESRouter.class, (IESRouter) config);
-		} else {
-			// nope - use a default
-			Dep.setIfAbsent(IESRouter.class, new StdESRouter());
-		}
-		
-		// set up our client
-		//ESHttpClient client = new ESHttpClient();
-		// preparing for an index
-		boolean indexExists = client.admin().indices().indexExists(indexName);
-		if (indexExists) {
-			DeleteIndexRequest preparedDeletion = client.admin().indices().prepareDelete(indexName);
-			preparedDeletion.get().check();
-		}
-		CreateIndexRequest preparedCreation = client.admin().indices().prepareCreate(indexName);
-		preparedCreation.get().check();
-	}
-
 	@Override
 	public void setTrainSuccessFlag(boolean b) {
 		// TODO Auto-generated method stub
@@ -244,37 +286,9 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	public String getModelConfig() {
 		return "";
 	}
-
+	
 	@Override
-	public void train1(Map data) throws UnsupportedOperationException {
-		ListenableFuture<ESHttpResponse> f = train1_doIt(data);
-		ESHttpResponse response;
-		try {
-			response = f.get();
-		} catch (InterruptedException e) {
-			throw Utils.runtime(e);
-		} catch (ExecutionException e) {
-			throw Utils.runtime(e);
-		}
-		response.check();
-	}
-
-	private ListenableFuture<ESHttpResponse> train1_doIt(Map data) {
-		// actually index data 
-		ESHttpClient client = new ESHttpClient();
-		String qa = (String)data.get("question") + " " + (String)data.get("answer");
-		assert ! data.containsKey("id") : data;
-		String hashedQA = StrUtils.md5(qa);
-		data.put("id", hashedQA);
-		
-		// create the index
-		IndexRequestBuilder request = client.prepareIndex(indexName, indexType, hashedQA);
-		
-		// adding the data
-		request.setBodyMap(data);
-		
-		return request.execute();
-	}
-	
-	
+	public void load() throws IOException {
+		// TODO Auto-generated method stub
+	}	
 }
