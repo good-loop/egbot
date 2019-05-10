@@ -94,7 +94,7 @@ public class LSTM implements IEgBotModel {
 	int vocab_size;
 	
 	// training parameters	
-	final int seq_length = 30;
+	final int seq_length = 10;
 	/**
 	 * total training epochs to do. 
 	 */
@@ -155,7 +155,7 @@ public class LSTM implements IEgBotModel {
 //	public void setSeq_length(int seq_length) {
 //		this.seq_length = seq_length;
 //	}
-
+	
 	/**
 	 * load egbot slim files and construct vocab (without saving training data because it's too memory consuming)
 	 * 
@@ -395,6 +395,7 @@ public class LSTM implements IEgBotModel {
 			System.out.println("Trained");
 			// save model checkpoint
 			save(sess,checkpointPrefix);
+
 			System.out.println("Saved");
 	    }
 	}
@@ -821,10 +822,9 @@ public class LSTM implements IEgBotModel {
 	 * returns the file that contains a blank untrained graph -- structure but no training
 	 */
 	public File getTensorflowGraphName() {
-		// !TODO: undo this
-		experimentName = "lstmGraphTF.pb";
-		//experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length 
-		//	+ "_modelType=" + modelType + "_activation1=" + activation1 + "_activation2=" + activation2 + ".pb";
+		//experimentName = "lstmGraphTF.pb";
+		experimentName = "lstmGraphTF_vocab=" + vocab_size + "_numHidden=" + num_hidden + "_seqLength=" + seq_length 
+			+ "_modelType=" + modelType + "_activation1=" + activation1 + "_activation2=" + activation2 + ".pb";
 		String graphLocation = System.getProperty("user.dir") + "/data/models/final/v3/" + experimentName;
 		Log.d(graphLocation);
 		File TENSORFLOW_GRAPH = new File(graphLocation);
