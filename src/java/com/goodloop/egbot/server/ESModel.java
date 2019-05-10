@@ -68,6 +68,11 @@ import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.web.app.AMain;
 import com.winterwell.web.app.AppUtils;
 
+/**
+ * 
+ * @author Irina
+ * @testedby {@link ESModelTest}
+ */
 public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	// location of Paulius' data set
 	String filepath = System.getProperty("user.dir") + "/data/test_input/pauliusSample.json";
@@ -77,6 +82,31 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	
 	private final Desc<IEgBotModel> desc = new Desc<IEgBotModel>("ESModel", ESModel.class).setTag("egbot").setVersion(0);
 	boolean trainSuccessFlag;
+	
+	ESModel(){
+		// set up es config
+		ESConfig config = AppUtils.getConfig("egbot", ESConfig.class, null);
+		ESConfig esc = ConfigFactory.get().getConfig(ESConfig.class);
+
+		// set up our client
+		ESHttpClient client = new ESHttpClient(esc);
+		Dep.setIfAbsent(ESHttpClient.class, client);
+		assert config != null;
+		// Is the config the IESRouter?
+		if (config instanceof IESRouter) {
+			Dep.setIfAbsent(IESRouter.class, (IESRouter) config);
+		} else {
+			// nope - use a default
+			Dep.setIfAbsent(IESRouter.class, new StdESRouter());
+		}
+
+		// preparing for an index
+		boolean indexExists = client.admin().indices().indexExists(indexName);
+		if (!indexExists) {
+			CreateIndexRequest preparedCreation = client.admin().indices().prepareCreate(indexName);
+			preparedCreation.get().check();
+		}		
+	}
 	
 	/**
 	 * get ES similarity score for the most likely answer and known possible answer 
@@ -148,20 +178,18 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	@Override
 	public String generateMostLikely(String question, int expectedAnswerLength) throws IOException {
 		List relatedQAs = new RelatedESquestion().run(question);
+		if (relatedQAs==null || relatedQAs.isEmpty()) {
+			Log.e("ESModel", "NOTHING in the DB?! Q was "+question);
+			return ""; // :(
+		}
 		List relatedAs = new ArrayList();
-		
-		if (relatedQAs!=null &&  ! relatedQAs.isEmpty()) {
-			int qaSize = relatedQAs.size();
-			for (int i=0; i<qaSize ; i++) {
-				Object rqa = relatedQAs.get(i);
-				Object answer = SimpleJson.get(rqa, "answer");
-				//Object answer = SimpleJson.get(rq, "answers", j);	
-				//boolean accepted = SimpleJson.get(rq, "answers", j, "is_accepted");
-				// !TODO: update this to work with MSE data
-				relatedAs.add(answer);
-				break;
-			}
-		}	
+		int qaSize = relatedQAs.size();
+		for (int i=0; i<qaSize ; i++) {
+			Object rqa = relatedQAs.get(i);
+			Object answer = SimpleJson.get(rqa, "answer");
+			relatedAs.add(answer);
+			break;
+		}
 		return (String) relatedAs.get(0);
 	}
 
@@ -170,28 +198,6 @@ public class ESModel implements IEgBotModel, IHasDesc, ModularXML {
 	 */
 	@Override
 	public void init(List<File> files, int num_epoch, String preprocessing, String wordEmbed) throws IOException {
-		// set up es config
-		ESConfig config = AppUtils.getConfig("egbot", ESConfig.class, null);
-		ESConfig esc = ConfigFactory.get().getConfig(ESConfig.class);
-
-		// set up our client
-		ESHttpClient client = new ESHttpClient(esc);
-		Dep.setIfAbsent(ESHttpClient.class, client);
-		assert config != null;
-		// Is the config the IESRouter?
-		if (config instanceof IESRouter) {
-			Dep.setIfAbsent(IESRouter.class, (IESRouter) config);
-		} else {
-			// nope - use a default
-			Dep.setIfAbsent(IESRouter.class, new StdESRouter());
-		}
-
-		// preparing for an index
-		boolean indexExists = client.admin().indices().indexExists(indexName);
-		if (!indexExists) {
-			CreateIndexRequest preparedCreation = client.admin().indices().prepareCreate(indexName);
-			preparedCreation.get().check();
-		}		
 	}
 
 	/**

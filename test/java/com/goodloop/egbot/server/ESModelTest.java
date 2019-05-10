@@ -18,28 +18,38 @@ import com.winterwell.utils.log.Log;
 public class ESModelTest {
 
 //	@Test
-	public void testModelWithMSE20Data() throws Exception {
+	public void testMSEPart1ModelWithMSEPart1Data() throws Exception {
+		ESModel es = new ESModel();
+		new EvaluatePredictions().runModel(es, "MSE-part1", "MSE-part1", 100, 100, 1, "None", "None");
+	}	
+	
+//	@Test
+	public void testMSEFullModelWithMSEfullData() throws Exception {
+		ESModel es = new ESModel();
+		new EvaluatePredictions().runModel(es, "MSE-full", "MSE-full", 100, 100, 1, "None", "None");
+	}	
+	
+//	@Test
+	public void testMSEFullModelWithPauliusData() throws Exception {
+		ESModel es = new ESModel();
+		new EvaluatePredictions().runModel(es, "MSE-full", "pauliusSample", 1, 1, 1, "None", "None");
+	}	
+	
+	@Test
+	public void testMSE20ModelWithPaulius20Data() throws Exception {
 		ESModel es = new ESModel();						
-		new EvaluatePredictions().runModel(es, "MSE-20", "MSE-20", 1, 1, 1, "None", "None");
+		new EvaluatePredictions().runModel(es, "MSE-20", "pauliusSample", 1, 1, 1, "None", "None");
 	}
 	
 //	@Test
-	public void testModelWithPauliusData() throws Exception {
+	public void testPauliusModelWithMSE20Data() throws Exception {
 		ESModel es = new ESModel();						
-		new EvaluatePredictions().runModel(es, "pauliusSample", "pauliusSample", 1, 1, 1, "None", "None");
+		new EvaluatePredictions().runModel(es, "pauliusSample", "MSE-20", 1, 1, 1, "None", "None");
 	}
 	
-	@Test
+//	@Test
 	public void testScoreAnswer() throws Exception {
-		ESModel es = new ESModel();				
-		
-		// get data files
-		List<File> files = EgBotDataLoader.setup("pauliusSample");
-		
-		// init model (set up es and prepare for index)
-		es.init(files, 0, "", "");
-		
-		// index data and evaluate
+		ESModel es = new ESModel();
 		new EvaluatePredictions().runModel(es, "pauliusSample", "irinaSample", 1, 1, 1, "None", "None");			
 		
 		// score question
