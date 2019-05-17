@@ -1151,7 +1151,7 @@ public class LSTM implements IEgBotModel {
 		// apply desired preprocessing function
 		switch(preprocessing) {
 			case "lower":
-				q_a = EgBotDataLoader.lower(q_a);			
+				q_a = q_a.toLowerCase();			
 		    break;			  
 		}
 		// tokenise

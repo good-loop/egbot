@@ -28,6 +28,7 @@ import com.winterwell.utils.log.Log;
 public class EgBotDataLoader {
 	List<File> files;
 	RateCounter rate;
+	String evalName;
 	
 	/**
 	 * finds egbot files in preparation for data loading
@@ -78,30 +79,18 @@ public class EgBotDataLoader {
 		List<File> files = null;
 		
 		switch (dataLabel) {
-    		case "MSE-part1":
-        		files = loadMSE("MathStackExchangeAPI_Part_1"); // MSE part 1/8 file
-        		break;
-    		case "MSE-part2":
-        		files = loadMSE("MathStackExchangeAPI_Part_2"); // load MSE data that starts with this string (aka only first part of egbot data)
+    		case "MSE-part":
+        		files = loadMSE("MathStackExchangeAPI_Part_1"); // load MSE data that starts with this string (aka only first part of egbot data)
         		break;
         	case "MSE-full":
-        		files = loadMSE("MathStackExchangeAPI_Part"); // load MSE data that starts with this string (aka all egbot data)
+        		files = loadMSE("MathStackExchangeAPI_Part_1"); // load MSE data that starts with this string (aka all egbot data)
             	break;
-        	case "statsBookJSON":
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/statsBookJSON.json")); // todo: remove this 
-        		break;
-        	case "irinaSample":
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/irinaSample.json")); // todo: remove this 
-        		break;
-        	case "pauliusSample":
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/pauliusSample.json")); // todo: remove this 
-        		break;
         	case "MSE-20": 
         		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/tiny.json")); // 20 pre-selected MSE q&a pairs
         		break;
-        	case "MSE-100": 
-        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/build/slimmer/MathStackExchangeAPI_slimmer_Part_2.json")); // 100 MSE q&a pairs
-        		break;    
+        	case "paul-20": 
+        		files = Arrays.asList(new File(System.getProperty("user.dir") + "/data/test_input/paulius20.json")); // paulius' 20 questions (TODO: needs answers, currently has dummy ones)
+        		break;        
 		}
 		// always have the same ordering
 		Collections.sort(files);
@@ -202,24 +191,20 @@ public class EgBotDataLoader {
 	public static void train(Experiment e) throws IOException {
 		EgBotData trainData = (EgBotData) e.getTrainData();
 		IEgBotModel model = (IEgBotModel) e.getModel();
-		int num_epoch = e.getNumEpoch();
-		String preprocessing = e.getPreprocessing();
-		String wordEmbedMethod = e.getWordEmbedMethod();
-
+ 
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		// Do we have a pre-trained version?
 		IEgBotModel pretrained = Depot.getDefault().get(modelDesc);
 		if (pretrained!=null) {
 			// replace the untrained with the trained
 			Log.d("Using pre-trained model");
-			Log.d("Model description: " + modelDesc);
 			model = pretrained;
 			e.setModel(pretrained, modelDesc);
 			// TODO: remove temporary loadSuccessFlag flag and associated methods, this is just while I test model loading (can't hold loadSuccessFlag within model because of how we load the model)
 			model.setLoadSuccessFlag(true);
 		}
 
-		// call load (not terribly useful since we've already checked whether it's worth loading it) TODO: implement re-loading training (so that we can train in stages and can start/stop it at will); it would mean remembering point where it left off in the dataset;
+		// call load
 		//model.load();
 
 		// already done?
@@ -231,10 +216,10 @@ public class EgBotDataLoader {
 		Log.i("Starting training ...");
 		
 		// init model (vocab etc)
-		model.init(trainData.files, num_epoch, preprocessing, wordEmbedMethod);
+		model.init(trainData.files, e.getNumEpoch(), e.getPreprocessing(), e.getWordEmbedMethod());
 							
 		RateCounter rate = new RateCounter(TUnit.MINUTE.dt);
-		 
+		
 		for(File file : trainData.files) {
 			Log.i("File: "+file+"...");
 	
@@ -259,9 +244,9 @@ public class EgBotDataLoader {
 				model.train1(qa);
 				rate.plus(1);
 				if (c % 1000 == 0) Log.i(c+" "+rate+"...");
-				if (false) break;
 			} 
 			jr.close();
+			
 			if (false) break;
 		}
 		
@@ -272,9 +257,8 @@ public class EgBotDataLoader {
 		Depot.getDefault().flush();
 	}
 
-	// basic preprocessing method, just lowercase strings
-	public static String lower(String q_a) {
-		return q_a.toLowerCase();
+	public String getEvalName() {
+		return evalName;
 	}
 	
 }
