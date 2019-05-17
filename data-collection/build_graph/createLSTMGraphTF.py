@@ -15,9 +15,9 @@ learning_rate = 0.001
 #batch_size = 128 # should we batch? it might be tricky to sync this with the java code
 
 # WARNING: this might trip you up, because it needs the vocab size of the training data; TODO: this can be solved by having the script run with a parameter that tells it what the vocab size is expected to be (this is useful for the code to be able to run for any training data)
-vocab_size = 13346
+vocab_size = 1197
 num_hidden = 256 # number of units in RNN cell
-seq_length = 30 # length of training window
+seq_length = 10 # length of training window
 
 # tf Graph input
 x = tf.placeholder("float", [None, seq_length, 1], name='input')

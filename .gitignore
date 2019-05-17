@@ -4,6 +4,7 @@ data/raw
 data/build
 data/results
 data-collection/data
+data-collection/test_scripts
 pom.bob.xml
 web/build
 node_modules/

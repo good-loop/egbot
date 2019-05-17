@@ -42,11 +42,11 @@ public class EvaluatePredictions {
 			
 		// Markov 
 		MarkovModel mm = new MarkovModel();		
-		runModel(mm, "MSE-20", "MSE-20", 100, 1, 5, "None", "vocabPos");		
+		runModel(mm, "MSE-100", "MSE-20", 100, 1, 5, "None", "vocabPos");		
 				
 		// LSTM 
 		LSTM lstm = new LSTM();				
-		runModel(lstm, "MSE-20", "MSE-20", 100, 1, 5, "None", "vocabPos");	
+		runModel(lstm, "MSE-100", "MSE-20", 100, 1, 5, "None", "vocabPos");	
 	}
 	
 	/**
@@ -62,12 +62,16 @@ public class EvaluatePredictions {
 	 */
 	void runModel(IEgBotModel model, String tLabel, String eLabel, int tFilter, int eFilter, int num_epoch, String preprocessing, String wordEmbedMethod) throws Exception {
 		
+		if (tFilter == 1) 
+			assert (tLabel != eLabel): "You shouldn't use the same dataset for training and evaluation (bad practice and can have bad side effects when using ESModel)";
+		
 		Desc<IEgBotModel> modelDesc = model.getDesc();
 		
 		String modelConfig = model.getModelConfig(); 
 		modelDesc.put("modelConfig", modelConfig);
 		modelDesc.put("train", tLabel);
-		
+		modelDesc.put("test", eLabel);
+
 		// refresh cache?
 		//Depot.getDefault().remove(modelDesc);
 		
@@ -81,7 +85,6 @@ public class EvaluatePredictions {
 		// set up filters (that decide train/test split)
 		// NB: we specify the filter by passing a parameter x that specifies the train/test split n % x != 1, 
 		// if x is 1 then it's the whole dataset (which allows us to use completely different datasets)
-		// TODO: check w/ DW that this makes sense in terms of usability
 		IFilter<Integer> trainFilter = n -> true;
 		IFilter<Integer> testFilter;
 		if (tFilter != 1) { // 1 is for when no filter is used

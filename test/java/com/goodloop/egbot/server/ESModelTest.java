@@ -35,7 +35,7 @@ public class ESModelTest {
 		new EvaluatePredictions().runModel(es, "MSE-full", "pauliusSample", 1, 1, 1, "None", "None");
 	}	
 	
-	@Test
+//	@Test
 	public void testMSE20ModelWithPaulius20Data() throws Exception {
 		ESModel es = new ESModel();						
 		new EvaluatePredictions().runModel(es, "MSE-20", "pauliusSample", 1, 1, 1, "None", "None");

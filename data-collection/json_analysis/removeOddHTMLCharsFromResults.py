@@ -7,7 +7,7 @@ if not sys.argv[1]:
     exit(1)
 
 # weird html chars that have to be removed 
-removable = ["&#xc;", "&#x0;", "&#x2;", "&#x12;", "&#x13;", "&#x14;", "&#x1f;", "&#x1d;"]
+removable = ["&#xc;", "&#x0;", "&#x2;", "&#x12;", "&#x13;", "&#x14;", "&#x1f;", "&#x1d;", "&#x1c", "&#xe;", "&#xd;"]
 
 filepath = sys.argv[1]
 print("Opening file")

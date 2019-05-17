@@ -29,7 +29,6 @@ biases = {
 }
 
 def BiRNN(x, weights, biases):
-
     # Define lstm cells with tensorflow
     # Forward direction cell
     lstm_fw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0, activation=tf.relu)

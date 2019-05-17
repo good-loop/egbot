@@ -39,6 +39,13 @@ public class EvaluationTest {
 	// TEST LSTM
 	
 //	@Test
+	public void testLoadAndEvalLTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "pauliusSample", "pauliusSample", 1, 1, 1, "None", "vocabPos");
+	}
+	
+	
+//	@Test
 	public void testPauliusSampleLTSM() throws Exception {
 		LSTM lstm = new LSTM();						
 		new EvaluatePredictions().runModel(lstm, "pauliusSample", "pauliusSample", 1, 1, 1, "None", "vocabPos");
@@ -48,13 +55,19 @@ public class EvaluationTest {
 //	@Test
 	public void test20LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-20", "MSE-20", 1, 1, 1, "None", "vocabPos");
+		new EvaluatePredictions().runModel(lstm, "MSE-20", "pauliusSample", 1, 1, 100, "None", "vocabPos");
 	}
 	
 //	@Test
 	public void test100LTSM() throws Exception {
 		LSTM lstm = new LSTM();						
-		new EvaluatePredictions().runModel(lstm, "MSE-100", "MSE-20", 1, 1, 5, "None", "vocabPos");
+		new EvaluatePredictions().runModel(lstm, "MSE-100", "pauliusSample", 1, 1, 100, "None", "vocabPos");
+	}
+	
+//	@Test
+	public void testMSEPart1LTSM() throws Exception {
+		LSTM lstm = new LSTM();						
+		new EvaluatePredictions().runModel(lstm, "MSE-part1", "MSE-part1", 100, 100, 5, "None", "vocabPos");
 	}
 	
 //	@Test
